@@ -70,7 +70,13 @@
 
                 <a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060#gid=479177060" target="_blank" 
                    class="w-full p-3 flex justify-between items-center rounded-lg text-white bg-blue-600 dark:bg-blue-800 hover:bg-blue-500 dark:hover:bg-blue-700 transition duration-200 shadow-md">
-                    <span class="font-semibold"><i class="fa-solid fa-table mr-2"></i>Tablo</span>
+                    <span class="font-semibold"><i class="fa-solid fa-table mr-2"></i>Ders Programı Tablosu</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-sm opacity-80"></i>
+                </a>
+
+                <a href="https://kuran.diyanet.gov.tr/mushaf/kuran-meal-1/fatiha-suresi-1/ayet-1/diyanet-isleri-baskanligi-meali-1" target="_blank" 
+                   class="w-full p-3 flex justify-between items-center rounded-lg text-white bg-amber-600 dark:bg-amber-800 hover:bg-amber-500 dark:hover:bg-amber-700 transition duration-200 shadow-md">
+                    <span class="font-semibold"><i class="fa-solid fa-book-quran mr-2"></i>Kur'an-ı Kerim Oku (Diyanet)</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-sm opacity-80"></i>
                 </a>
 
@@ -186,7 +192,7 @@
             { week: "2 - 6 Aralık", date: "6 Aralık", day: "Cumartesi", time: "21:00", subject: "Araf Suresi Özeti", speaker: "Taylan", link1: "https://drive.google.com/file/d/1EyhaVzdvi1cOhDkAWfscTSqP0dZGiA7i/view?usp=drive_link", link2: "" },
         ];
         
-        // --- Toplu Kur'an Kaynakları Verisi ---
+        // --- Toplu Kur'an Kaynakları Verisi (Dosyadaki Birebir Hali) ---
         const quranNotes = [
             { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
             { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
@@ -204,6 +210,7 @@
             { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" },
         ];
         
+        // Dropdown menü oluşturma
         function renderQuranNotes() {
             const menu = document.getElementById('quranNotesMenu');
             menu.innerHTML = ''; 
@@ -214,10 +221,10 @@
                 link.target = "_blank";
                 link.className = "flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0";
                 
-                // İkon Mantığı
-                let iconClass = "fa-file-lines"; 
+                // İkon Seçimi: 'Dersi' kelimesi geçiyorsa ve 'notlar' geçmiyorsa ses dosyası, diğerleri döküman
+                let iconClass = "fa-file-lines"; // Varsayılan: Döküman
                 if (note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not")) {
-                    iconClass = "fa-file-audio"; 
+                    iconClass = "fa-file-audio"; // Ses dosyası
                 }
                 
                 link.innerHTML = `<i class="fa-solid ${iconClass} mr-3 text-emerald-500 w-5 text-center"></i> ${note.name}`;
@@ -225,6 +232,7 @@
             });
         }
         
+        // Dropdown aç/kapa
         function toggleQuranNotes() {
             const menu = document.getElementById('quranNotesMenu');
             const icon = document.getElementById('quranNotesIcon');
@@ -239,6 +247,7 @@
             }
         }
 
+        // Dışarı tıklandığında dropdown kapatma
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('quranNotesMenu');
             const btn = document.getElementById('quranNotesBtn');
@@ -252,7 +261,7 @@
             }
         });
 
-        // Takvim Listeleme (Ters Sıralı)
+        // Ana Takvim Oluşturma
         function renderSchedule(data) {
             const container = document.getElementById('contentArea');
             container.innerHTML = '';
@@ -298,6 +307,7 @@
             }
         }
 
+        // Kart Oluşturma
         function createCard(item, showWeek = false) {
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300';
@@ -343,6 +353,7 @@
             return card;
         }
 
+        // Hafta Aç/Kapa
         function toggleWeek(header) {
             const list = header.nextElementSibling;
             const icon = header.querySelector('.fa-chevron-down');
@@ -356,6 +367,7 @@
             }
         }
 
+        // Arama Fonksiyonu
         function filterData() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             if(!query) {
