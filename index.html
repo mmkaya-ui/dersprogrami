@@ -38,6 +38,18 @@
                     onkeyup="filterData()">
                 <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400 dark:text-gray-500"></i>
             </div>
+
+            <div class="mt-3 relative z-10">
+                <button onclick="toggleQuranNotes()" id="quranNotesBtn" 
+                    class="w-full p-3 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md">
+                    <span class="font-semibold"><i class="fa-solid fa-layer-group mr-2"></i>Kur'an Dersleri Toplu Kaynaklar</span>
+                    <i id="quranNotesIcon" class="fa-solid fa-chevron-down smooth-transition"></i>
+                </button>
+                
+                <div id="quranNotesMenu" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-80 overflow-y-auto">
+                    </div>
+            </div>
+            
         </div>
     </div>
 
@@ -77,9 +89,7 @@
             }
         }
 
-        // --- Veri Seti ---
-        // link1: Dosya Linki (Ders Notu)
-        // link2: Kur'an Okuma (Tilavet)
+        // --- Veri Seti (Ders Programı) ---
         const rawData = [
              { week: "7 - 11 Ekim", date: "7 Ekim", day: "Salı", time: "20:00", subject: "Kuran-ı Kerim Dersi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1TCs8upFodzWqFOjDylfSDhoEWrJ3EQ1d/view?usp=drive_link", link2: "" },
             { week: "7 - 11 Ekim", date: "8 Ekim", day: "Çarşamba", time: "20:00", subject: "Kuran-ı Kerim Dersi", speaker: "Hafız", link1: "", link2: "" },
@@ -138,6 +148,72 @@
             { week: "2 - 6 Aralık", date: "5 Aralık", day: "Cuma", time: "21:00", subject: "Efendimiz (s.a.v.) ve Darü'l-Erkam", speaker: "Mert", link1: "https://drive.google.com/file/d/1_R_97G62jAZ5ibaJvY793nRg8tix351W/view?usp=drive_link", link2: "" },
             { week: "2 - 6 Aralık", date: "6 Aralık", day: "Cumartesi", time: "21:00", subject: "Araf Suresi Özeti", speaker: "Taylan", link1: "https://drive.google.com/file/d/1EyhaVzdvi1cOhDkAWfscTSqP0dZGiA7i/view?usp=drive_link", link2: "" },
         ];
+        
+        // --- Toplu Kur'an Kaynakları Verisi (Dosyadaki Birebir Hali) ---
+        const quranNotes = [
+            { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
+            { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
+            { name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
+            { name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
+            { name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
+            { name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
+            { name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
+            { name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
+            { name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
+            { name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
+            { name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
+            { name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
+            { name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
+            { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" },
+        ];
+        
+        function renderQuranNotes() {
+            const menu = document.getElementById('quranNotesMenu');
+            menu.innerHTML = ''; 
+            
+            quranNotes.forEach(note => {
+                const link = document.createElement('a');
+                link.href = note.url;
+                link.target = "_blank";
+                link.className = "flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0";
+                
+                // İkon Seçimi: 'Dersi' kelimesi geçiyorsa ses dosyası, 'notlar' geçiyorsa döküman ikonu
+                let iconClass = "fa-file-lines"; // Varsayılan: Döküman
+                if (note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not")) {
+                    iconClass = "fa-file-audio"; // Ses dosyası
+                }
+                
+                link.innerHTML = `<i class="fa-solid ${iconClass} mr-3 text-emerald-500 w-5 text-center"></i> ${note.name}`;
+                menu.appendChild(link);
+            });
+        }
+        
+        function toggleQuranNotes() {
+            const menu = document.getElementById('quranNotesMenu');
+            const icon = document.getElementById('quranNotesIcon');
+            
+            if (menu.classList.contains('hidden')) {
+                renderQuranNotes();
+                menu.classList.remove('hidden');
+                icon.classList.add('rotate-icon');
+            } else {
+                menu.classList.add('hidden');
+                icon.classList.remove('rotate-icon');
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('quranNotesMenu');
+            const btn = document.getElementById('quranNotesBtn');
+            const icon = document.getElementById('quranNotesIcon');
+            
+            if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    icon.classList.remove('rotate-icon');
+                }
+            }
+        });
 
         function renderSchedule(data) {
             const container = document.getElementById('contentArea');
@@ -149,15 +225,16 @@
                 return acc;
             }, {});
 
-            Object.keys(groups).forEach((week, index) => {
+            const sortedWeeks = Object.keys(groups).reverse();
+
+            sortedWeeks.forEach((week, index) => {
                 const weekSection = document.createElement('section');
                 weekSection.className = 'mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300';
 
                 const header = document.createElement('div');
                 header.className = 'week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700';
                 
-                // Varsayılan olarak son haftayı açıyoruz
-                const isOpen = index === Object.keys(groups).length - 1; 
+                const isOpen = index === 0; 
                 
                 header.onclick = () => toggleWeek(header);
                 header.innerHTML = `
@@ -187,24 +264,19 @@
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300';
             
-            // Butonların oluşturulması (Flexbox yapısı)
             let buttonsHtml = '';
             
-            // Dosya Linki (link1) -> Yeşil buton, Döküman İkonu, Ders Notu Yazısı
             const link1Btn = item.link1 
                 ? `<a href="${item.link1}" target="_blank" class="flex-1 text-center bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 py-2 rounded-md text-sm font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition"><i class="fa-solid fa-file-lines mr-1"></i> Ders Notu</a>` 
                 : '';
                 
-            // Kur'an Okuma (link2) -> Sarı buton (Tilavet)
             const link2Btn = item.link2 
                 ? `<a href="${item.link2}" target="_blank" class="flex-1 text-center bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 py-2 rounded-md text-sm font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition"><i class="fa-solid fa-book-quran mr-1"></i> Tilavet</a>` 
                 : '';
 
-            // Buton yoksa uyarı
             if (!link1Btn && !link2Btn) {
                  buttonsHtml = `<span class="text-xs text-gray-400 italic">Kayıt bulunmuyor</span>`;
             } else {
-                // Eğer her iki buton da varsa araya boşluk koy, yoksa tek buton full genişlik olur
                 buttonsHtml = `
                     ${link1Btn}
                     ${(link1Btn && link2Btn) ? '<div class="w-2"></div>' : ''}
