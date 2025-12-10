@@ -190,6 +190,17 @@
             searchDebounce: 250
         };
 
+        // Türkçe Normalizasyon (İ/ı sorununu çözen sağlam fonksiyon)
+        function normalizeText(value) {
+            if (!value) return '';
+            let v = String(value);
+            try { v = v.toLocaleLowerCase('tr'); } catch (e) { v = v.toLowerCase(); }
+            v = v.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            v = v.replace(/ı/g, 'i');
+            return v;
+        }
+
+        // Hızlı Tarih İşlemcisi (Timestamp'e çevirir)
         const DateProcessor = {
             parseTimestamp(dateStr, timeStr) {
                 try {
@@ -199,20 +210,6 @@
                     const now = new Date();
                     return new Date(now.getFullYear(), monthIndex, parseInt(day), parseInt(hour), parseInt(minute)).getTime();
                 } catch { return 0; }
-            }
-        };
-
-        const StringUtils = {
-            // "Akıllı Türkçe Arama" mantığı: Türkçe karakterleri İngilizce karşılıklarına çevirerek normalleştirir.
-            normalize(text) {
-                return text
-                    .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
-                    .replace(/ğ/g, 'g').replace(/Ğ/g, 'g')
-                    .replace(/ü/g, 'u').replace(/Ü/g, 'u')
-                    .replace(/ş/g, 's').replace(/Ş/g, 's')
-                    .replace(/ö/g, 'o').replace(/Ö/g, 'o')
-                    .replace(/ç/g, 'c').replace(/Ç/g, 'c')
-                    .toLowerCase();
             }
         };
 
@@ -299,13 +296,13 @@
                 this.#processedResources = EXTRA_RESOURCES;
             }
 
-            // Arama indeksini oluştururken tüm veriyi "normalize" eder (Türkçe karakterlerden arındırır)
+            // Sayfa açılışında verileri bir kere işle ve önbelleğe al (HIZ İÇİN)
             #processData() {
                 this.#processedSchedule = RAW_SCHEDULE.map(item => ({
                     ...item,
                     timestamp: DateProcessor.parseTimestamp(item.date, item.time),
-                    // Burada hem konuyu hem hocayı normalize edip kaydediyoruz
-                    searchIndex: StringUtils.normalize(`${item.subject} ${item.speaker} ${item.date}`)
+                    // "Akıllı Arama" metnini burada hazırlıyoruz (CPU Dostu)
+                    searchIndex: normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
                 }));
             }
 
@@ -320,8 +317,8 @@
 
             search(query) {
                 if (!query) return null;
-                // Aranan kelimeyi de aynı şekilde normalize ediyoruz
-                const normalizedQuery = StringUtils.normalize(query);
+                const normalizedQuery = normalizeText(query);
+                // Önbellekteki metinden arama yap (Çok hızlı)
                 return this.#processedSchedule.filter(item => item.searchIndex.includes(normalizedQuery));
             }
         }
@@ -464,11 +461,15 @@
                     this.#container.appendChild(this.#clone('empty'));
                     return;
                 }
+                
+                // ARAMA SONUÇLARINI TARİHE GÖRE SIRALA (Yeniden Eskiye)
+                const sortedList = list.sort((a, b) => b.timestamp - a.timestamp);
+
                 const fragment = document.createDocumentFragment();
                 const wrapper = document.createElement('div');
                 wrapper.className = 'p-2 fade-in';
                 
-                list.forEach(item => wrapper.appendChild(this.#createCard(item, true)));
+                sortedList.forEach(item => wrapper.appendChild(this.#createCard(item, true)));
                 
                 fragment.appendChild(wrapper);
                 this.#container.appendChild(fragment);
