@@ -27,18 +27,15 @@
     </script>
 
     <style>
-        /* Base Reset & Custom Utilities */
         :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
         .dark { --scroll-thumb: #475569; }
         
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         
-        /* Optimized Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
         ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
         
-        /* Utility Classes */
         .rotate-icon { transform: rotate(180deg); }
         .smooth-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -51,15 +48,8 @@
 </head>
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300 min-h-screen flex flex-col">
 
-    <!-- 
-      ========================================
-      BLUEPRINTS (Templates)
-      Modern Frontend yaklaşımı: HTML string'i JS içinde yazmak yerine, 
-      burada şablon olarak tanımlayıp JS ile klonluyoruz.
-      ========================================
-    -->
+    <!-- ================== Templates ================== -->
 
-    <!-- Template: Week Section Header -->
     <template id="tpl-week-section">
         <section class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group">
             <div class="week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700 cursor-pointer select-none" role="button" aria-expanded="false">
@@ -75,7 +65,6 @@
         </section>
     </template>
 
-    <!-- Template: Lesson Card -->
     <template id="tpl-card">
         <article class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md">
             <div class="flex justify-between items-start mb-3">
@@ -105,7 +94,6 @@
         </article>
     </template>
 
-    <!-- Template: Action Button -->
     <template id="tpl-button">
         <a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition flex items-center justify-center group">
             <i class="mr-1 group-hover:scale-110 transition-transform"></i>
@@ -113,7 +101,6 @@
         </a>
     </template>
 
-    <!-- Template: Empty State -->
     <template id="tpl-empty">
         <div class="text-center text-gray-500 mt-10 fade-in">
             <i class="fa-solid fa-filter-circle-xmark text-4xl mb-3 opacity-50"></i>
@@ -121,7 +108,6 @@
         </div>
     </template>
 
-    <!-- Template: Menu Item -->
     <template id="tpl-menu-item">
         <a target="_blank" rel="noopener noreferrer" class="flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0 group">
             <i class="fa-solid mr-3 text-emerald-500 w-5 text-center group-hover:scale-110 transition-transform" data-slot="icon"></i>
@@ -129,21 +115,15 @@
         </a>
     </template>
 
-    <!-- 
-      ========================================
-      UI STRUCTURE
-      ========================================
-    -->
+    <!-- ================== HEADER ================== -->
 
     <header class="bg-emerald-700 dark:bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-50 transition-colors duration-300 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
         <div class="max-w-md mx-auto relative">
             
-            <!-- Theme Toggle -->
             <button id="btn-theme-toggle" class="absolute right-0 top-0 z-[60] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800" aria-label="Temayı değiştir">
                 <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
             </button>
 
-            <!-- Titles -->
             <div class="mb-3">
                 <h1 class="text-xl font-bold mb-1 flex items-center">
                     <i class="fa-solid fa-book-open mr-2"></i>Ders Programı
@@ -151,7 +131,6 @@
                 <p class="text-emerald-100 text-xs opacity-90">Ders notları ve tilavet arşivi</p>
             </div>
             
-            <!-- Search -->
             <div class="relative mb-3 group">
                 <input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..." 
                     class="w-full p-2.5 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
@@ -159,10 +138,8 @@
                 <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
             </div>
 
-            <!-- Controls -->
             <div class="flex flex-col gap-2 relative z-10">
                 
-                <!-- Dropdown -->
                 <div class="relative w-full">
                     <button id="btn-quran-menu" class="w-full p-2.5 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400" aria-haspopup="true" aria-expanded="false">
                         <span class="font-semibold flex items-center pointer-events-none">
@@ -172,11 +149,10 @@
                     </button>
                     
                     <div id="menu-quran" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0">
-                        <!-- Menu items injected here -->
+                        <!-- Menu items -->
                     </div>
                 </div>
 
-                <!-- External Links -->
                 <nav class="flex gap-2 items-stretch h-10">
                     <a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060" target="_blank" rel="noopener noreferrer"
                         class="flex-1 flex justify-center items-center rounded-lg text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5">
@@ -193,9 +169,7 @@
         </div>
     </header>
 
-    <main class="max-w-md mx-auto p-4 w-full flex-grow" id="main-content" role="main">
-        <!-- Dynamic Content -->
-    </main>
+    <main class="max-w-md mx-auto p-4 w-full flex-grow" id="main-content" role="main"></main>
 
     <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto">
         <div class="max-w-md mx-auto px-4">
@@ -210,430 +184,419 @@
         </div>
     </footer>
 
-    <!-- 
-      ========================================
-      LOGIC LAYER (Vanilla JS Guru Style)
-      ========================================
-    -->
+    <!-- ================== LOGIC ================== -->
     <script>
-        /**
-         * @namespace App
-         * Using IIFE to avoid global scope pollution.
-         */
-        (function() {
-            'use strict';
+    (function () {
+        'use strict';
 
-            // --- Configuration & Constants ---
-            const CONFIG = {
-                classes: {
-                    hidden: 'hidden',
-                    rotate: 'rotate-icon',
-                    dark: 'dark',
-                    menuAnimateIn: ['scale-100', 'opacity-100'],
-                    menuAnimateOut: ['scale-95', 'opacity-0'],
-                    btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
-                    btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
-                }
-            };
-
-            // --- Time Utilities ---
-            const TimeUtils = {
-                MONTHS: {
-                    'Ocak': 0, 'Şubat': 1, 'Mart': 2, 'Nisan': 3, 'Mayıs': 4, 'Haziran': 5,
-                    'Temmuz': 6, 'Ağustos': 7, 'Eylül': 8, 'Ekim': 9, 'Kasım': 10, 'Aralık': 11
-                },
-
-                /**
-                 * Checks if a given date string (e.g. "7 Ekim", "20:00") is in the past.
-                 * Assumes the current year.
-                 */
-                isPast(dateStr, timeStr) {
-                    try {
-                        const [day, monthName] = dateStr.trim().split(/\s+/);
-                        const [hour, minute] = timeStr.trim().split(':');
-                        
-                        if (this.MONTHS[monthName] === undefined) return false; // Fail safe
-
-                        const now = new Date();
-                        const year = now.getFullYear();
-                        
-                        // Construct lesson date
-                        const lessonDate = new Date(year, this.MONTHS[monthName], parseInt(day), parseInt(hour), parseInt(minute));
-                        
-                        // Add duration buffer (e.g., allow joining until 1 hour after start)? 
-                        // For now, strict comparison.
-                        return now > lessonDate;
-                    } catch (e) {
-                        console.warn('Date parsing error:', e);
-                        return false;
-                    }
-                }
-            };
-
-            // --- Data Service (Simulated Database) ---
-            const DataService = {
-                schedule: [
-                    { week: "7 - 11 Ekim", date: "7 Ekim", day: "Salı", time: "20:00", subject: "Kuran-ı Kerim Dersi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1TCs8upFodzWqFOjDylfSDhoEWrJ3EQ1d/view?usp=drive_link", link2: "" },
-                    { week: "7 - 11 Ekim", date: "8 Ekim", day: "Çarşamba", time: "20:00", subject: "Kuran-ı Kerim Dersi", speaker: "Hafız", link1: "", link2: "" },
-                    { week: "7 - 11 Ekim", date: "8 Ekim", day: "Çarşamba", time: "21:00", subject: "Hz. Adem (a.s.) Anlatımı (Tekrar)", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1u0yexwWa2Vy8Cc-4l5BGmhHtZDhBlgQQ/view?usp=drive_link", link2: "" },
-                    { week: "7 - 11 Ekim", date: "9 Ekim", day: "Perşembe", time: "20:00", subject: "Kuran-ı Kerim ve Namaz Anlatımı", speaker: "Hafız", link1: "https://drive.google.com/file/d/1skUjjnVh-hfgWJwCaSvK3Cml3_oRtcMY/view?usp=drive_link", link2: "" },
-                    { week: "7 - 11 Ekim", date: "10 Ekim", day: "Cuma", time: "21:00", subject: "Hz. Yunus (a.s.) Anlatımı", speaker: "Celalettin", link1: "https://drive.google.com/file/d/1p1nqg71bTxTG1qHB1ME1nQk7nP1DCbrm/view?usp=drive_link", link2: "" },
-                    { week: "7 - 11 Ekim", date: "11 Ekim", day: "Cumartesi", time: "21:00", subject: "Bedir Savaşı Anlatımı", speaker: "Sertan", link1: "https://drive.google.com/file/d/1iNJMs2KSxN2wZvSIe1WTU2DlSjnr2Eea/view?usp=drive_link", link2: "" },
-                    { week: "13 - 18 Ekim", date: "13 Ekim", day: "Pazartesi", time: "21:00", subject: "Bakara Suresi Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/140xXOORGk_4aIDAfKsOZU5XRPfw0N3HJ/view?usp=drive_link", link2: "" },
-                    { week: "13 - 18 Ekim", date: "14 Ekim", day: "Salı", time: "20:00", subject: "Kuran-ı Kerim Ders Tekrarı", speaker: "Hafız", link1: "", link2: "" },
-                    { week: "13 - 18 Ekim", date: "15 Ekim", day: "Çarşamba", time: "20:00", subject: "Kuran-ı Kerim Ders Tekrarı", speaker: "Hafız", link1: "", link2: "" },
-                    { week: "13 - 18 Ekim", date: "15 Ekim", day: "Çarşamba", time: "21:00", subject: "Hz. Yunus (a.s.) Anlatım Tekrarı", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1p1nqg71bTxTG1qHB1ME1nQk7nP1DCbrm/view", link2: "" },
-                    { week: "13 - 18 Ekim", date: "16 Ekim", day: "Perşembe", time: "21:00", subject: "Alak Suresi (İlk 5 Ayet)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1UeGKPPgPz0_tYG3xq38wdndW--CBjVXP/view", link2: "https://drive.google.com/file/d/1S97dC2xfHa5T0isOFNpJvp_DGPetu0it/view" },
-                    { week: "13 - 18 Ekim", date: "17 Ekim", day: "Cuma", time: "21:00", subject: "Hz. Eyüp (a.s.) Anlatımı", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1UT_m_dxI9FCAP4yU_i-JyPYTqeUbmm61/view", link2: "" },
-                    { week: "13 - 18 Ekim", date: "18 Ekim", day: "Cumartesi", time: "21:00", subject: "Uhud Savaşı Anlatımı", speaker: "Taner", link1: "https://drive.google.com/file/d/1bXLCv_pKTdMgvKChhd-bjrw3eIVmWfrs/view", link2: "" },
-                    { week: "20 - 25 Ekim", date: "20 Ekim", day: "Pazartesi", time: "21:00", subject: "Ali İmran Suresi Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/1uBzn9PGYyoQ_SkgKSo0o3KcVnRjLbFoF/view", link2: "" },
-                    { week: "20 - 25 Ekim", date: "21 Ekim", day: "Salı", time: "21:00", subject: "Kalem Suresi (İlk 5 Ayet Okuma)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1UeGKPPgPz0_tYG3xq38wdndW--CBjVXP/view", link2: "https://drive.google.com/file/d/1en2GmVK493Dcaa6CTs0gsAZ5662JEGDH/view" },
-                    { week: "20 - 25 Ekim", date: "22 Ekim", day: "Çarşamba", time: "21:00", subject: "Uhud Savaşı Anlatımı (Tekrar)", speaker: "Mert", link1: "https://drive.google.com/file/d/1ydb8dRvrisbCK8h3NcXuv8dLwfkcv1TR/view?usp=drive_link", link2: "" },
-                    { week: "20 - 25 Ekim", date: "23 Ekim", day: "Perşembe", time: "21:00", subject: "Müzzemmil Suresi (ilk 5 Ayet)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1kWPY9KV0V5aATajrvMROsWYrdwzNmCWq/view?usp=drive_link", link2: "https://drive.google.com/file/d/112fcGNEu8H4qRflGD-cWpY341mZ-MJGH/view?usp=drive_link" },
-                    { week: "20 - 25 Ekim", date: "24 Ekim", day: "Cuma", time: "21:00", subject: "Hz. İsa (a.s.) Anlatımı", speaker: "Kemal", link1: "https://drive.google.com/file/d/1DscN5BkK8FluyBxKjExRg5nQcSm_bSEp/view?usp=drive_link", link2: "" },
-                    { week: "20 - 25 Ekim", date: "25 Ekim", day: "Cumartesi", time: "21:00", subject: "Hudeybiye Antlaşması Anlatımı", speaker: "Hafız", link1: "https://drive.google.com/file/d/1sgY7lg3fcmc6Mmd-ZEFnPRpq3Z3L5zN6/view?usp=drive_link", link2: "" },
-                    { week: "28 Ekim - 1 Kasım", date: "28 Ekim", day: "Salı", time: "21:00", subject: "Fil Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1qzGaaQ7VLbMQXHH_S4p45UlyR4kaBinu/view?usp=drive_link", link2: "https://drive.google.com/file/d/1ljbqPFcuNRwYNZgs0pfZ-fLwU4Q3xnWi/view?usp=drive_link" },
-                    { week: "28 Ekim - 1 Kasım", date: "29 Ekim", day: "Çarşamba", time: "21:00", subject: "Hz. İbrahim (a.s.) Anlatımı", speaker: "Taner", link1: "https://drive.google.com/file/d/1jrzkNRN-cKRYHoar46ov0tgxOwPGxmIz/view?usp=drive_link", link2: "" },
-                    { week: "28 Ekim - 1 Kasım", date: "30 Ekim", day: "Perşembe", time: "21:00", subject: "Kevser Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1rehtOGW3EdXcpZdKZNHlOVtsOWKxXOE7/view?usp=drive_link", link2: "" },
-                    { week: "28 Ekim - 1 Kasım", date: "31 Ekim", day: "Cuma", time: "21:00", subject: "Nisa Suresi Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/1a15aPiqqSdck-Q_iqqGseXmxUi6PPaIR/view?usp=drive_link", link2: "" },
-                    { week: "4 - 8 Kasım", date: "4 Kasım", day: "Salı", time: "21:00", subject: "Alak Suresi (6-10. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1Mf2AL1XH06LS0IkfcwIvZ9G9NPF1WwSH/view?usp=drive_link", link2: "https://drive.google.com/file/d/1iMG7x7mRHbAvwGKIvB_4h4CCC0Jj2_Dj/view?usp=drive_link" },
-                    { week: "4 - 8 Kasım", date: "5 Kasım", day: "Çarşamba", time: "21:00", subject: "Kalem Suresi (6-10. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1tjZgqJlzsWy9ojr29QzdWlphPxxR7Q7s/view?usp=drive_link", link2: "https://drive.google.com/file/d/1rbtLr2SMqixKS46bU091eF6yUoamwyd3/view?usp=drivesdk" },
-                    { week: "4 - 8 Kasım", date: "6 Kasım", day: "Perşembe", time: "21:00", subject: "Hz. İsmail (a.s.) Anlatımı", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1PRwATaWaL3p3nkk1xAjdLfE6yN_nc-rk/view?usp=drive_link", link2: "" },
-                    { week: "4 - 8 Kasım", date: "7 Kasım", day: "Cuma", time: "21:00", subject: "Hendek Savaşı", speaker: "Mert", link1: "https://drive.google.com/file/d/1t1hlvXI3jyH2Fvnq6DPvfPmc_qcj4_89/view?usp=drive_link", link2: "" },
-                    { week: "4 - 8 Kasım", date: "8 Kasım", day: "Cumartesi", time: "21:00", subject: "Veda Hutbesi", speaker: "Özer", link1: "https://drive.google.com/file/d/1t2gns9p7LaK25T1IjOFwHT7jWTGTM_uA/view?usp=drive_link", link2: "" },
-                    { week: "11 - 15 Kasım", date: "11 Kasım", day: "Salı", time: "21:00", subject: "Alak Suresi (11-15. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1X7DtdT5lyJdPSHl5E0u9ozUA7c8m_MLC/view?usp=drive_link", link2: "https://drive.google.com/file/d/1TJQushZBe4KKTD6hPJqybyibYecMR-XK/view?usp=drive_link" },
-                    { week: "11 - 15 Kasım", date: "12 Kasım", day: "Çarşamba", time: "21:00", subject: "Hz. İshak (a.s.) Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/1j6GgAJevPaVGHdvUlBksfaYK-bS2qtMp/view?usp=drive_link", link2: "" },
-                    { week: "11 - 15 Kasım", date: "13 Kasım", day: "Perşembe", time: "21:00", subject: "Duha Suresi okunuşu", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1scL4ciXrac9OIf-RLkqHuQC8u9JiFk3Y/view?usp=drive_link" },
-                    { week: "11 - 15 Kasım", date: "14 Kasım", day: "Cuma", time: "21:00", subject: "Hayber Savaşı", speaker: "Mert", link1: "https://drive.google.com/file/d/1zxN05Jdq6T1uu15i8NhGEsnoRyOvMN0U/view?usp=drive_link", link2: "" },
-                    { week: "11 - 15 Kasım", date: "15 Kasım", day: "Cumartesi", time: "21:00", subject: "Hicret", speaker: "Özer", link1: "https://drive.google.com/file/d/14LYCyHxIPwqgZC18Ntuw04DtLAon6Uc7/view?usp=drive_link", link2: "" },
-                    { week: "18 - 22 Kasım", date: "18 Kasım", day: "Salı", time: "21:00", subject: "Kalem Suresi (11-15. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/18nCDlVsT7I5eBamc4QMkcIQ68pnl0qOe/view?usp=drive_link", link2: "https://drive.google.com/file/d/1-Y9Rrvn6S_drosTcb9tEG5Qx6qlgUX40/view?usp=drive_link" },
-                    { week: "18 - 22 Kasım", date: "19 Kasım", day: "Çarşamba", time: "21:00", subject: "Kalem Suresi (16-20. Ayetler)", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1h2CuwDIy7XjyYD6Mc6fFh3Ud1GHEVsoS/view?usp=drive_link" },
-                    { week: "18 - 22 Kasım", date: "20 Kasım", day: "Perşembe", time: "21:00", subject: "Çocuk Sevgisi", speaker: "Mert", link1: "https://drive.google.com/file/d/1ilK3l9aGUOcx10WQaOkVcTvSJwToJigh/view?usp=drive_link", link2: "" },
-                    { week: "18 - 22 Kasım", date: "21 Kasım", day: "Cuma", time: "21:00", subject: "Hz. Yakup (a.s.) Anlatımı", speaker: "Özer", link1: "https://drive.google.com/file/d/1MVIoUaRfDxJWlY7i7dGFOC_gYKlC-aJ9/view?usp=drive_link", link2: "" },
-                    { week: "18 - 22 Kasım", date: "22 Kasım", day: "Cumartesi", time: "21:00", subject: "Mekke’nin Fethi", speaker: "Taylan", link1: "https://drive.google.com/file/d/141P3zvX9ecqhucWGpKk0Ib-wViAVUxE7/view?usp=drive_link", link2: "" },
-                    { week: "25 - 29 Kasım", date: "25 Kasım", day: "Salı", time: "21:00", subject: "Fatiha Suresi okunuşu", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1c_CL9fmoieVyF0ZbvgShGNQ46tWT7jBP/view?usp=drive_link" },
-                    { week: "25 - 29 Kasım", date: "26 Kasım", day: "Çarşamba", time: "21:00", subject: "Efendimiz (s.a.v.)'in Doğumu", speaker: "Mert", link1: "https://drive.google.com/file/d/1aPAkUjDglwPJywoOWgVhR8yvSpmNw8vl/view?usp=drive_link", link2: "" },
-                    { week: "25 - 29 Kasım", date: "27 Kasım", day: "Perşembe", time: "21:00", subject: "Müddessir Suresi (ilk 5 Ayet)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1sb4qZYrpGajd1yoB7nni68910R3fTK5R/view?usp=drive_link", link2: "https://drive.google.com/file/d/18UgQ5jGIO_8eSHTrCAmAssqSMg6PuNnm/view" },
-                    { week: "25 - 29 Kasım", date: "28 Kasım", day: "Cuma", time: "21:00", subject: "Şehadet ve İman", speaker: "Özer", link1: "https://drive.google.com/file/d/1vpOpJo_0PSlXIN9hYUSzp3EQHgq7y59-/view?usp=drive_link", link2: "" },
-                    { week: "25 - 29 Kasım", date: "29 Kasım", day: "Cumartesi", time: "21:00", subject: "Enam Suresi Özeti", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1MwJwk7_uQHQIpUE1QKT03k6OAX7p8ISW/view?usp=drive_link", link2: "" },
-                    { week: "2 - 6 Aralık", date: "2 Aralık", day: "Salı", time: "21:00", subject: "Fatiha Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1VKAPMWR-7_XEPvjzv4LYOM-n3xshnLGL/view?usp=drive_link", link2: "" },
-                    { week: "2 - 6 Aralık", date: "3 Aralık", day: "Çarşamba", time: "21:00", subject: "Müddessir Suresi (6-10. Ayetler)", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1ghbXgGXwsbzAubrkiuoPZ1Mi0DG4aL1k/view?usp=drive_link" },
-                    { week: "2 - 6 Aralık", date: "4 Aralık", day: "Perşembe", time: "21:00", subject: "İslam ve İnsan", speaker: "Özer", link1: "https://drive.google.com/file/d/1H_TIy9PF1JHZs86-XovfPa5fskLnZXFM/view?usp=drive_link", link2: "" },
-                    { week: "2 - 6 Aralık", date: "5 Aralık", day: "Cuma", time: "21:00", subject: "Efendimiz (s.a.v.) ve Darü'l-Erkam", speaker: "Mert", link1: "https://drive.google.com/file/d/1_R_97G62jAZ5ibaJvY793nRg8tix351W/view?usp=drive_link", link2: "" },
-                    { week: "2 - 6 Aralık", date: "6 Aralık", day: "Cumartesi", time: "21:00", subject: "Araf Suresi Özeti", speaker: "Taylan", link1: "https://drive.google.com/file/d/1EyhaVzdvi1cOhDkAWfscTSqP0dZGiA7i/view?usp=drive_link", link2: "" },
-                    { week: "9 - 12 Aralık", date: "9 Aralık", day: "Salı", time: "21:00", subject: "Fatiha Suresi & İhlas Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1KJfm-IK2E13T-up4AtF1WcM8JiSpHpzH/view?usp=drive_link", link2: "https://drive.google.com/file/d/1YxlJUWP8EQgMkP7yF3XkDV6dB9dqE7Hr/view?usp=drive_link" },
-                    { week: "9 - 12 Aralık", date: "10 Aralık", day: "Çarşamba", time: "21:00", subject: "İman ve İnsan", speaker: "Mert", link1: "https://drive.google.com/file/d/1BMMbMSuBxiFP6rRDVZPjSH1e8AIYde9e/view", link2: "" },
-                    { week: "9 - 12 Aralık", date: "11 Aralık", day: "Perşembe", time: "21:00", subject: "Mutaffifin Suresi (ilk 5 Ayet)", speaker: "Hafız", link1: "", link2: "" },
-                    { week: "9 - 12 Aralık", date: "12 Aralık", day: "Cuma", time: "21:00", subject: "Bağımlılıklar sevgi ile nasıl değişir?", speaker: "Özer", link1: "", link2: "" },
+        // -------- CONFIG --------
+        const CONFIG = {
+            classes: {
+                hidden: 'hidden',
+                rotate: 'rotate-icon',
+                dark: 'dark',
+                menuAnimateIn: ['scale-100', 'opacity-100'],
+                menuAnimateOut: ['scale-95', 'opacity-0'],
+                btnPrimary: [
+                    'bg-emerald-50',
+                    'dark:bg-emerald-900/40',
+                    'text-emerald-700',
+                    'dark:text-emerald-400',
+                    'hover:bg-emerald-100',
+                    'dark:hover:bg-emerald-900/60'
                 ],
-                extraResources: [
-                    { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
-                    { name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
-                    { name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
-                    { name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
-                    { name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
-                    { name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
-                    { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" },
-                ],
-                
-                // Grouping Logic
-                getGroupedSchedule() {
-                    return this.schedule.reduce((acc, item) => {
-                        if (!acc[item.week]) acc[item.week] = [];
-                        acc[item.week].push(item);
-                        return acc;
-                    }, {});
-                },
+                btnSecondary: [
+                    'bg-amber-50',
+                    'dark:bg-amber-900/30',
+                    'text-amber-700',
+                    'dark:text-amber-400',
+                    'hover:bg-amber-100',
+                    'dark:hover:bg-amber-900/50'
+                ]
+            },
+            searchDebounceMs: 250
+        };
 
-                // Filter Logic
-                search(query) {
-                    if (!query) return null; // null indicates reset
-                    const lowerQ = query.toLowerCase();
-                    return this.schedule.filter(item => 
-                        item.subject.toLowerCase().includes(lowerQ) || 
-                        item.speaker.toLowerCase().includes(lowerQ) ||
-                        item.date.toLowerCase().includes(lowerQ)
-                    );
-                }
-            };
+        // -------- Time Utils --------
+        const TimeUtils = {
+            MONTHS: {
+                'Ocak': 0, 'Şubat': 1, 'Mart': 2, 'Nisan': 3, 'Mayıs': 4, 'Haziran': 5,
+                'Temmuz': 6, 'Ağustos': 7, 'Eylül': 8, 'Ekim': 9, 'Kasım': 10, 'Aralık': 11
+            },
+            isPast(dateStr, timeStr) {
+                try {
+                    if (!dateStr || !timeStr) return false;
+                    const parts = dateStr.trim().split(/\s+/);
+                    if (parts.length < 2) return false;
+                    const day = parseInt(parts[0], 10);
+                    const monthName = parts[1];
+                    const monthIndex = this.MONTHS[monthName];
+                    if (monthIndex === undefined || isNaN(day)) return false;
 
-            // --- Theme Manager (State & Persistence) ---
-            class ThemeManager {
-                constructor() {
-                    this.html = document.documentElement;
-                    this.icon = document.querySelector('#btn-theme-toggle i');
-                    this.btn = document.getElementById('btn-theme-toggle');
-                    this.init();
-                }
+                    const timeParts = timeStr.trim().split(':');
+                    if (timeParts.length < 2) return false;
+                    const hour = parseInt(timeParts[0], 10);
+                    const minute = parseInt(timeParts[1], 10);
+                    if (isNaN(hour) || isNaN(minute)) return false;
 
-                init() {
-                    // Check local storage or system preference
-                    const localTheme = localStorage.getItem('theme');
-                    const sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    
-                    this.toggle((localTheme === 'dark' || (!localTheme && sysTheme)));
-                    
-                    // Bind event
-                    this.btn.addEventListener('click', () => this.toggle(!this.isDark));
-                }
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const lessonDate = new Date(year, monthIndex, day, hour, minute);
 
-                get isDark() {
-                    return this.html.classList.contains(CONFIG.classes.dark);
-                }
-
-                toggle(forceDark) {
-                    if (forceDark) {
-                        this.html.classList.add(CONFIG.classes.dark);
-                        localStorage.setItem('theme', 'dark');
-                        this.icon.className = 'fa-solid fa-sun text-white text-xs pointer-events-none';
-                    } else {
-                        this.html.classList.remove(CONFIG.classes.dark);
-                        localStorage.setItem('theme', 'light');
-                        this.icon.className = 'fa-solid fa-moon text-white text-xs pointer-events-none';
-                    }
+                    return now > lessonDate;
+                } catch (e) {
+                    console.warn('Date parsing error:', e);
+                    return false;
                 }
             }
+        };
 
-            // --- Renderer (DOM Manipulation) ---
-            class Renderer {
-                constructor() {
-                    this.container = document.getElementById('main-content');
-                    this.templates = {
-                        week: document.getElementById('tpl-week-section'),
-                        card: document.getElementById('tpl-card'),
-                        btn: document.getElementById('tpl-button'),
-                        empty: document.getElementById('tpl-empty'),
-                        menuItem: document.getElementById('tpl-menu-item')
-                    };
+        // -------- Data Service --------
+        const DataService = {
+            schedule: [
+                { week: "7 - 11 Ekim", date: "7 Ekim", day: "Salı", time: "20:00", subject: "Kuran-ı Kerim Dersi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1TCs8upFodzWqFOjDylfSDhoEWrJ3EQ1d/view?usp=drive_link", link2: "" },
+                { week: "7 - 11 Ekim", date: "8 Ekim", day: "Çarşamba", time: "20:00", subject: "Kuran-ı Kerim Dersi", speaker: "Hafız", link1: "", link2: "" },
+                { week: "7 - 11 Ekim", date: "8 Ekim", day: "Çarşamba", time: "21:00", subject: "Hz. Adem (a.s.) Anlatımı (Tekrar)", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1u0yexwWa2Vy8Cc-4l5BGmhHtZDhBlgQQ/view?usp=drive_link", link2: "" },
+                { week: "7 - 11 Ekim", date: "9 Ekim", day: "Perşembe", time: "20:00", subject: "Kuran-ı Kerim ve Namaz Anlatımı", speaker: "Hafız", link1: "https://drive.google.com/file/d/1skUjjnVh-hfgWJwCaSvK3Cml3_oRtcMY/view?usp=drive_link", link2: "" },
+                { week: "7 - 11 Ekim", date: "10 Ekim", day: "Cuma", time: "21:00", subject: "Hz. Yunus (a.s.) Anlatımı", speaker: "Celalettin", link1: "https://drive.google.com/file/d/1p1nqg71bTxTG1qHB1ME1nQk7nP1DCbrm/view?usp=drive_link", link2: "" },
+                { week: "7 - 11 Ekim", date: "11 Ekim", day: "Cumartesi", time: "21:00", subject: "Bedir Savaşı Anlatımı", speaker: "Sertan", link1: "https://drive.google.com/file/d/1iNJMs2KSxN2wZvSIe1WTU2DlSjnr2Eea/view?usp=drive_link", link2: "" },
+
+                { week: "13 - 18 Ekim", date: "13 Ekim", day: "Pazartesi", time: "21:00", subject: "Bakara Suresi Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/140xXOORGk_4aIDAfKsOZU5XRPfw0N3HJ/view?usp=drive_link", link2: "" },
+                { week: "13 - 18 Ekim", date: "14 Ekim", day: "Salı", time: "20:00", subject: "Kuran-ı Kerim Ders Tekrarı", speaker: "Hafız", link1: "", link2: "" },
+                { week: "13 - 18 Ekim", date: "15 Ekim", day: "Çarşamba", time: "20:00", subject: "Kuran-ı Kerim Ders Tekrarı", speaker: "Hafız", link1: "", link2: "" },
+                { week: "13 - 18 Ekim", date: "15 Ekim", day: "Çarşamba", time: "21:00", subject: "Hz. Yunus (a.s.) Anlatım Tekrarı", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1p1nqg71bTxTG1qHB1ME1nQk7nP1DCbrm/view", link2: "" },
+                { week: "13 - 18 Ekim", date: "16 Ekim", day: "Perşembe", time: "21:00", subject: "Alak Suresi (İlk 5 Ayet)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1UeGKPPgPz0_tYG3xq38wdndW--CBjVXP/view", link2: "https://drive.google.com/file/d/1S97dC2xfHa5T0isOFNpJvp_DGPetu0it/view" },
+                { week: "13 - 18 Ekim", date: "17 Ekim", day: "Cuma", time: "21:00", subject: "Hz. Eyüp (a.s.) Anlatımı", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1UT_m_dxI9FCAP4yU_i-JyPYTqeUbmm61/view", link2: "" },
+                { week: "13 - 18 Ekim", date: "18 Ekim", day: "Cumartesi", time: "21:00", subject: "Uhud Savaşı Anlatımı", speaker: "Taner", link1: "https://drive.google.com/file/d/1bXLCv_pKTdMgvKChhd-bjrw3eIVmWfrs/view", link2: "" },
+
+                { week: "20 - 25 Ekim", date: "20 Ekim", day: "Pazartesi", time: "21:00", subject: "Ali İmran Suresi Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/1uBzn9PGYyoQ_SkgKSo0o3KcVnRjLbFoF/view", link2: "" },
+                { week: "20 - 25 Ekim", date: "21 Ekim", day: "Salı", time: "21:00", subject: "Kalem Suresi (İlk 5 Ayet Okuma)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1UeGKPPgPz0_tYG3xq38wdndW--CBjVXP/view", link2: "https://drive.google.com/file/d/1en2GmVK493Dcaa6CTs0gsAZ5662JEGDH/view" },
+                { week: "20 - 25 Ekim", date: "22 Ekim", day: "Çarşamba", time: "21:00", subject: "Uhud Savaşı Anlatımı (Tekrar)", speaker: "Mert", link1: "https://drive.google.com/file/d/1ydb8dRvrisbCK8h3NcXuv8dLwfkcv1TR/view?usp=drive_link", link2: "" },
+                { week: "20 - 25 Ekim", date: "23 Ekim", day: "Perşembe", time: "21:00", subject: "Müzzemmil Suresi (ilk 5 Ayet)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1kWPY9KV0V5aATajrvMROsWYrdwzNmCWq/view?usp=drive_link", link2: "https://drive.google.com/file/d/112fcGNEu8H4qRflGD-cWpY341mZ-MJGH/view?usp=drive_link" },
+                { week: "20 - 25 Ekim", date: "24 Ekim", day: "Cuma", time: "21:00", subject: "Hz. İsa (a.s.) Anlatımı", speaker: "Kemal", link1: "https://drive.google.com/file/d/1DscN5BkK8FluyBxKjExRg5nQcSm_bSEp/view?usp=drive_link", link2: "" },
+                { week: "20 - 25 Ekim", date: "25 Ekim", day: "Cumartesi", time: "21:00", subject: "Hudeybiye Antlaşması Anlatımı", speaker: "Hafız", link1: "https://drive.google.com/file/d/1sgY7lg3fcmc6Mmd-ZEFnPRpq3Z3L5zN6/view?usp=drive_link", link2: "" },
+
+                { week: "28 Ekim - 1 Kasım", date: "28 Ekim", day: "Salı", time: "21:00", subject: "Fil Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1qzGaaQ7VLbMQXHH_S4p45UlyR4kaBinu/view?usp=drive_link", link2: "https://drive.google.com/file/d/1ljbqPFcuNRwYNZgs0pfZ-fLwU4Q3xnWi/view?usp=drive_link" },
+                { week: "28 Ekim - 1 Kasım", date: "29 Ekim", day: "Çarşamba", time: "21:00", subject: "Hz. İbrahim (a.s.) Anlatımı", speaker: "Taner", link1: "https://drive.google.com/file/d/1jrzkNRN-cKRYHoar46ov0tgxOwPGxmIz/view?usp=drive_link", link2: "" },
+                { week: "28 Ekim - 1 Kasım", date: "30 Ekim", day: "Perşembe", time: "21:00", subject: "Kevser Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1rehtOGW3EdXcpZdKZNHlOVtsOWKxXOE7/view?usp=drive_link", link2: "" },
+                { week: "28 Ekim - 1 Kasım", date: "31 Ekim", day: "Cuma", time: "21:00", subject: "Nisa Suresi Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/1a15aPiqqSdck-Q_iqqGseXmxUi6PPaIR/view?usp=drive_link", link2: "" },
+
+                { week: "4 - 8 Kasım", date: "4 Kasım", day: "Salı", time: "21:00", subject: "Alak Suresi (6-10. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1Mf2AL1XH06LS0IkfcwIvZ9G9NPF1WwSH/view?usp=drive_link", link2: "https://drive.google.com/file/d/1iMG7x7mRHbAvwGKIvB_4h4CCC0Jj2_Dj/view?usp=drive_link" },
+                { week: "4 - 8 Kasım", date: "5 Kasım", day: "Çarşamba", time: "21:00", subject: "Kalem Suresi (6-10. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1tjZgqJlzsWy9ojr29QzdWlphPxxR7Q7s/view?usp=drive_link", link2: "https://drive.google.com/file/d/1rbtLr2SMqixKS46bU091eF6yUoamwyd3/view?usp=drivesdk" },
+                { week: "4 - 8 Kasım", date: "6 Kasım", day: "Perşembe", time: "21:00", subject: "Hz. İsmail (a.s.) Anlatımı", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1PRwATaWaL3p3nkk1xAjdLfE6yN_nc-rk/view?usp=drive_link", link2: "" },
+                { week: "4 - 8 Kasım", date: "7 Kasım", day: "Cuma", time: "21:00", subject: "Hendek Savaşı", speaker: "Mert", link1: "https://drive.google.com/file/d/1t1hlvXI3jyH2Fvnq6DPvfPmc_qcj4_89/view?usp=drive_link", link2: "" },
+                { week: "4 - 8 Kasım", date: "8 Kasım", day: "Cumartesi", time: "21:00", subject: "Veda Hutbesi", speaker: "Özer", link1: "https://drive.google.com/file/d/1t2gns9p7LaK25T1IjOFwHT7jWTGTM_uA/view?usp=drive_link", link2: "" },
+
+                { week: "11 - 15 Kasım", date: "11 Kasım", day: "Salı", time: "21:00", subject: "Alak Suresi (11-15. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1X7DtdT5lyJdPSHl5E0u9ozUA7c8m_MLC/view?usp=drive_link", link2: "https://drive.google.com/file/d/1TJQushZBe4KKTD6hPJqybyibYecMR-XK/view?usp=drive_link" },
+                { week: "11 - 15 Kasım", date: "12 Kasım", day: "Çarşamba", time: "21:00", subject: "Hz. İshak (a.s.) Anlatımı", speaker: "Mert", link1: "https://drive.google.com/file/d/1j6GgAJevPaVGHdvUlBksfaYK-bS2qtMp/view?usp=drive_link", link2: "" },
+                { week: "11 - 15 Kasım", date: "13 Kasım", day: "Perşembe", time: "21:00", subject: "Duha Suresi okunuşu", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1scL4ciXrac9OIf-RLkqHuQC8u9JiFk3Y/view?usp=drive_link" },
+                { week: "11 - 15 Kasım", date: "14 Kasım", day: "Cuma", time: "21:00", subject: "Hayber Savaşı", speaker: "Mert", link1: "https://drive.google.com/file/d/1zxN05Jdq6T1uu15i8NhGEsnoRyOvMN0U/view?usp=drive_link", link2: "" },
+                { week: "11 - 15 Kasım", date: "15 Kasım", day: "Cumartesi", time: "21:00", subject: "Hicret", speaker: "Özer", link1: "https://drive.google.com/file/d/14LYCyHxIPwqgZC18Ntuw04DtLAon6Uc7/view?usp=drive_link", link2: "" },
+
+                { week: "18 - 22 Kasım", date: "18 Kasım", day: "Salı", time: "21:00", subject: "Kalem Suresi (11-15. Ayetler)", speaker: "Hafız", link1: "https://drive.google.com/file/d/18nCDlVsT7I5eBamc4QMkcIQ68pnl0qOe/view?usp=drive_link", link2: "https://drive.google.com/file/d/1-Y9Rrvn6S_drosTcb9tEG5Qx6qlgUX40/view?usp=drive_link" },
+                { week: "18 - 22 Kasım", date: "19 Kasım", day: "Çarşamba", time: "21:00", subject: "Kalem Suresi (16-20. Ayetler)", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1h2CuwDIy7XjyYD6Mc6fFh3Ud1GHEVsoS/view?usp=drive_link" },
+                { week: "18 - 22 Kasım", date: "20 Kasım", day: "Perşembe", time: "21:00", subject: "Çocuk Sevgisi", speaker: "Mert", link1: "https://drive.google.com/file/d/1ilK3l9aGUOcx10WQaOkVcTvSJwToJigh/view?usp=drive_link", link2: "" },
+                { week: "18 - 22 Kasım", date: "21 Kasım", day: "Cuma", time: "21:00", subject: "Hz. Yakup (a.s.) Anlatımı", speaker: "Özer", link1: "https://drive.google.com/file/d/1MVIoUaRfDxJWlY7i7dGFOC_gYKlC-aJ9/view?usp=drive_link", link2: "" },
+                { week: "18 - 22 Kasım", date: "22 Kasım", day: "Cumartesi", time: "21:00", subject: "Mekke’nin Fethi", speaker: "Taylan", link1: "https://drive.google.com/file/d/141P3zvX9ecqhucWGpKk0Ib-wViAVUxE7/view?usp=drive_link", link2: "" },
+
+                { week: "25 - 29 Kasım", date: "25 Kasım", day: "Salı", time: "21:00", subject: "Fatiha Suresi okunuşu", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1c_CL9fmoieVyF0ZbvgShGNQ46tWT7jBP/view?usp=drive_link" },
+                { week: "25 - 29 Kasım", date: "26 Kasım", day: "Çarşamba", time: "21:00", subject: "Efendimiz (s.a.v.)'in Doğumu", speaker: "Mert", link1: "https://drive.google.com/file/d/1aPAkUjDglwPJywoOWgVhR8yvSpmNw8vl/view?usp=drive_link", link2: "" },
+                { week: "25 - 29 Kasım", date: "27 Kasım", day: "Perşembe", time: "21:00", subject: "Müddessir Suresi (ilk 5 Ayet)", speaker: "Hafız", link1: "https://drive.google.com/file/d/1sb4qZYrpGajd1yoB7nni68910R3fTK5R/view?usp=drive_link", link2: "https://drive.google.com/file/d/18UgQ5jGIO_8eSHTrCAmAssqSMg6PuNnm/view" },
+                { week: "25 - 29 Kasım", date: "28 Kasım", day: "Cuma", time: "21:00", subject: "Şehadet ve İman", speaker: "Özer", link1: "https://drive.google.com/file/d/1vpOpJo_0PSlXIN9hYUSzp3EQHgq7y59-/view?usp=drive_link", link2: "" },
+                { week: "25 - 29 Kasım", date: "29 Kasım", day: "Cumartesi", time: "21:00", subject: "Enam Suresi Özeti", speaker: "Çağrı", link1: "https://drive.google.com/file/d/1MwJwk7_uQHQIpUE1QKT03k6OAX7p8ISW/view?usp=drive_link", link2: "" },
+
+                { week: "2 - 6 Aralık", date: "2 Aralık", day: "Salı", time: "21:00", subject: "Fatiha Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1VKAPMWR-7_XEPvjzv4LYOM-n3xshnLGL/view?usp=drive_link", link2: "" },
+                { week: "2 - 6 Aralık", date: "3 Aralık", day: "Çarşamba", time: "21:00", subject: "Müddessir Suresi (6-10. Ayetler)", speaker: "Hafız", link1: "", link2: "https://drive.google.com/file/d/1ghbXgGXwsbzAubrkiuoPZ1Mi0DG4aL1k/view?usp=drive_link" },
+                { week: "2 - 6 Aralık", date: "4 Aralık", day: "Perşembe", time: "21:00", subject: "İslam ve İnsan", speaker: "Özer", link1: "https://drive.google.com/file/d/1H_TIy9PF1JHZs86-XovfPa5fskLnZXFM/view?usp=drive_link", link2: "" },
+                { week: "2 - 6 Aralık", date: "5 Aralık", day: "Cuma", time: "21:00", subject: "Efendimiz (s.a.v.) ve Darü'l-Erkam", speaker: "Mert", link1: "https://drive.google.com/file/d/1_R_97G62jAZ5ibaJvY793nRg8tix351W/view?usp=drive_link", link2: "" },
+                { week: "2 - 6 Aralık", date: "6 Aralık", day: "Cumartesi", time: "21:00", subject: "Araf Suresi Özeti", speaker: "Taylan", link1: "https://drive.google.com/file/d/1EyhaVzdvi1cOhDkAWfscTSqP0dZGiA7i/view?usp=drive_link", link2: "" },
+
+                { week: "9 - 12 Aralık", date: "9 Aralık", day: "Salı", time: "21:00", subject: "Fatiha Suresi & İhlas Suresi", speaker: "Hafız", link1: "https://drive.google.com/file/d/1KJfm-IK2E13T-up4AtF1WcM8JiSpHpzH/view?usp=drive_link", link2: "https://drive.google.com/file/d/1YxlJUWP8EQgMkP7yF3XkDV6dB9dqE7Hr/view?usp=drive_link" },
+                { week: "9 - 12 Aralık", date: "10 Aralık", day: "Çarşamba", time: "21:00", subject: "İman ve İnsan", speaker: "Mert", link1: "https://drive.google.com/file/d/1BMMbMSuBxiFP6rRDVZPjSH1e8AIYde9e/view", link2: "" },
+                { week: "9 - 12 Aralık", date: "11 Aralık", day: "Perşembe", time: "21:00", subject: "Mutaffifin Suresi (ilk 5 Ayet)", speaker: "Hafız", link1: "", link2: "" },
+                { week: "9 - 12 Aralık", date: "12 Aralık", day: "Cuma", time: "21:00", subject: "Bağımlılıklar sevgi ile nasıl değişir?", speaker: "Özer", link1: "", link2: "" }
+            ],
+            extraResources: [
+                { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
+                { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
+                { name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
+                { name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
+                { name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
+                { name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
+            ],
+
+            getGroupedSchedule() {
+                return this.schedule.reduce((acc, item) => {
+                    if (!acc[item.week]) acc[item.week] = [];
+                    acc[item.week].push(item);
+                    return acc;
+                }, {});
+            },
+
+            search(query) {
+                if (!query) return null;
+                const lowerQ = query.toLowerCase();
+                return this.schedule.filter(item =>
+                    item.subject.toLowerCase().includes(lowerQ) ||
+                    item.speaker.toLowerCase().includes(lowerQ) ||
+                    item.date.toLowerCase().includes(lowerQ)
+                );
+            }
+        };
+
+        // -------- Theme Manager --------
+        class ThemeManager {
+            constructor() {
+                this.html = document.documentElement;
+                this.icon = document.querySelector('#btn-theme-toggle i');
+                this.btn = document.getElementById('btn-theme-toggle');
+                if (this.btn && this.icon) {
+                    this.init();
                 }
-
-                clear() {
-                    this.container.textContent = '';
+            }
+            get isDark() {
+                return this.html.classList.contains(CONFIG.classes.dark);
+            }
+            init() {
+                try {
+                    const localTheme = localStorage.getItem('theme');
+                    const sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const forceDark = localTheme === 'dark' || (!localTheme && sysTheme);
+                    this.toggle(forceDark);
+                    this.btn.addEventListener('click', () => this.toggle(!this.isDark));
+                } catch (e) {
+                    console.warn('Theme init error:', e);
                 }
-
-                // Generic Template Cloner
-                clone(templateId) {
-                    return this.templates[templateId].content.cloneNode(true);
+            }
+            toggle(forceDark) {
+                if (forceDark) {
+                    this.html.classList.add(CONFIG.classes.dark);
+                    try { localStorage.setItem('theme', 'dark'); } catch (e) {}
+                    this.icon.className = 'fa-solid fa-sun text-white text-xs pointer-events-none';
+                } else {
+                    this.html.classList.remove(CONFIG.classes.dark);
+                    try { localStorage.setItem('theme', 'light'); } catch (e) {}
+                    this.icon.className = 'fa-solid fa-moon text-white text-xs pointer-events-none';
                 }
+            }
+        }
 
-                renderSchedule(groupedData) {
-                    this.clear();
-                    const weeks = Object.keys(groupedData).reverse();
+        // -------- Renderer --------
+        class Renderer {
+            constructor() {
+                this.container = document.getElementById('main-content');
+                this.templates = {
+                    week: document.getElementById('tpl-week-section'),
+                    card: document.getElementById('tpl-card'),
+                    btn: document.getElementById('tpl-button'),
+                    empty: document.getElementById('tpl-empty'),
+                    menuItem: document.getElementById('tpl-menu-item')
+                };
+            }
+            clear() {
+                this.container.textContent = '';
+            }
+            clone(templateId) {
+                return this.templates[templateId].content.cloneNode(true);
+            }
+            renderSchedule(groupedData) {
+                this.clear();
+                const weeks = Object.keys(groupedData).reverse();
+                if (weeks.length === 0) {
+                    this.container.appendChild(this.clone('empty'));
+                    return;
+                }
+                const fragment = document.createDocumentFragment();
+                weeks.forEach((week, index) => {
+                    const sectionNode = this.clone('week');
+                    const sectionEl = sectionNode.querySelector('section');
+                    const header = sectionEl.querySelector('.week-header');
+                    const content = sectionEl.querySelector('.week-content');
+                    const toggleIcon = header.querySelector('[data-slot="toggle-icon"]');
                     
-                    if (weeks.length === 0) {
-                        this.container.appendChild(this.clone('empty'));
-                        return;
+                    sectionNode.querySelector('[data-slot="week-title"]').textContent = week;
+                    groupedData[week].forEach(item => {
+                        content.appendChild(this.createCardElement(item));
+                    });
+                    if (index === 0) {
+                        content.classList.remove(CONFIG.classes.hidden);
+                        toggleIcon.classList.add(CONFIG.classes.rotate);
+                        header.setAttribute('aria-expanded', 'true');
+                    } else {
+                        content.classList.add(CONFIG.classes.hidden);
+                        header.setAttribute('aria-expanded', 'false');
                     }
-
-                    const fragment = document.createDocumentFragment();
-
-                    weeks.forEach((week, index) => {
-                        const sectionNode = this.clone('week');
-                        const sectionEl = sectionNode.querySelector('section');
-                        const header = sectionEl.querySelector('.week-header');
-                        const content = sectionEl.querySelector('.week-content');
-                        const toggleIcon = header.querySelector('[data-slot="toggle-icon"]');
-                        
-                        // Set Week Title safely
-                        sectionNode.querySelector('[data-slot="week-title"]').textContent = week;
-
-                        // Create Cards
-                        groupedData[week].forEach(item => {
-                            content.appendChild(this.createCardElement(item));
-                        });
-
-                        // Handle Initial State (First one open)
-                        if (index === 0) {
+                    header.addEventListener('click', () => {
+                        const isHidden = content.classList.contains(CONFIG.classes.hidden);
+                        if (isHidden) {
                             content.classList.remove(CONFIG.classes.hidden);
                             toggleIcon.classList.add(CONFIG.classes.rotate);
                             header.setAttribute('aria-expanded', 'true');
                         } else {
                             content.classList.add(CONFIG.classes.hidden);
+                            toggleIcon.classList.remove(CONFIG.classes.rotate);
+                            header.setAttribute('aria-expanded', 'false');
                         }
-
-                        // Attach Event Listener (Closure for week specific scope)
-                        header.addEventListener('click', () => {
-                            const isHidden = content.classList.contains(CONFIG.classes.hidden);
-                            if (isHidden) {
-                                content.classList.remove(CONFIG.classes.hidden);
-                                toggleIcon.classList.add(CONFIG.classes.rotate);
-                                header.setAttribute('aria-expanded', 'true');
-                            } else {
-                                content.classList.add(CONFIG.classes.hidden);
-                                toggleIcon.classList.remove(CONFIG.classes.rotate);
-                                header.setAttribute('aria-expanded', 'false');
-                            }
-                        });
-
-                        fragment.appendChild(sectionNode);
                     });
-
-                    this.container.appendChild(fragment);
-                }
-
-                renderFiltered(list) {
-                    this.clear();
-                    if (list.length === 0) {
-                        this.container.appendChild(this.clone('empty'));
-                        return;
-                    }
-
-                    const fragment = document.createDocumentFragment();
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'p-2 fade-in';
-
-                    list.forEach(item => {
-                        wrapper.appendChild(this.createCardElement(item, true));
-                    });
-
-                    fragment.appendChild(wrapper);
-                    this.container.appendChild(fragment);
-                }
-
-                createCardElement(item, showWeekBadge = false) {
-                    const node = this.clone('card');
-                    
-                    // Fill Text Content (Safe against XSS)
-                    node.querySelector('[data-slot="date-day"]').textContent = `${item.date}, ${item.day}`;
-                    node.querySelector('[data-slot="subject"]').textContent = item.subject;
-                    node.querySelector('[data-slot="speaker"]').textContent = item.speaker || 'Belirtilmedi';
-                    node.querySelector('[data-slot="time"]').textContent = item.time;
-
-                    // Handle Join Button Visibility (Time Check)
-                    const joinBtn = node.querySelector('[data-slot="join-btn"]');
-                    if (joinBtn) {
-                        if (TimeUtils.isPast(item.date, item.time)) {
-                            joinBtn.remove();
-                        }
-                    }
-
-                    // Week Badge logic
-                    if (showWeekBadge) {
-                        const badge = node.querySelector('[data-slot="week-badge"]');
-                        badge.textContent = item.week;
-                        badge.classList.remove('hidden');
-                    }
-
-                    // Action Buttons Logic
-                    const actionsContainer = node.querySelector('[data-slot="actions"]');
-                    const hasLink1 = !!item.link1;
-                    const hasLink2 = !!item.link2;
-
-                    if (!hasLink1 && !hasLink2) {
-                        const span = document.createElement('span');
-                        span.className = 'text-xs text-gray-400 italic';
-                        span.textContent = 'Kayıt bulunmuyor';
-                        actionsContainer.appendChild(span);
-                    } else {
-                        if (hasLink1) actionsContainer.appendChild(this.createButton(item.link1, 'Ders Notu', 'fa-file-lines', 'primary'));
-                        if (hasLink2) actionsContainer.appendChild(this.createButton(item.link2, 'Tilavet', 'fa-book-quran', 'secondary'));
-                    }
-
-                    return node;
-                }
-
-                createButton(url, text, iconClass, type) {
-                    const node = this.clone('btn');
-                    const a = node.querySelector('a');
-                    const i = node.querySelector('i');
-                    const span = node.querySelector('span');
-
-                    a.href = url;
-                    a.classList.add(...(type === 'primary' ? CONFIG.classes.btnPrimary : CONFIG.classes.btnSecondary));
-                    i.classList.add('fa-solid', iconClass);
-                    span.textContent = text;
-
-                    return node;
-                }
-
-                renderMenu(items) {
-                    const menu = document.getElementById('menu-quran');
-                    const fragment = document.createDocumentFragment();
-
-                    items.forEach(note => {
-                        const node = this.clone('menuItem');
-                        const a = node.querySelector('a');
-                        const icon = node.querySelector('[data-slot="icon"]');
-                        
-                        a.href = note.url;
-                        node.querySelector('[data-slot="text"]').textContent = note.name;
-                        
-                        // Icon logic
-                        const iconClass = (note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not")) 
-                            ? "fa-file-audio" 
-                            : "fa-file-lines";
-                        icon.classList.add(iconClass);
-
-                        fragment.appendChild(node);
-                    });
-
-                    menu.appendChild(fragment);
-                }
+                    fragment.appendChild(sectionNode);
+                });
+                this.container.appendChild(fragment);
             }
+            renderFiltered(list) {
+                this.clear();
+                if (!list || list.length === 0) {
+                    this.container.appendChild(this.clone('empty'));
+                    return;
+                }
+                const fragment = document.createDocumentFragment();
+                const wrapper = document.createElement('div');
+                wrapper.className = 'p-2 fade-in';
+                list.forEach(item => {
+                    wrapper.appendChild(this.createCardElement(item, true));
+                });
+                fragment.appendChild(wrapper);
+                this.container.appendChild(fragment);
+            }
+            createCardElement(item, showWeekBadge = false) {
+                const node = this.clone('card');
+                node.querySelector('[data-slot="date-day"]').textContent = `${item.date}, ${item.day}`;
+                node.querySelector('[data-slot="subject"]').textContent = item.subject;
+                node.querySelector('[data-slot="speaker"]').textContent = item.speaker || 'Belirtilmedi';
+                node.querySelector('[data-slot="time"]').textContent = item.time;
 
-            // --- Main Controller ---
-            class App {
-                constructor() {
-                    this.themeManager = new ThemeManager();
-                    this.renderer = new Renderer();
-                    this.searchDebounceTimer = null;
+                const joinBtn = node.querySelector('[data-slot="join-btn"]');
+                if (joinBtn && TimeUtils.isPast(item.date, item.time)) {
+                    joinBtn.remove();
+                }
+
+                if (showWeekBadge) {
+                    const badge = node.querySelector('[data-slot="week-badge"]');
+                    badge.textContent = item.week;
+                    badge.classList.remove('hidden');
+                }
+
+                const actionsContainer = node.querySelector('[data-slot="actions"]');
+                const hasLink1 = !!item.link1;
+                const hasLink2 = !!item.link2;
+
+                if (!hasLink1 && !hasLink2) {
+                    const span = document.createElement('span');
+                    span.className = 'text-xs text-gray-400 italic';
+                    span.textContent = 'Kayıt bulunmuyor';
+                    actionsContainer.appendChild(span);
+                } else {
+                    if (hasLink1) {
+                        actionsContainer.appendChild(this.createButton(item.link1, 'Ders Notu', 'fa-file-lines', 'primary'));
+                    }
+                    if (hasLink2) {
+                        actionsContainer.appendChild(this.createButton(item.link2, 'Tilavet', 'fa-book-quran', 'secondary'));
+                    }
+                }
+                return node;
+            }
+            createButton(url, text, iconClass, type) {
+                const node = this.clone('btn');
+                const a = node.querySelector('a');
+                const i = node.querySelector('i');
+                const span = node.querySelector('span');
+
+                a.href = url;
+                a.classList.add(...(type === 'primary' ? CONFIG.classes.btnPrimary : CONFIG.classes.btnSecondary));
+                i.classList.add('fa-solid', iconClass);
+                span.textContent = text;
+
+                return node;
+            }
+            renderMenu(items) {
+                const menu = document.getElementById('menu-quran');
+                if (!menu) return;
+                menu.textContent = '';
+                const fragment = document.createDocumentFragment();
+                items.forEach(note => {
+                    const node = this.clone('menuItem');
+                    const a = node.querySelector('a');
+                    const icon = node.querySelector('[data-slot="icon"]');
                     
-                    this.initEvents();
-                    this.initData();
-                }
+                    a.href = note.url;
+                    node.querySelector('[data-slot="text"]').textContent = note.name;
+                    const lower = note.name.toLowerCase();
+                    const iconClass = (lower.includes("dersi") && !lower.includes("not")) ? "fa-file-audio" : "fa-file-lines";
+                    icon.classList.add(iconClass);
 
-                initData() {
-                    // Initial Render
-                    this.renderer.renderSchedule(DataService.getGroupedSchedule());
-                    this.renderer.renderMenu(DataService.extraResources);
-                }
+                    fragment.appendChild(node);
+                });
+                menu.appendChild(fragment);
+            }
+        }
 
-                initEvents() {
-                    // Search Input with Debounce
-                    const searchInput = document.getElementById('input-search');
+        // -------- App --------
+        class App {
+            constructor() {
+                this.themeManager = new ThemeManager();
+                this.renderer = new Renderer();
+                this.searchDebounceTimer = null;
+            }
+            init() {
+                this.initData();
+                this.initEvents();
+            }
+            initData() {
+                this.renderer.renderSchedule(DataService.getGroupedSchedule());
+                this.renderer.renderMenu(DataService.extraResources);
+            }
+            initEvents() {
+                const searchInput = document.getElementById('input-search');
+                if (searchInput) {
                     searchInput.addEventListener('input', (e) => {
                         clearTimeout(this.searchDebounceTimer);
+                        const value = e.target.value || '';
                         this.searchDebounceTimer = setTimeout(() => {
-                            const query = e.target.value.trim();
+                            const query = value.trim();
                             if (query) {
                                 this.renderer.renderFiltered(DataService.search(query));
                             } else {
                                 this.renderer.renderSchedule(DataService.getGroupedSchedule());
                             }
-                        }, 250); // 250ms debounce for performance
+                        }, CONFIG.searchDebounceMs);
                     });
+                }
 
-                    // Dropdown Logic
-                    const dropdownBtn = document.getElementById('btn-quran-menu');
-                    const dropdownMenu = document.getElementById('menu-quran');
+                const dropdownBtn = document.getElementById('btn-quran-menu');
+                const dropdownMenu = document.getElementById('menu-quran');
+                if (dropdownBtn && dropdownMenu) {
                     const dropdownIcon = dropdownBtn.querySelector('.fa-chevron-down');
 
+                    const openMenu = () => {
+                        if (!dropdownMenu.classList.contains(CONFIG.classes.hidden)) return;
+                        dropdownMenu.classList.remove(CONFIG.classes.hidden);
+                        requestAnimationFrame(() => {
+                            dropdownMenu.classList.remove(...CONFIG.classes.menuAnimateOut);
+                            dropdownMenu.classList.add(...CONFIG.classes.menuAnimateIn);
+                            dropdownIcon && dropdownIcon.classList.add(CONFIG.classes.rotate);
+                        });
+                        dropdownBtn.setAttribute('aria-expanded', 'true');
+                    };
+                    const closeMenu = () => {
+                        if (dropdownMenu.classList.contains(CONFIG.classes.hidden)) return;
+                        dropdownMenu.classList.remove(...CONFIG.classes.menuAnimateIn);
+                        dropdownMenu.classList.add(...CONFIG.classes.menuAnimateOut);
+                        dropdownIcon && dropdownIcon.classList.remove(CONFIG.classes.rotate);
+                        dropdownBtn.setAttribute('aria-expanded', 'false');
+                        setTimeout(() => dropdownMenu.classList.add(CONFIG.classes.hidden), 200);
+                    };
                     const toggleMenu = () => {
-                        const isHidden = dropdownMenu.classList.contains('hidden');
-                        if (isHidden) {
-                            dropdownMenu.classList.remove('hidden');
-                            // Small delay for CSS transition to catch up
-                            requestAnimationFrame(() => {
-                                dropdownMenu.classList.remove(...CONFIG.classes.menuAnimateOut);
-                                dropdownMenu.classList.add(...CONFIG.classes.menuAnimateIn);
-                                dropdownIcon.classList.add(CONFIG.classes.rotate);
-                            });
-                            dropdownBtn.setAttribute('aria-expanded', 'true');
+                        if (dropdownMenu.classList.contains(CONFIG.classes.hidden)) {
+                            openMenu();
                         } else {
-                            dropdownMenu.classList.remove(...CONFIG.classes.menuAnimateIn);
-                            dropdownMenu.classList.add(...CONFIG.classes.menuAnimateOut);
-                            dropdownIcon.classList.remove(CONFIG.classes.rotate);
-                            dropdownBtn.setAttribute('aria-expanded', 'false');
-                            
-                            // Wait for animation to finish before hiding
-                            setTimeout(() => dropdownMenu.classList.add('hidden'), 200);
+                            closeMenu();
                         }
                     };
 
@@ -642,19 +605,23 @@
                         toggleMenu();
                     });
 
-                    // Click Outside to Close
                     document.addEventListener('click', (e) => {
-                        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target) && !dropdownMenu.classList.contains('hidden')) {
-                            toggleMenu();
+                        if (!dropdownBtn.contains(e.target) &&
+                            !dropdownMenu.contains(e.target) &&
+                            !dropdownMenu.classList.contains(CONFIG.classes.hidden)) {
+                            closeMenu();
                         }
                     });
                 }
             }
+        }
 
-            // --- Boot ---
-            document.addEventListener('DOMContentLoaded', () => new App());
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new App();
+            app.init();
+        });
 
-        })();
+    })();
     </script>
 </body>
 </html>
