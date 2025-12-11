@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -10,13 +8,10 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://cdn.tailwindcss.com">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -32,21 +27,14 @@
     <style>
         :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
         .dark { --scroll-thumb: #475569; }
-        
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
         ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
-        
         .rotate-icon { transform: rotate(180deg); }
         .smooth-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300 min-h-screen flex flex-col">
@@ -91,11 +79,11 @@
     </template>
 
     <template id="tpl-button">
-    <a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition duration-200 flex items-center justify-center hover:-translate-y-0.5 shadow-sm hover:shadow-md">
-        <i class="mr-1"></i>
-        <span></span>
-    </a>
-</template>
+        <a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition duration-200 flex items-center justify-center hover:-translate-y-0.5 shadow-sm hover:shadow-md">
+            <i class="mr-1"></i>
+            <span></span>
+        </a>
+    </template>
 
     <template id="tpl-empty">
         <div class="text-center text-gray-500 mt-10 fade-in">
@@ -179,7 +167,7 @@
 
         // -------- AYARLAR & SABİTLER --------
         const CONFIG = {
-            // Google Sheets CSV Linki
+            // YENİ CSV LİNKİ
             csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?gid=942881775&single=true&output=csv',
             
             classes: {
@@ -188,12 +176,11 @@
                 dark: 'dark',
                 menuIn: ['scale-100', 'opacity-100'],
                 menuOut: ['scale-95', 'opacity-0'],
-                // Buton stilleri
                 btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
                 btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
             },
             
-            // Ay İsimleri (Normalize edilmiş haliyle aranacak)
+            // Ay İsimleri (Küçük harf ve normalize edilmiş)
             months: { 
                 'ocak':0, 'subat':1, 'mart':2, 'nisan':3, 'mayis':4, 'haziran':5, 
                 'temmuz':6, 'agustos':7, 'eylul':8, 'ekim':9, 'kasim':10, 'aralik':11 
@@ -201,11 +188,11 @@
             
             searchDebounce: 250,
             
-            // DİKKAT: Ders başladıktan kaç dakika sonra buton kaybolsun? (120 dk = 2 saat)
+            // KATIL BUTONU TOLERANSI (DAKİKA) - 2 Saat
             joinToleranceMinutes: 120 
         };
 
-        // -------- SABİT KAYNAKLAR (Google Sheet'ten çekilmez, buraya gömülüdür) --------
+        // -------- SABİT KAYNAKLAR --------
         const EXTRA_RESOURCES = [
             { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
             { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
@@ -228,7 +215,7 @@
             if (!value) return '';
             let v = String(value);
             try { v = v.toLocaleLowerCase('tr'); } catch (e) { v = v.toLowerCase(); }
-            // Türkçe karakterleri İngilizce karşılıklarına çevir (ı->i, ş->s vs.)
+            // Türkçe karakterleri temizle
             v = v.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             v = v.replace(/ı/g, 'i').replace(/İ/g, 'i');
             return v;
@@ -237,45 +224,41 @@
         const DateProcessor = {
             parseTimestamp(dateStr, timeStr) {
                 try {
-                    // 1. Metinleri temizle ("9 ARAL?K" -> "9 aralik")
                     const normDate = normalizeText(dateStr);
                     const normTime = timeStr ? timeStr.trim() : "00:00";
                     
-                    // 2. Günü bul (Sayıları çek)
+                    // Günü bul
                     const dayMatch = normDate.match(/(\d+)/);
                     if (!dayMatch) return 0;
                     const day = parseInt(dayMatch[1]);
 
-                    // 3. Ayı bul (İçinde geçen kelimeye bak)
+                    // Ayı bul
                     let monthIndex = -1;
                     for (const [key, val] of Object.entries(CONFIG.months)) {
-                        if (normDate.includes(key)) {
+                        if (normDate.includes(key) || normDate.includes(key.substring(0, 3))) {
                             monthIndex = val;
                             break;
                         }
                     }
-                    if (monthIndex === -1) return 0; // Ay bulunamazsa hata
+                    if (monthIndex === -1) return 0;
 
-                    // 4. Saati ayrıştır
+                    // Saati ayrıştır
                     const [hour, minute] = normTime.split(':').map(n => parseInt(n) || 0);
 
-                    // 5. Yıl Mantığı (Önemli: Yıl değişimi kontrolü)
+                    // Yıl Tahmini
                     const now = new Date();
                     let year = now.getFullYear();
                     const currentMonth = now.getMonth();
 
-                    // Eğer şu an Aralık (11) ise ve ders Ocak (0) ayındaysa, ders seneye (2026) demektir.
+                    // Yıl geçiş kontrolü
                     if (currentMonth > 8 && monthIndex < 3) {
                         year += 1;
-                    }
-                    // Eğer şu an Ocak (0) ise ve ders Aralık (11) ayındaysa, ders geçen senedir (2024).
-                    else if (currentMonth < 3 && monthIndex > 8) {
+                    } else if (currentMonth < 3 && monthIndex > 8) {
                         year -= 1;
                     }
 
                     return new Date(year, monthIndex, day, hour, minute).getTime();
                 } catch (e) {
-                    console.error("Tarih hatası:", dateStr, e);
                     return 0;
                 }
             }
@@ -314,9 +297,10 @@
                     const response = await fetch(CONFIG.csvUrl);
                     if (!response.ok) throw new Error('Veri çekilemedi');
                     
-                    // UTF-8 Decoding (Tr Karakter Sorununu Çözer)
+                    // KARAKTER KODLAMA DÜZELTME (UTF-8 DECODER)
+                    // ? işareti sorununu çözmek için en güvenli modern yöntem
                     const buffer = await response.arrayBuffer();
-                    const decoder = new TextDecoder('utf-8');
+                    const decoder = new TextDecoder('utf-8'); 
                     const csvText = decoder.decode(buffer);
                     
                     const rows = parseCSV(csvText);
@@ -337,9 +321,7 @@
 
                         return {
                             ...item,
-                            // Timestamp hesapla
                             timestamp: DateProcessor.parseTimestamp(item.date, item.time),
-                            // Arama indexi oluştur
                             searchIndex: normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
                         };
                     }).filter(item => item.subject); 
@@ -422,14 +404,12 @@
 
                 const joinBtn = node.querySelector('[data-slot="join-btn"]');
                 
-                // --- KATIL BUTONU GİZLEME MANTIĞI ---
-                // Eğer timestamp 0 ise (tarih okunamadıysa) butonu göster (ne olur ne olmaz)
-                // Eğer timestamp geçerliyse ve şu anki zaman > ders saati + 2 saat ise gizle
+                // --- KATIL BUTONU GİZLEME (2 Saat Tolerans) ---
                 const toleranceMs = (CONFIG.joinToleranceMinutes || 0) * 60 * 1000;
                 
                 if (joinBtn) {
                     if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
-                        joinBtn.remove(); // Süresi geçti, kaldır
+                        joinBtn.remove();
                     }
                 }
 
@@ -457,9 +437,8 @@
                 const node = this.#clone('btn');
                 const a = node.querySelector('a');
                 a.href = url;
-                // Buton stilleri + YUKARI KALKMA EFEKTİ (hover:-translate-y-0.5)
                 a.classList.add(...(type === 'primary' ? CONFIG.classes.btnPrimary : CONFIG.classes.btnSecondary));
-                // Sabit efekt sınıfları:
+                // BUTON EFEKTİ
                 a.classList.add('shadow-sm', 'hover:shadow-md', 'hover:-translate-y-0.5', 'transition-all', 'duration-200');
                 
                 node.querySelector('i').classList.add('fa-solid', iconClass);
@@ -479,7 +458,7 @@
                 this.#container.innerHTML = `
                     <div class="text-center mt-10 text-red-500 fade-in">
                         <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
-                        <p>Veri yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.</p>
+                        <p>Veri yüklenemedi. İnternet bağlantınızı kontrol edin.</p>
                     </div>`;
             }
 
@@ -556,7 +535,7 @@
             }
         }
 
-        // -------- MAIN APP CONTROLLER --------
+        // -------- ANA UYGULAMA --------
         class App {
             #dataService; #renderer; #themeManager; #searchTimer;
             constructor() {
@@ -622,6 +601,6 @@
 
         document.addEventListener('DOMContentLoaded', () => new App().init());
     })();
-</script>
+    </script>
 </body>
 </html>
