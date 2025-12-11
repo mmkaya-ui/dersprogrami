@@ -1,563 +1,706 @@
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<meta name="description" content="Ders notları, tilavet arşivi ve haftalık ders programı.">
-<meta name="theme-color" content="#047857">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="Ders Programı">
-<meta name="format-detection" content="telephone=no">
-<title>Ders Programı ve Notlar</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Added SheetJS for Excel parsing -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-tailwind.config = {
-darkMode: 'class',
-theme: {
-extend: {
-fontFamily: { sans: ['Inter', 'sans-serif'] },
-transitionProperty: { 'height': 'height', 'spacing': 'margin, padding' },
-colors: { emerald: { 450: '#10b981' } }
-}
-}
-}
-</script>
-<style>
-:root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
-.dark { --scroll-thumb: #475569; }
-body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overscroll-behavior-y: none; }
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--scroll-track); }
-::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
-.rotate-icon { transform: rotate(180deg); }
-.smooth-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-* { -webkit-tap-highlight-color: transparent; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="description" content="Ders notları, tilavet arşivi ve haftalık ders programı.">
+    <meta name="theme-color" content="#047857">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Ders Programı">
+    <meta name="format-detection" content="telephone=no">
+    <title>Ders Programı ve Notlar</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    transitionProperty: { 'height': 'height', 'spacing': 'margin, padding' },
+                    colors: { emerald: { 450: '#10b981' } }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
+        .dark { --scroll-thumb: #475569; }
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overscroll-behavior-y: none; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--scroll-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
+        .rotate-icon { transform: rotate(180deg); }
+        .smooth-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        * { -webkit-tap-highlight-color: transparent; }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300 min-h-screen flex flex-col">
-<template id="tpl-week-section">
-<section class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
-<div class="week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700 cursor-pointer select-none active:bg-emerald-100 dark:active:bg-gray-600 transition-colors" role="button" aria-expanded="false">
-<h2 class="font-bold text-emerald-800 dark:text-emerald-400 flex items-center">
-<i class="fa-regular fa-calendar-days mr-2 text-emerald-600 dark:text-emerald-400"></i>
-<span data-slot="week-title"></span>
-</h2>
-<i class="fa-solid fa-chevron-down text-gray-400 smooth-transition" data-slot="toggle-icon"></i>
-</div>
-<div class="week-content p-2 bg-gray-50 dark:bg-gray-900 hidden transition-colors duration-300" data-slot="content-area"></div>
-</section>
-</template>
-<template id="tpl-card">
-<article class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md will-change-transform">
-<div class="flex justify-between items-start mb-3">
-<div class="pr-2">
-<div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide flex items-center gap-2">
-<span data-slot="date-day"></span>
-<span data-slot="week-badge" class="hidden text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded"></span>
-</div>
-<h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight mt-1" data-slot="subject"></h3>
-<p class="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center">
-<i class="fa-solid fa-user-tag mr-1 opacity-50 text-xs"></i>
-<span data-slot="speaker"></span>
-</p>
-</div>
-<div class="flex flex-col items-end gap-1 shrink-0">
-<time data-slot="time" class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
-<a href="http://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
-<i class="fa-solid fa-video text-red-500 mr-1"></i> Katıl
-</a>
-</div>
-</div>
-<div class="flex mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 gap-2" data-slot="actions"></div>
-</article>
-</template>
-<template id="tpl-button">
-<a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition duration-200 flex items-center justify-center hover:-translate-y-0.5 shadow-sm hover:shadow-md active:scale-95">
-<i class="mr-1"></i>
-<span></span>
-</a>
-</template>
-<template id="tpl-empty">
-<div class="text-center text-gray-500 mt-10 fade-in select-none">
-<i class="fa-solid fa-filter-circle-xmark text-4xl mb-3 opacity-50"></i>
-<p>Sonuç bulunamadı.</p>
-</div>
-</template>
-<template id="tpl-menu-item">
-<a target="_blank" rel="noopener noreferrer" class="flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0 group">
-<i class="fa-solid mr-3 text-emerald-500 w-5 text-center group-hover:scale-110 transition-transform" data-slot="icon"></i>
-<span data-slot="text"></span>
-</a>
-</template>
-<header class="bg-emerald-700 dark:bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95 supports-[backdrop-filter]:bg-opacity-80">
-<div class="max-w-md mx-auto relative">
-<button id="btn-theme-toggle" class="absolute right-0 top-0 z-[60] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
-<i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
-</button>
-<div class="mb-3 select-none">
-<h1 class="text-xl font-bold mb-1 flex items-center">
-<i class="fa-solid fa-book-open mr-2"></i>Ders Programı
-</h1>
-<p class="text-emerald-100 text-xs opacity-90">Ders notları ve tilavet arşivi</p>
-</div>
-<div class="relative mb-3 group">
-<input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..."
-class="w-full p-2.5 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
-autocomplete="off" enterkeyhint="search">
-<i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
-</div>
-<div class="flex flex-col gap-2 relative z-10">
-<div class="relative w-full">
-<button id="btn-quran-menu" class="w-full p-2.5 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
-<span class="font-semibold flex items-center pointer-events-none">
-<i class="fa-solid fa-layer-group mr-2"></i>Kur'an Dersleri Toplu Kaynaklar
-</span>
-<i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
-</button>
-<div id="menu-quran" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0"></div>
-</div>
-<nav class="flex gap-2 items-stretch h-10">
-<a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060" target="_blank" rel="noopener noreferrer"
-class="flex-1 flex justify-center items-center rounded-lg text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
-<i class="fa-solid fa-table mr-2 text-emerald-700"></i>
-Ders Tablosu
-</a>
-<a href="https://kuran.diyanet.gov.tr/mushaf_v2" target="_blank" rel="noopener noreferrer"
-class="flex-1 flex justify-center items-center rounded-lg text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
-<i class="fa-solid fa-book-quran mr-2 text-amber-700"></i>
-Kur'an Oku
-</a>
-</nav>
-</div>
-</div>
-</header>
-<main class="max-w-md mx-auto p-4 w-full flex-grow relative" id="main-content" role="main"></main>
-<footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto pb-safe">
-<div class="max-w-md mx-auto px-4">
-<div class="mb-4">
-<p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim & Öneri</p>
-<a href="mailto:biz2004571@gmail.com" class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-medium group">
-<i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
-biz2004571@gmail.com
-</a>
-</div>
-<p class="text-[10px] opacity-60">&copy; 2025 - 2032 Ders Arşivi</p>
-</div>
-</footer>
-<script>
-(function () {
-'use strict';
-if (window.DERS_PROGRAMI_APP_LOADED) return;
-window.DERS_PROGRAMI_APP_LOADED = true;
-const CONFIG = {
-// Cache Key geri eklendi (XLSX sürümü için yeni versiyon)
-cacheKey: 'ders_programi_v8_xlsx',
-csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
-classes: {
-hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
-menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
-btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
-btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
-},
-months: { 'ocak':0, 'subat':1, 'mart':2, 'nisan':3, 'mayis':4, 'haziran':5, 'temmuz':6, 'agustos':7, 'eylul':8, 'ekim':9, 'kasim':10, 'aralik':11 },
-searchDebounce: 150,
-joinToleranceMinutes: 120
-};
-const EXTRA_RESOURCES = [
-{ name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
-{ name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
-{ name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
-{ name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
-{ name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
-{ name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
-{ name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
-{ name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
-{ name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
-{ name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
-{ name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
-{ name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
-{ name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
-{ name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
-];
-const normalizeText = (() => {
-const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
-return (val) => {
-if (!val) return '';
-return String(val).replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-};
-})();
-const DateProcessor = {
-parseTimestamp(dateStr, timeStr) {
-try {
-const normDate = normalizeText(dateStr);
-const normTime = timeStr ? timeStr.trim() : "00:00";
-const dayMatch = normDate.match(/(\d+)/);
-if (!dayMatch) return 0;
-const day = parseInt(dayMatch[1]);
-let monthIndex = -1;
-for (const [key, val] of Object.entries(CONFIG.months)) {
-if (normDate.includes(key) || normDate.includes(key.substring(0, 3))) { monthIndex = val; break; }
-}
-if (monthIndex === -1) return 0;
-const [hour, minute] = normTime.split(':').map(n => parseInt(n) || 0);
-const now = new Date();
-let year = now.getFullYear();
-const currentMonth = now.getMonth();
-if (currentMonth > 8 && monthIndex < 3) year += 1;
-else if (currentMonth < 3 && monthIndex > 8) year -= 1;
-return new Date(year, monthIndex, day, hour, minute).getTime();
-} catch (e) { return 0; }
-}
-};
-class DataManager {
-constructor() {
-this.groupedData = {};
-}
-// Cache metodu: localStorage'dan oku
-loadFromCache() {
-try {
-const raw = localStorage.getItem(CONFIG.cacheKey);
-if (!raw) return null;
-const parsed = JSON.parse(raw);
-if (!parsed) return null;
-this.groupedData = parsed;
-return parsed;
-} catch (e) {
-localStorage.removeItem(CONFIG.cacheKey);
-return null;
-}
-}
-// Cache metodu: localStorage'a yaz
-saveToCache(data) {
-this.groupedData = data;
-try {
-const str = JSON.stringify(data);
-localStorage.removeItem(CONFIG.cacheKey);
-localStorage.setItem(CONFIG.cacheKey, str);
-return true;
-} catch (e) {
-console.error("Cache save failed:", e);
-return false;
-}
-}
-async fetchFreshData() {
-try {
-const randomId = Math.floor(Math.random() * 9999999);
-const cacheBusterUrl = `${CONFIG.csvUrl}&_t=${Date.now()}&_r=${randomId}`;
-// Fetch arrayBuffer for XLS data
-const response = await fetch(cacheBusterUrl, {
-cache: 'no-store',
-headers: {
-'Pragma': 'no-cache',
-'Cache-Control': 'no-cache, no-store, must-revalidate'
-}
-});
-if (!response.ok) throw new Error('Network error');
-const buffer = await response.arrayBuffer();
-// Parse using SheetJS (XLSX)
-const workbook = XLSX.read(buffer, { type: 'array' });
-const firstSheetName = workbook.SheetNames[0];
-const worksheet = workbook.Sheets[firstSheetName];
-// Convert sheet to JSON array of arrays
-const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-// Slice(1) to skip header
-const processed = rows.slice(1).map(cols => {
-const clean = (val) => (val !== null && val !== undefined) ? String(val).trim() : '';
-const item = {
-week: clean(cols[0]), date: clean(cols[1]), day: clean(cols[2]),
-time: clean(cols[3]), subject: clean(cols[4]), speaker: clean(cols[5]),
-link1: clean(cols[6]), link2: clean(cols[7])
-};
-const ts = DateProcessor.parseTimestamp(item.date, item.time);
-return {
-...item,
-timestamp: ts,
-searchIndex: normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
-};
-}).filter(item => item.subject);
-const newGroupedData = processed.reduce((acc, item) => {
-(acc[item.week] = acc[item.week] || []).push(item);
-return acc;
-}, {});
-// Note: We return newGroupedData but don't set this.groupedData yet.
-// That decision is made in App.init based on version comparison.
-return newGroupedData;
-} catch (error) {
-console.error("Fetch failed:", error);
-return null;
-}
-}
-get resources() { return EXTRA_RESOURCES; }
-search(query) {
-if (!query) return [];
-const normQ = normalizeText(query);
-const flat = Object.values(this.groupedData).flat();
-return flat.filter(item => item.searchIndex.includes(normQ));
-}
-}
-class Renderer {
-#container; #templates;
-constructor() {
-this.#container = document.getElementById('main-content');
-this.#templates = {
-week: document.getElementById('tpl-week-section'),
-card: document.getElementById('tpl-card'),
-btn: document.getElementById('tpl-button'),
-empty: document.getElementById('tpl-empty'),
-menuItem: document.getElementById('tpl-menu-item')
-};
-}
-#clone(id) { return this.#templates[id].content.cloneNode(true); }
-#createCard(item, showWeekBadge = false) {
-const node = this.#clone('card');
-const { subject, speaker, time, date, day, week, link1, link2, timestamp } = item;
-const toleranceMs = CONFIG.joinToleranceMinutes * 60 * 1000;
-node.querySelector('[data-slot="date-day"]').textContent = `${date}, ${day}`;
-node.querySelector('[data-slot="subject"]').textContent = subject;
-node.querySelector('[data-slot="speaker"]').textContent = speaker || 'Belirtilmedi';
-node.querySelector('[data-slot="time"]').textContent = time;
-const joinBtn = node.querySelector('[data-slot="join-btn"]');
-if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
-joinBtn.remove();
-}
-if (showWeekBadge) {
-const badge = node.querySelector('[data-slot="week-badge"]');
-badge.textContent = week;
-badge.classList.remove('hidden');
-}
-const actionsContainer = node.querySelector('[data-slot="actions"]');
-if (!link1 && !link2) {
-const span = document.createElement('span');
-span.className = 'text-xs text-gray-400 italic';
-span.textContent = 'Kayıt bulunmuyor';
-actionsContainer.appendChild(span);
-} else {
-if (link1) actionsContainer.appendChild(this.#createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary'));
-if (link2) actionsContainer.appendChild(this.#createButton(link2, 'Tilavet', 'fa-book-quran', 'secondary'));
-}
-return node;
-}
-#createButton(url, text, iconClass, type) {
-const node = this.#clone('btn');
-const a = node.querySelector('a');
-a.href = url;
-a.classList.add(...(type === 'primary' ? CONFIG.classes.btnPrimary : CONFIG.classes.btnSecondary));
-node.querySelector('i').classList.add('fa-solid', iconClass);
-node.querySelector('span').textContent = text;
-return node;
-}
-showLoading() {
-this.#container.innerHTML = `
-<div class="text-center mt-10 text-emerald-600 dark:text-emerald-400 fade-in">
-<i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
-<p>Ders programı yükleniyor...</p>
-</div>`;
-}
-showError() {
-this.#container.innerHTML = `
-<div class="text-center mt-10 text-red-500 fade-in">
-<i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
-<p>Veri yüklenemedi. Bağlantınızı kontrol edin.</p>
-<button onclick="location.reload()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm font-bold">Tekrar Dene</button>
-</div>`;
-}
-renderSchedule(groupedData) {
-requestAnimationFrame(() => {
-this.#container.innerHTML = '';
-const weeks = Object.keys(groupedData).reverse();
-if (weeks.length === 0) {
-this.#container.appendChild(this.#clone('empty'));
-return;
-}
-const fragment = document.createDocumentFragment();
-weeks.forEach((week, index) => {
-const section = this.#clone('week');
-const sectionEl = section.querySelector('section');
-const header = sectionEl.querySelector('.week-header');
-const content = sectionEl.querySelector('.week-content');
-const icon = header.querySelector('[data-slot="toggle-icon"]');
-section.querySelector('[data-slot="week-title"]').textContent = week;
-groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
-if (index === 0) {
-content.classList.remove(CONFIG.classes.hidden);
-icon.classList.add(CONFIG.classes.rotate);
-header.setAttribute('aria-expanded', 'true');
-}
-header.addEventListener('click', () => {
-const isHidden = content.classList.contains(CONFIG.classes.hidden);
-content.classList.toggle(CONFIG.classes.hidden);
-icon.classList.toggle(CONFIG.classes.rotate);
-header.setAttribute('aria-expanded', isHidden);
-});
-fragment.appendChild(section);
-});
-this.#container.appendChild(fragment);
-});
-}
-renderFiltered(list) {
-requestAnimationFrame(() => {
-this.#container.innerHTML = '';
-if (!list?.length) {
-this.#container.appendChild(this.#clone('empty'));
-return;
-}
-const sortedList = list.sort((a, b) => b.timestamp - a.timestamp);
-const fragment = document.createDocumentFragment();
-const wrapper = document.createElement('div');
-wrapper.className = 'p-2 fade-in';
-sortedList.forEach(item => wrapper.appendChild(this.#createCard(item, true)));
-fragment.appendChild(wrapper);
-this.#container.appendChild(fragment);
-});
-}
-renderMenu(items) {
-const menu = document.getElementById('menu-quran');
-if (!menu) return;
-menu.innerHTML = '';
-const fragment = document.createDocumentFragment();
-items.forEach(note => {
-const node = this.#clone('menuItem');
-const a = node.querySelector('a');
-a.href = note.url;
-node.querySelector('[data-slot="text"]').textContent = note.name;
-const isAudio = note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not");
-node.querySelector('[data-slot="icon"]').classList.add(isAudio ? "fa-file-audio" : "fa-file-lines");
-fragment.appendChild(node);
-});
-menu.appendChild(fragment);
-}
-}
-class ThemeManager {
-constructor() {
-this.html = document.documentElement;
-this.btn = document.getElementById('btn-theme-toggle');
-this.icon = this.btn.querySelector('i');
-this.init();
-}
-init() {
-const local = localStorage.getItem('theme');
-const sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
-const isDark = local === 'dark' || (!local && sys);
-this.apply(isDark);
-this.btn.addEventListener('click', () => this.apply(!this.html.classList.contains('dark')));
-}
-apply(isDark) {
-this.html.classList.toggle('dark', isDark);
-localStorage.setItem('theme', isDark ? 'dark' : 'light');
-this.icon.className = isDark ? 'fa-solid fa-sun text-white text-xs' : 'fa-solid fa-moon text-white text-xs';
-}
-}
-class App {
-#dataManager; #renderer; #themeManager; #searchTimer;
-constructor() {
-this.#dataManager = new DataManager();
-this.#renderer = new Renderer();
-this.#themeManager = new ThemeManager();
-}
-async init() {
-this.#renderer.renderMenu(this.#dataManager.resources);
-this.#setupDropdown();
-this.#bindSearch();
-// 1. Önce Önbelleği (Varsa) Göster
-const cachedData = this.#dataManager.loadFromCache();
-let isCachedDisplayed = false;
-if (cachedData && Object.keys(cachedData).length > 0) {
-this.#renderer.renderSchedule(cachedData);
-isCachedDisplayed = true;
-} else {
-this.#renderer.showLoading();
-}
-// 2. Arka Planda Taze Veri Çek
-const freshData = await this.#dataManager.fetchFreshData();
-// 3. Veri Geldiyse Karşılaştır
-if (freshData) {
-// Eğer önbellek hiç yoktuysa direkt bas ve kaydet
-if (!isCachedDisplayed) {
-this.#dataManager.saveToCache(freshData);
-this.#renderer.renderSchedule(freshData);
-} else {
-// Önbellek vardı, fark var mı diye bak (basit stringify karşılaştırması)
-const cachedStr = JSON.stringify(cachedData || {});
-const freshStr = JSON.stringify(freshData);
-if (cachedStr !== freshStr) {
-// 4. Farklıysa: Önbelleği güncelle ve ekrana bas
-console.log("Veri güncellendi.");
-this.#dataManager.saveToCache(freshData);
-this.#renderer.renderSchedule(freshData);
-} else {
-console.log("Veri güncel.");
-}
-}
-} else if (!isCachedDisplayed) {
-// Önbellek yoktu ve taze veri de çekilemedi
-this.#renderer.showError();
-}
-}
-#bindSearch() {
-const input = document.getElementById('input-search');
-if (!input) return;
-const newInfo = input.cloneNode(true);
-input.parentNode.replaceChild(newInfo, input);
-newInfo.addEventListener('input', (e) => {
-clearTimeout(this.#searchTimer);
-const query = e.target.value.trim();
-this.#searchTimer = setTimeout(() => {
-if (query) {
-const results = this.#dataManager.search(query);
-this.#renderer.renderFiltered(results);
-} else {
-this.#renderer.renderSchedule(this.#dataManager.groupedData);
-}
-}, CONFIG.searchDebounce);
-});
-}
-#setupDropdown() {
-const btn = document.getElementById('btn-quran-menu');
-const menu = document.getElementById('menu-quran');
-if (!btn || !menu) return;
-const newBtn = btn.cloneNode(true);
-btn.parentNode.replaceChild(newBtn, btn);
-const icon = newBtn.querySelector('.fa-chevron-down');
-let isOpen = false;
-const toggle = (force) => {
-isOpen = force !== undefined ? force : !isOpen;
-if (isOpen) {
-menu.classList.remove(CONFIG.classes.hidden);
-requestAnimationFrame(() => {
-menu.classList.remove(...CONFIG.classes.menuOut);
-menu.classList.add(...CONFIG.classes.menuIn);
-icon.classList.add(CONFIG.classes.rotate);
-});
-newBtn.setAttribute('aria-expanded', 'true');
-} else {
-menu.classList.remove(...CONFIG.classes.menuIn);
-menu.classList.add(...CONFIG.classes.menuOut);
-icon.classList.remove(CONFIG.classes.rotate);
-newBtn.setAttribute('aria-expanded', 'false');
-setTimeout(() => menu.classList.add(CONFIG.classes.hidden), 200);
-}
-};
-newBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
-document.addEventListener('click', (e) => {
-if (isOpen && !newBtn.contains(e.target) && !menu.contains(e.target)) toggle(false);
-});
-}
-}
-document.addEventListener('DOMContentLoaded', () => new App().init());
-})();
-</script>
+
+    <template id="tpl-week-section">
+        <section class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
+            <div class="week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700 cursor-pointer select-none active:bg-emerald-100 dark:active:bg-gray-600 transition-colors" role="button" aria-expanded="false">
+                <h2 class="font-bold text-emerald-800 dark:text-emerald-400 flex items-center">
+                    <i class="fa-regular fa-calendar-days mr-2 text-emerald-600 dark:text-emerald-400"></i>
+                    <span data-slot="week-title"></span>
+                </h2>
+                <i class="fa-solid fa-chevron-down text-gray-400 smooth-transition" data-slot="toggle-icon"></i>
+            </div>
+            <div class="week-content p-2 bg-gray-50 dark:bg-gray-900 hidden transition-colors duration-300" data-slot="content-area"></div>
+        </section>
+    </template>
+
+    <template id="tpl-card">
+        <article class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md will-change-transform">
+            <div class="flex justify-between items-start mb-3">
+                <div class="pr-2">
+                    <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide flex items-center gap-2">
+                        <span data-slot="date-day"></span>
+                        <span data-slot="week-badge" class="hidden text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded"></span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight mt-1" data-slot="subject"></h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center">
+                        <i class="fa-solid fa-user-tag mr-1 opacity-50 text-xs"></i>
+                        <span data-slot="speaker"></span>
+                    </p>
+                </div>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                    <time data-slot="time" class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
+                    <a href="http://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
+                        <i class="fa-solid fa-video text-red-500 mr-1"></i> Katıl
+                    </a>
+                </div>
+            </div>
+            <div class="flex mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 gap-2" data-slot="actions"></div>
+        </article>
+    </template>
+
+    <template id="tpl-button">
+        <a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition duration-200 flex items-center justify-center hover:-translate-y-0.5 shadow-sm hover:shadow-md active:scale-95">
+            <i class="mr-1"></i>
+            <span></span>
+        </a>
+    </template>
+
+    <template id="tpl-empty">
+        <div class="text-center text-gray-500 mt-10 fade-in select-none">
+            <i class="fa-solid fa-filter-circle-xmark text-4xl mb-3 opacity-50"></i>
+            <p>Sonuç bulunamadı.</p>
+        </div>
+    </template>
+
+    <template id="tpl-menu-item">
+        <a target="_blank" rel="noopener noreferrer" class="flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0 group">
+            <i class="fa-solid mr-3 text-emerald-500 w-5 text-center group-hover:scale-110 transition-transform" data-slot="icon"></i>
+            <span data-slot="text"></span>
+        </a>
+    </template>
+
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95 supports-[backdrop-filter]:bg-opacity-80">
+        <div class="max-w-md mx-auto relative">
+            <button id="btn-theme-toggle" class="absolute right-0 top-0 z-[60] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
+                <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
+            </button>
+            <div class="mb-3 select-none">
+                <h1 class="text-xl font-bold mb-1 flex items-center">
+                    <i class="fa-solid fa-book-open mr-2"></i>Ders Programı
+                </h1>
+                <p class="text-emerald-100 text-xs opacity-90">Ders notları ve tilavet arşivi</p>
+            </div>
+            
+            <div class="relative mb-3 group">
+                <input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..." 
+                    class="w-full p-2.5 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
+                    autocomplete="off" enterkeyhint="search">
+                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
+            </div>
+
+            <div class="flex flex-col gap-2 relative z-10">
+                <div class="relative w-full">
+                    <button id="btn-quran-menu" class="w-full p-2.5 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
+                        <span class="font-semibold flex items-center pointer-events-none">
+                            <i class="fa-solid fa-layer-group mr-2"></i>Kur'an Dersleri Toplu Kaynaklar
+                        </span>
+                        <i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
+                    </button>
+                    <div id="menu-quran" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0"></div>
+                </div>
+                
+                <nav class="flex gap-2 items-stretch h-10">
+                    <a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060" target="_blank" rel="noopener noreferrer" 
+                       class="flex-1 flex justify-center items-center rounded-lg text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
+                        <i class="fa-solid fa-table mr-2 text-emerald-700"></i>
+                        Ders Tablosu
+                    </a>
+                    <a href="https://kuran.diyanet.gov.tr/mushaf_v2" target="_blank" rel="noopener noreferrer" 
+                       class="flex-1 flex justify-center items-center rounded-lg text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
+                        <i class="fa-solid fa-book-quran mr-2 text-amber-700"></i>
+                        Kur'an Oku
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 w-full flex-grow relative" id="main-content" role="main"></main>
+
+    <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto pb-safe">
+        <div class="max-w-md mx-auto px-4">
+            <div class="mb-4">
+                <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim & Öneri</p>
+                <a href="mailto:biz2004571@gmail.com" class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-medium group">
+                    <i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
+                    biz2004571@gmail.com
+                </a>
+            </div>
+            <p class="text-[10px] opacity-60">&copy; 2025 - 2032 Ders Arşivi</p>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            'use strict';
+        
+            // Global namespace pollution prevention
+            if (window.DERS_PROGRAMI_APP_LOADED) return;
+            window.DERS_PROGRAMI_APP_LOADED = true;
+        
+            /**
+             * Uygulama Konfigürasyonu
+             * Değişmez (Immutable) obje olarak tanımlandı.
+             */
+            const CONFIG = Object.freeze({
+                CACHE_KEY: 'ders_programi_v8_xlsx',
+                CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
+                CLASSES: {
+                    hidden: 'hidden',
+                    rotate: 'rotate-icon',
+                    menuIn: ['scale-100', 'opacity-100'],
+                    menuOut: ['scale-95', 'opacity-0'],
+                    btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
+                    btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
+                },
+                MONTHS: { 'ocak': 0, 'subat': 1, 'mart': 2, 'nisan': 3, 'mayis': 4, 'haziran': 5, 'temmuz': 6, 'agustos': 7, 'eylul': 8, 'ekim': 9, 'kasim': 10, 'aralik': 11 },
+                SEARCH_DEBOUNCE_MS: 150,
+                JOIN_TOLERANCE_MIN: 120
+            });
+        
+            // Kaynaklar listesi (Veri katmanı)
+            const EXTRA_RESOURCES = [
+                { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
+                { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
+                { name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
+                { name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
+                { name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
+                { name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
+            ];
+        
+            /**
+             * Yardımcı Fonksiyonlar (Utilities)
+             */
+            const Utils = {
+                normalizeText(val) {
+                    if (!val) return '';
+                    const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
+                    return String(val)
+                        .replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c)
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
+                },
+        
+                parseTimestamp(dateStr, timeStr) {
+                    try {
+                        const normDate = this.normalizeText(dateStr);
+                        const normTime = timeStr ? timeStr.trim() : "00:00";
+                        const dayMatch = normDate.match(/(\d+)/);
+                        if (!dayMatch) return 0;
+                        
+                        const day = parseInt(dayMatch[1], 10);
+                        let monthIndex = -1;
+                        
+                        for (const [key, val] of Object.entries(CONFIG.MONTHS)) {
+                            if (normDate.includes(key) || normDate.includes(key.substring(0, 3))) {
+                                monthIndex = val;
+                                break;
+                            }
+                        }
+                        
+                        if (monthIndex === -1) return 0;
+                        
+                        const [hour, minute] = normTime.split(':').map(n => parseInt(n, 10) || 0);
+                        const now = new Date();
+                        let year = now.getFullYear();
+                        const currentMonth = now.getMonth();
+                        
+                        // Yıl geçiş mantığı
+                        if (currentMonth > 8 && monthIndex < 3) year += 1;
+                        else if (currentMonth < 3 && monthIndex > 8) year -= 1;
+                        
+                        return new Date(year, monthIndex, day, hour, minute).getTime();
+                    } catch (e) {
+                        console.warn('Date parsing error:', e);
+                        return 0;
+                    }
+                }
+            };
+        
+            /**
+             * Veri Yönetim Sınıfı
+             * Sorumluluk: Veriyi çekmek, önbelleklemek, filtrelemek.
+             */
+            class DataManager {
+                constructor() {
+                    this.groupedData = {};
+                }
+        
+                get resources() { return EXTRA_RESOURCES; }
+        
+                loadFromCache() {
+                    try {
+                        const raw = localStorage.getItem(CONFIG.CACHE_KEY);
+                        if (!raw) return null;
+                        const parsed = JSON.parse(raw);
+                        if (parsed) this.groupedData = parsed;
+                        return parsed;
+                    } catch (e) {
+                        console.warn('Cache corrupted, clearing.');
+                        localStorage.removeItem(CONFIG.CACHE_KEY);
+                        return null;
+                    }
+                }
+        
+                saveToCache(data) {
+                    this.groupedData = data;
+                    try {
+                        localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify(data));
+                    } catch (e) {
+                        console.error("Storage quota exceeded or error:", e);
+                    }
+                }
+        
+                async fetchFreshData() {
+                    try {
+                        // Cache busting ile her zaman taze veri kontrolü
+                        const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
+                        const response = await fetch(CONFIG.CSV_URL + cacheBuster, {
+                            cache: 'no-store',
+                            headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                        });
+        
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        
+                        const buffer = await response.arrayBuffer();
+                        const workbook = XLSX.read(buffer, { type: 'array' });
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+        
+                        return this.#processRows(rows);
+                    } catch (error) {
+                        console.error("Fetch failed:", error);
+                        return null;
+                    }
+                }
+        
+                #processRows(rows) {
+                    // Başlık satırını atla ve veriyi işle
+                    const processed = rows.slice(1).map(cols => {
+                        const clean = (val) => (val != null) ? String(val).trim() : '';
+                        const item = {
+                            week: clean(cols[0]), date: clean(cols[1]), day: clean(cols[2]),
+                            time: clean(cols[3]), subject: clean(cols[4]), speaker: clean(cols[5]),
+                            link1: clean(cols[6]), link2: clean(cols[7])
+                        };
+                        
+                        return {
+                            ...item,
+                            timestamp: Utils.parseTimestamp(item.date, item.time),
+                            searchIndex: Utils.normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
+                        };
+                    }).filter(item => item.subject); // Boş satırları filtrele
+        
+                    // Haftalara göre grupla
+                    return processed.reduce((acc, item) => {
+                        (acc[item.week] = acc[item.week] || []).push(item);
+                        return acc;
+                    }, {});
+                }
+        
+                search(query) {
+                    if (!query) return [];
+                    const normQ = Utils.normalizeText(query);
+                    return Object.values(this.groupedData).flat()
+                        .filter(item => item.searchIndex.includes(normQ));
+                }
+            }
+        
+            /**
+             * Arayüz Yönetim Sınıfı
+             * Sorumluluk: DOM manipülasyonu ve HTML oluşturma.
+             */
+            class Renderer {
+                #container; 
+                #templates;
+        
+                constructor() {
+                    this.#container = document.getElementById('main-content');
+                    this.#templates = {
+                        week: document.getElementById('tpl-week-section'),
+                        card: document.getElementById('tpl-card'),
+                        btn: document.getElementById('tpl-button'),
+                        empty: document.getElementById('tpl-empty'),
+                        menuItem: document.getElementById('tpl-menu-item')
+                    };
+                }
+        
+                #clone(id) { return this.#templates[id].content.cloneNode(true); }
+        
+                /**
+                 * Güvenli metin yerleştirme (XSS koruması için textContent kullanımı)
+                 */
+                #setText(node, selector, text) {
+                    const el = node.querySelector(selector);
+                    if (el) el.textContent = text || '';
+                }
+        
+                #createCard(item, showWeekBadge = false) {
+                    const node = this.#clone('card');
+                    const { subject, speaker, time, date, day, week, link1, link2, timestamp } = item;
+                    
+                    this.#setText(node, '[data-slot="date-day"]', `${date}, ${day}`);
+                    this.#setText(node, '[data-slot="subject"]', subject);
+                    this.#setText(node, '[data-slot="speaker"]', speaker || 'Belirtilmedi');
+                    this.#setText(node, '[data-slot="time"]', time);
+        
+                    // Join butonu mantığı (Ders zamanı geçtiyse kaldır)
+                    const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
+                    const joinBtn = node.querySelector('[data-slot="join-btn"]');
+                    if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
+                        joinBtn.remove();
+                    }
+        
+                    if (showWeekBadge) {
+                        const badge = node.querySelector('[data-slot="week-badge"]');
+                        badge.textContent = week;
+                        badge.classList.remove('hidden');
+                    }
+        
+                    const actionsContainer = node.querySelector('[data-slot="actions"]');
+                    if (!link1 && !link2) {
+                        const span = document.createElement('span');
+                        span.className = 'text-xs text-gray-400 italic';
+                        span.textContent = 'Kayıt bulunmuyor';
+                        actionsContainer.appendChild(span);
+                    } else {
+                        if (link1) actionsContainer.appendChild(this.#createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary'));
+                        if (link2) actionsContainer.appendChild(this.#createButton(link2, 'Tilavet', 'fa-book-quran', 'secondary'));
+                    }
+                    return node;
+                }
+        
+                #createButton(url, text, iconClass, type) {
+                    const node = this.#clone('btn');
+                    const a = node.querySelector('a');
+                    a.href = url;
+                    const classes = type === 'primary' ? CONFIG.CLASSES.btnPrimary : CONFIG.CLASSES.btnSecondary;
+                    a.classList.add(...classes);
+                    node.querySelector('i').classList.add('fa-solid', iconClass);
+                    node.querySelector('span').textContent = text;
+                    return node;
+                }
+        
+                showLoading() {
+                    this.#container.innerHTML = `
+                        <div class="text-center mt-10 text-emerald-600 dark:text-emerald-400 fade-in">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
+                            <p>Ders programı yükleniyor...</p>
+                        </div>`;
+                }
+        
+                showError() {
+                    this.#container.innerHTML = `
+                        <div class="text-center mt-10 text-red-500 fade-in">
+                            <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
+                            <p>Veri yüklenemedi. Bağlantınızı kontrol edin.</p>
+                            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm font-bold">Tekrar Dene</button>
+                        </div>`;
+                }
+        
+                renderSchedule(groupedData) {
+                    requestAnimationFrame(() => {
+                        this.#container.innerHTML = '';
+                        const weeks = Object.keys(groupedData).reverse();
+                        
+                        if (weeks.length === 0) {
+                            this.#container.appendChild(this.#clone('empty'));
+                            return;
+                        }
+        
+                        const fragment = document.createDocumentFragment();
+                        
+                        weeks.forEach((week, index) => {
+                            const section = this.#clone('week');
+                            const sectionEl = section.querySelector('section');
+                            const header = sectionEl.querySelector('.week-header');
+                            const content = sectionEl.querySelector('.week-content');
+                            const icon = header.querySelector('[data-slot="toggle-icon"]');
+        
+                            this.#setText(section, '[data-slot="week-title"]', week);
+                            
+                            // İçerik oluştur
+                            groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
+        
+                            // İlk haftayı varsayılan olarak açık bırak
+                            if (index === 0) {
+                                content.classList.remove(CONFIG.CLASSES.hidden);
+                                icon.classList.add(CONFIG.CLASSES.rotate);
+                                header.setAttribute('aria-expanded', 'true');
+                            }
+                            
+                            fragment.appendChild(section);
+                        });
+        
+                        this.#container.appendChild(fragment);
+                        
+                        // EVENT DELEGATION: Senior Dokunuşu
+                        // 50 tane event listener yerine container üzerinde tek bir listener.
+                        this.#container.onclick = (e) => {
+                            const header = e.target.closest('.week-header');
+                            if (!header) return;
+                            
+                            const section = header.parentElement;
+                            const content = section.querySelector('.week-content');
+                            const icon = header.querySelector('[data-slot="toggle-icon"]');
+                            const isHidden = content.classList.contains(CONFIG.CLASSES.hidden);
+        
+                            content.classList.toggle(CONFIG.CLASSES.hidden);
+                            icon.classList.toggle(CONFIG.CLASSES.rotate);
+                            header.setAttribute('aria-expanded', isHidden);
+                        };
+                    });
+                }
+        
+                renderFiltered(list) {
+                    requestAnimationFrame(() => {
+                        this.#container.innerHTML = '';
+                        // Event delegation'ı temizle (arama modunda gerek yok)
+                        this.#container.onclick = null; 
+        
+                        if (!list?.length) {
+                            this.#container.appendChild(this.#clone('empty'));
+                            return;
+                        }
+        
+                        const sortedList = [...list].sort((a, b) => b.timestamp - a.timestamp);
+                        const fragment = document.createDocumentFragment();
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'p-2 fade-in';
+                        
+                        sortedList.forEach(item => wrapper.appendChild(this.#createCard(item, true)));
+                        fragment.appendChild(wrapper);
+                        this.#container.appendChild(fragment);
+                    });
+                }
+        
+                renderMenu(items) {
+                    const menu = document.getElementById('menu-quran');
+                    if (!menu) return;
+                    
+                    const fragment = document.createDocumentFragment();
+                    items.forEach(note => {
+                        const node = this.#clone('menuItem');
+                        const a = node.querySelector('a');
+                        a.href = note.url;
+                        
+                        this.#setText(node, '[data-slot="text"]', note.name);
+                        
+                        const isAudio = note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not");
+                        node.querySelector('[data-slot="icon"]').classList.add(isAudio ? "fa-file-audio" : "fa-file-lines");
+                        
+                        fragment.appendChild(node);
+                    });
+                    menu.innerHTML = '';
+                    menu.appendChild(fragment);
+                }
+            }
+        
+            /**
+             * Tema Yönetimi
+             */
+            class ThemeManager {
+                constructor() {
+                    this.html = document.documentElement;
+                    this.btn = document.getElementById('btn-theme-toggle');
+                    this.icon = this.btn?.querySelector('i');
+                    if(this.btn) this.init();
+                }
+        
+                init() {
+                    const local = localStorage.getItem('theme');
+                    const sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const isDark = local === 'dark' || (!local && sys);
+                    this.apply(isDark);
+                    
+                    this.btn.addEventListener('click', () => {
+                        const isCurrentDark = this.html.classList.contains('dark');
+                        this.apply(!isCurrentDark);
+                    });
+                }
+        
+                apply(isDark) {
+                    this.html.classList.toggle('dark', isDark);
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    if (this.icon) {
+                        this.icon.className = isDark 
+                            ? 'fa-solid fa-sun text-white text-xs' 
+                            : 'fa-solid fa-moon text-white text-xs';
+                    }
+                }
+            }
+        
+            /**
+             * Ana Uygulama Kontrolcüsü
+             */
+            class App {
+                #dataManager; 
+                #renderer; 
+                #themeManager; 
+                #searchTimer;
+        
+                constructor() {
+                    this.#dataManager = new DataManager();
+                    this.#renderer = new Renderer();
+                    this.#themeManager = new ThemeManager();
+                }
+        
+                async init() {
+                    this.#renderer.renderMenu(this.#dataManager.resources);
+                    this.#setupDropdown();
+                    this.#bindSearch();
+        
+                    // Stale-While-Revalidate Stratejisi
+                    const cachedData = this.#dataManager.loadFromCache();
+                    let isCachedDisplayed = false;
+        
+                    if (cachedData && Object.keys(cachedData).length > 0) {
+                        this.#renderer.renderSchedule(cachedData);
+                        isCachedDisplayed = true;
+                    } else {
+                        this.#renderer.showLoading();
+                    }
+        
+                    const freshData = await this.#dataManager.fetchFreshData();
+        
+                    if (freshData) {
+                        const hasChanges = JSON.stringify(cachedData || {}) !== JSON.stringify(freshData);
+                        if (hasChanges || !isCachedDisplayed) {
+                            console.log(isCachedDisplayed ? "Veri güncellendi." : "Veri yüklendi.");
+                            this.#dataManager.saveToCache(freshData);
+                            this.#renderer.renderSchedule(freshData);
+                        }
+                    } else if (!isCachedDisplayed) {
+                        this.#renderer.showError();
+                    }
+                }
+        
+                #bindSearch() {
+                    const input = document.getElementById('input-search');
+                    if (!input) return;
+        
+                    // Event listener duplication önlemek için
+                    const newInfo = input.cloneNode(true);
+                    input.parentNode.replaceChild(newInfo, input);
+        
+                    newInfo.addEventListener('input', (e) => {
+                        clearTimeout(this.#searchTimer);
+                        const query = e.target.value.trim();
+                        
+                        this.#searchTimer = setTimeout(() => {
+                            if (query) {
+                                const results = this.#dataManager.search(query);
+                                this.#renderer.renderFiltered(results);
+                            } else {
+                                this.#renderer.renderSchedule(this.#dataManager.groupedData);
+                            }
+                        }, CONFIG.SEARCH_DEBOUNCE_MS);
+                    });
+                }
+        
+                #setupDropdown() {
+                    const btn = document.getElementById('btn-quran-menu');
+                    const menu = document.getElementById('menu-quran');
+                    if (!btn || !menu) return;
+        
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    const icon = newBtn.querySelector('.fa-chevron-down');
+        
+                    let isOpen = false;
+        
+                    const toggle = (forceState) => {
+                        isOpen = forceState !== undefined ? forceState : !isOpen;
+                        
+                        if (isOpen) {
+                            menu.classList.remove(CONFIG.CLASSES.hidden);
+                            requestAnimationFrame(() => {
+                                menu.classList.remove(...CONFIG.CLASSES.menuOut);
+                                menu.classList.add(...CONFIG.CLASSES.menuIn);
+                                icon.classList.add(CONFIG.CLASSES.rotate);
+                            });
+                            newBtn.setAttribute('aria-expanded', 'true');
+                        } else {
+                            menu.classList.remove(...CONFIG.CLASSES.menuIn);
+                            menu.classList.add(...CONFIG.CLASSES.menuOut);
+                            icon.classList.remove(CONFIG.CLASSES.rotate);
+                            newBtn.setAttribute('aria-expanded', 'false');
+                            setTimeout(() => {
+                                // Eğer bu süre içinde tekrar açılmadıysa hidden yap
+                                if(!isOpen) menu.classList.add(CONFIG.CLASSES.hidden);
+                            }, 200);
+                        }
+                    };
+        
+                    newBtn.addEventListener('click', (e) => { 
+                        e.stopPropagation(); 
+                        toggle(); 
+                    });
+        
+                    document.addEventListener('click', (e) => {
+                        if (isOpen && !newBtn.contains(e.target) && !menu.contains(e.target)) {
+                            toggle(false);
+                        }
+                    });
+                }
+            }
+        
+            // Uygulamayı Başlat
+            document.addEventListener('DOMContentLoaded', () => new App().init());
+        
+        })();
+    </script>
 </body>
 </html>
+
