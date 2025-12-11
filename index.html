@@ -184,7 +184,7 @@
 
         const CONFIG = {
             csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?gid=942881775&single=true&output=csv',
-            cacheKey: 'ders_programi_v5_unlimited', // Tarih kontrolü kaldırılmış versiyon
+            cacheKey: 'ders_programi_v6_fix',
             classes: {
                 hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
                 menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
@@ -283,7 +283,6 @@
                     if (!raw) return null;
                     const parsed = JSON.parse(raw);
                     if (!parsed) return null;
-                    
                     this.groupedData = parsed;
                     return parsed;
                 } catch (e) {
@@ -294,8 +293,7 @@
 
             async fetchFreshData() {
                 try {
-                    // CACHE-BUSTING: URL sonuna rastgele sayı ekleyerek 
-                    // tarayıcının ve Google'ın önbelleğini deliyoruz.
+                    // Cache'i tamamen delmek için
                     const randomId = Math.floor(Math.random() * 9999999);
                     const cacheBusterUrl = `${CONFIG.csvUrl}&_t=${Date.now()}&_r=${randomId}`;
                     
@@ -343,23 +341,19 @@
                 }
             }
 
-            // GÜVENLİ GÜNCELLEME V5 (Sadece İçerik Kontrolü)
-            // Tarih kontrolü kaldırıldı. Eğer içerik string olarak farklıysa
-            // bu bir güncellemedir ve ekrana basılmalıdır.
-            shouldUpdate(newData) {
-                if (!newData) return false;
-                
-                const oldJson = JSON.stringify(this.groupedData);
-                const newJson = JSON.stringify(newData);
-
-                // Eğer veri değiştiyse (virgül bile olsa) güncelle
-                if (oldJson !== newJson) {
-                    this.groupedData = newData;
-                    localStorage.setItem(CONFIG.cacheKey, newJson);
+            // GÜVENLİ KAYIT
+            saveToCache(data) {
+                try {
+                    const str = JSON.stringify(data);
+                    // Doluluk hatasını önlemek için önce sil
+                    localStorage.removeItem(CONFIG.cacheKey); 
+                    localStorage.setItem(CONFIG.cacheKey, str);
+                    this.groupedData = data;
                     return true;
+                } catch (e) {
+                    console.error("Cache save failed:", e);
+                    return false;
                 }
-                
-                return false;
             }
 
             get resources() { return EXTRA_RESOURCES; }
@@ -553,7 +547,7 @@
                 this.#setupDropdown();
                 this.#bindSearch();
 
-                // 1. ÖNBELLEK: Hemen göster
+                // 1. CACHE'DEN OKU VE BAS
                 const cachedData = this.#dataManager.loadFromCache();
                 let hasCache = false;
                 if (cachedData && Object.keys(cachedData).length > 0) {
@@ -563,12 +557,19 @@
                     this.#renderer.showLoading();
                 }
 
-                // 2. NETWORK: Taze veriyi çek
+                // 2. İNTERNETTEN OKU
                 const freshData = await this.#dataManager.fetchFreshData();
                 
-                // 3. GÜNCELLEME: Eğer içerik (text) değiştiyse hemen bas
+                // 3. KARŞILAŞTIR
                 if (freshData) {
-                    if (this.#dataManager.shouldUpdate(freshData)) {
+                    const oldJson = JSON.stringify(cachedData || {});
+                    const newJson = JSON.stringify(freshData);
+
+                    // EĞER VERİ FARKLIYSA (Her türlü değişikliği kabul et)
+                    if (oldJson !== newJson) {
+                        // ÖNCE KAYDET (Garantile)
+                        this.#dataManager.saveToCache(freshData);
+                        // SONRA ÇİZ
                         this.#renderer.renderSchedule(freshData);
                     }
                 } else if (!hasCache) {
