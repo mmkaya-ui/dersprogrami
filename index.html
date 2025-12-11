@@ -19,6 +19,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Added SheetJS for Excel parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 tailwind.config = {
 darkMode: 'class',
@@ -161,7 +163,8 @@ biz2004571@gmail.com
 if (window.DERS_PROGRAMI_APP_LOADED) return;
 window.DERS_PROGRAMI_APP_LOADED = true;
 const CONFIG = {
-csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?gid=942881775&single=true&output=csv',
+// Updated to fetch XLSX output instead of CSV
+csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
 classes: {
 hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
 menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
@@ -218,41 +221,17 @@ return new Date(year, monthIndex, day, hour, minute).getTime();
 } catch (e) { return 0; }
 }
 };
-function parseCSV(text) {
-const rows = [];
-let row = [];
-let cursor = 0;
-let inQuote = false;
-let currentToken = '';
-text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-while (cursor < text.length) {
-const char = text[cursor];
-const nextChar = text[cursor + 1];
-if (inQuote) {
-if (char === '"') {
-if (nextChar === '"') { currentToken += '"'; cursor++; }
-else { inQuote = false; }
-} else { currentToken += char; }
-} else {
-if (char === '"') { inQuote = true; }
-else if (char === ',') { row.push(currentToken.trim()); currentToken = ''; }
-else if (char === '\n') { row.push(currentToken.trim()); rows.push(row); row = []; currentToken = ''; }
-else { currentToken += char; }
-}
-cursor++;
-}
-if (currentToken || row.length) { row.push(currentToken.trim()); rows.push(row); }
-return rows.slice(1);
-}
+// Removed manual parseCSV function as SheetJS handles parsing
 class DataManager {
 constructor() {
 this.groupedData = {};
 }
-// Cache metodları silindi (loadFromCache, saveToCache)
+// Cache methods removed as requested previously
 async fetchFreshData() {
 try {
 const randomId = Math.floor(Math.random() * 9999999);
 const cacheBusterUrl = `${CONFIG.csvUrl}&_t=${Date.now()}&_r=${randomId}`;
+// Fetch arrayBuffer for XLS data
 const response = await fetch(cacheBusterUrl, {
 cache: 'no-store',
 headers: {
@@ -262,11 +241,16 @@ headers: {
 });
 if (!response.ok) throw new Error('Network error');
 const buffer = await response.arrayBuffer();
-const decoder = new TextDecoder('utf-8');
-const csvText = decoder.decode(buffer);
-const rows = parseCSV(csvText);
-const processed = rows.map(cols => {
-const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
+// Parse using SheetJS (XLSX)
+const workbook = XLSX.read(buffer, { type: 'array' });
+const firstSheetName = workbook.SheetNames[0];
+const worksheet = workbook.Sheets[firstSheetName];
+// Convert sheet to JSON array of arrays (header: 1 gives row arrays)
+// raw: false ensures everything comes back as formatted text (dates, numbers)
+const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+// Slice(1) to skip header, similar to previous CSV logic
+const processed = rows.slice(1).map(cols => {
+const clean = (val) => (val !== null && val !== undefined) ? String(val).trim() : '';
 const item = {
 week: clean(cols[0]), date: clean(cols[1]), day: clean(cols[2]),
 time: clean(cols[3]), subject: clean(cols[4]), speaker: clean(cols[5]),
@@ -283,7 +267,7 @@ const newGroupedData = processed.reduce((acc, item) => {
 (acc[item.week] = acc[item.week] || []).push(item);
 return acc;
 }, {});
-// Veriyi memory'e kaydet (arama için gerekli)
+// Save to memory
 this.groupedData = newGroupedData;
 return newGroupedData;
 } catch (error) {
