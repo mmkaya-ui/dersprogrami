@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Ders Programı">
-    <meta name="apple-mobile-web-app-title" content="Ders Programı">
     <meta name="format-detection" content="telephone=no">
 
     <title>Ders Programı ve Notlar</title>
@@ -77,7 +76,6 @@
                         <span data-slot="speaker"></span>
                     </p>
                 </div>
-                
                 <div class="flex flex-col items-end gap-1 shrink-0">
                     <time data-slot="time" class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
                     <a href="http://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
@@ -177,7 +175,12 @@
         'use strict';
 
         const CONFIG = {
+            // CSV URL değişmedi
             csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?gid=942881775&single=true&output=csv',
+            
+            // YENİ ÖNBELLEK ANAHTARI (Eski bozuk cache'leri çöpe atar)
+            cacheKey: 'ders_programi_v3_final',
+            
             classes: {
                 hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
                 menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
@@ -186,8 +189,7 @@
             },
             months: { 'ocak':0, 'subat':1, 'mart':2, 'nisan':3, 'mayis':4, 'haziran':5, 'temmuz':6, 'agustos':7, 'eylul':8, 'ekim':9, 'kasim':10, 'aralik':11 },
             searchDebounce: 150,
-            joinToleranceMinutes: 120,
-            cacheKey: 'ders_programi_data_v2'
+            joinToleranceMinutes: 120
         };
 
         const EXTRA_RESOURCES = [
@@ -207,7 +209,7 @@
             { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
         ];
 
-        // --- UTILS ---
+        // --- YARDIMCI METOTLAR ---
         const normalizeText = (() => {
             const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
             return (val) => {
@@ -244,7 +246,6 @@
             }
         };
 
-        // Advanced CSV Parser
         function parseCSV(text) {
             const rows = [];
             let row = [];
@@ -279,71 +280,105 @@
             return rows.slice(1);
         }
 
-        // --- DATA LAYER ---
-        class DataService {
-            #processedSchedule = [];
-            
-            async fetchWithRetry(url, retries = 2, delay = 1000) {
-                for (let i = 0; i <= retries; i++) {
-                    try {
-                        const controller = new AbortController();
-                        const id = setTimeout(() => controller.abort(), 8000); 
-                        const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
-                        clearTimeout(id);
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                        return await res.arrayBuffer();
-                    } catch (err) {
-                        if (i === retries) throw err;
-                        await new Promise(r => setTimeout(r, delay * (i + 1)));
-                    }
+        // --- VERİ VE CACHE YÖNETİCİSİ (SIFIRDAN YAZILDI) ---
+        class DataManager {
+            constructor() {
+                this.groupedData = {};
+            }
+
+            // 1. ADIM: Güvenli Cache Okuma
+            loadFromCache() {
+                try {
+                    const raw = localStorage.getItem(CONFIG.cacheKey);
+                    if (!raw) return null;
+                    const parsed = JSON.parse(raw);
+                    // Veri bozuksa null dön
+                    if (!parsed || typeof parsed !== 'object') return null;
+                    this.groupedData = parsed;
+                    return parsed;
+                } catch (e) {
+                    // Hata varsa temizle
+                    localStorage.removeItem(CONFIG.cacheKey);
+                    return null;
                 }
             }
 
-            async loadData() {
+            // 2. ADIM: İnternetten Taze Veri Çekme (Agresif Cache Delici)
+            async fetchFreshData() {
                 try {
-                    const buffer = await this.fetchWithRetry(CONFIG.csvUrl);
-                    const decoder = new TextDecoder('utf-8'); 
+                    // Tarayıcının eski dosyayı vermesini engellemek için
+                    // URL sonuna rastgele sayı ve zaman ekliyoruz.
+                    // Google Sheets'in kendisi bazen 5dk gecikmeli gelir ama
+                    // tarayıcı cache'i bu yöntemle %100 aşılır.
+                    const randomId = Math.floor(Math.random() * 999999);
+                    const cacheBusterUrl = `${CONFIG.csvUrl}&_t=${Date.now()}&_r=${randomId}`;
+
+                    const response = await fetch(cacheBusterUrl, { 
+                        cache: 'no-store', // HTTP seviyesinde cache engelle
+                        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                    });
+
+                    if (!response.ok) throw new Error('Network error');
+
+                    const buffer = await response.arrayBuffer();
+                    const decoder = new TextDecoder('utf-8');
                     const csvText = decoder.decode(buffer);
-                    
+
+                    // CSV İşleme
                     const rows = parseCSV(csvText);
-                    this.#processedSchedule = rows.map(cols => {
+                    const processed = rows.map(cols => {
                         const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
                         const item = {
                             week: clean(cols[0]), date: clean(cols[1]), day: clean(cols[2]),
                             time: clean(cols[3]), subject: clean(cols[4]), speaker: clean(cols[5]),
                             link1: clean(cols[6]), link2: clean(cols[7])
                         };
-                        const ts = DateProcessor.parseTimestamp(item.date, item.time);
                         return {
                             ...item,
-                            timestamp: ts,
+                            timestamp: DateProcessor.parseTimestamp(item.date, item.time),
                             searchIndex: normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
                         };
                     }).filter(item => item.subject);
 
-                    const grouped = this.#processedSchedule.reduce((acc, item) => {
+                    const newGroupedData = processed.reduce((acc, item) => {
                         (acc[item.week] = acc[item.week] || []).push(item);
                         return acc;
                     }, {});
 
-                    return { success: true, data: grouped };
+                    return newGroupedData;
+
                 } catch (error) {
-                    console.error("Data load error:", error);
-                    return { error: true };
+                    console.error("Fetch failed:", error);
+                    return null; // Başarısız olursa null dön
                 }
             }
 
+            // 3. ADIM: Akıllı Güncelleme (Derin Kontrol)
+            shouldUpdate(newData) {
+                if (!newData) return false;
+                const oldJson = JSON.stringify(this.groupedData);
+                const newJson = JSON.stringify(newData);
+                
+                if (oldJson !== newJson) {
+                    this.groupedData = newData;
+                    // Yeni veriyi temizce kaydet
+                    localStorage.setItem(CONFIG.cacheKey, newJson);
+                    return true;
+                }
+                return false;
+            }
+
             get resources() { return EXTRA_RESOURCES; }
-            
-            search(query, data) {
-                if (!query) return null;
-                const normalizedQuery = normalizeText(query);
-                const flatData = Object.values(data).flat();
-                return flatData.filter(item => item.searchIndex.includes(normalizedQuery));
+
+            search(query) {
+                if (!query) return [];
+                const normQ = normalizeText(query);
+                const flat = Object.values(this.groupedData).flat();
+                return flat.filter(item => item.searchIndex.includes(normQ));
             }
         }
 
-        // --- UI ---
+        // --- UI RENDERER (Görsel İşler) ---
         class Renderer {
             #container; #templates;
             constructor() {
@@ -371,7 +406,10 @@
 
                 const joinBtn = node.querySelector('[data-slot="join-btn"]');
                 if (joinBtn) {
-                    if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
+                    // Katıl butonu zaman kontrolü
+                    if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
+                        joinBtn.remove();
+                    }
                 }
 
                 if (showWeekBadge) {
@@ -421,6 +459,7 @@
             }
 
             renderSchedule(groupedData) {
+                // UI bloklamadan çizim (requestAnimationFrame)
                 requestAnimationFrame(() => {
                     this.#container.innerHTML = '';
                     const weeks = Object.keys(groupedData).reverse();
@@ -441,12 +480,14 @@
                         section.querySelector('[data-slot="week-title"]').textContent = week;
                         groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
 
+                        // İlk haftayı açık yap
                         if (index === 0) {
                             content.classList.remove(CONFIG.classes.hidden);
                             icon.classList.add(CONFIG.classes.rotate);
                             header.setAttribute('aria-expanded', 'true');
                         }
 
+                        // Akordeon mantığı
                         header.addEventListener('click', () => {
                             const isHidden = content.classList.contains(CONFIG.classes.hidden);
                             content.classList.toggle(CONFIG.classes.hidden);
@@ -515,53 +556,44 @@
             }
         }
 
-        // --- APP CORE ---
+        // --- ANA UYGULAMA (APP) ---
         class App {
-            #dataService; #renderer; #themeManager; #searchTimer; #currentData;
+            #dataManager; #renderer; #themeManager; #searchTimer;
 
             constructor() {
-                this.#dataService = new DataService();
+                this.#dataManager = new DataManager();
                 this.#renderer = new Renderer();
                 this.#themeManager = new ThemeManager();
             }
 
             async init() {
-                this.#renderer.renderMenu(this.#dataService.resources);
+                this.#renderer.renderMenu(this.#dataManager.resources);
                 this.#setupDropdown();
                 this.#bindSearch();
 
-                // 1. ÖNBELLEK: Anında yükle
-                const cachedRaw = localStorage.getItem(CONFIG.cacheKey);
+                // 1. ÖNBELLEK: Varsa hemen göster (0 bekleme)
+                const cachedData = this.#dataManager.loadFromCache();
                 let hasCache = false;
-                if (cachedRaw) {
-                    try {
-                        this.#currentData = JSON.parse(cachedRaw);
-                        if (Object.keys(this.#currentData).length > 0) {
-                            this.#renderer.renderSchedule(this.#currentData);
-                            hasCache = true;
-                        }
-                    } catch (e) { console.error("Cache corrupted"); }
+                
+                if (cachedData && Object.keys(cachedData).length > 0) {
+                    this.#renderer.renderSchedule(cachedData);
+                    hasCache = true;
+                } else {
+                    this.#renderer.showLoading();
                 }
 
-                if (!hasCache) this.#renderer.showLoading();
+                // 2. NETWORK: Arka planda tazesini çek
+                const freshData = await this.#dataManager.fetchFreshData();
 
-                // 2. AĞ: Arka planda güncelle
-                const result = await this.#dataService.loadData();
-                
-                if (result.success) {
-                    // DEEP EQUALITY CHECK (Titremeyi engelleyen asıl çözüm)
-                    // Gelen veri şu an ekrandakiyle birebir aynı mı?
-                    const currentJson = JSON.stringify(this.#currentData);
-                    const newJson = JSON.stringify(result.data);
-
-                    if (currentJson !== newJson) {
-                        // Sadece veri gerçekten değişmişse ekranı güncelle
-                        this.#currentData = result.data;
-                        this.#renderer.renderSchedule(this.#currentData);
-                        localStorage.setItem(CONFIG.cacheKey, newJson);
+                if (freshData) {
+                    // Veri geldi, peki ekrandakiyle farklı mı?
+                    if (this.#dataManager.shouldUpdate(freshData)) {
+                        // Evet farklı, o zaman ekranı yenile
+                        this.#renderer.renderSchedule(freshData);
                     }
-                    // Veri aynıysa HİÇBİR ŞEY yapma (Sıfır titreme)
+                    // Hayır aynı, ekrana dokunma (Titreme yok)
                 } else if (!hasCache) {
+                    // Hem cache yok hem internet yoksa hata göster
                     this.#renderer.showError();
                 }
             }
@@ -578,10 +610,10 @@
                     const query = e.target.value.trim();
                     this.#searchTimer = setTimeout(() => {
                         if (query) {
-                            const results = this.#dataService.search(query, this.#currentData);
+                            const results = this.#dataManager.search(query);
                             this.#renderer.renderFiltered(results);
                         } else {
-                            this.#renderer.renderSchedule(this.#currentData);
+                            this.#renderer.renderSchedule(this.#dataManager.groupedData);
                         }
                     }, CONFIG.searchDebounce);
                 });
