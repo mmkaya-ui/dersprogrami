@@ -187,7 +187,8 @@
                 btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
             },
             months: { 'Ocak':0, 'Şubat':1, 'Mart':2, 'Nisan':3, 'Mayıs':4, 'Haziran':5, 'Temmuz':6, 'Ağustos':7, 'Eylül':8, 'Ekim':9, 'Kasım':10, 'Aralık':11 },
-            searchDebounce: 250
+            searchDebounce: 250,
+            joinToleranceMinutes: 120 // Katıl butonu için 2 saat tolerans
         };
 
         // Türkçe Normalizasyon (İ/ı sorununu çözen sağlam fonksiyon)
@@ -208,7 +209,13 @@
                     const [hour, minute] = timeStr.trim().split(':');
                     const monthIndex = CONSTANTS.months[monthName];
                     const now = new Date();
-                    return new Date(now.getFullYear(), monthIndex, parseInt(day), parseInt(hour), parseInt(minute)).getTime();
+                    return new Date(
+                        now.getFullYear(),
+                        monthIndex,
+                        parseInt(day),
+                        parseInt(hour),
+                        parseInt(minute)
+                    ).getTime();
                 } catch { return 0; }
             }
         };
@@ -382,7 +389,14 @@
                 node.querySelector('[data-slot="time"]').textContent = time;
 
                 const joinBtn = node.querySelector('[data-slot="join-btn"]');
-                if (joinBtn && (Date.now() > timestamp)) joinBtn.remove();
+
+                // 2 saatlik tolerans (dakika bazlı ayarlı)
+                const toleranceMs = (CONSTANTS.joinToleranceMinutes || 0) * 60 * 1000;
+
+                // Şu anki zaman > (ders saati + tolerans) ise butonu kaldır
+                if (joinBtn && (Date.now() > (timestamp + toleranceMs))) {
+                    joinBtn.remove();
+                }
 
                 if (showWeekBadge) {
                     const badge = node.querySelector('[data-slot="week-badge"]');
