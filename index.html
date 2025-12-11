@@ -549,21 +549,24 @@
                 // 1. Menüyü render et
                 this.#renderer.renderMenu(this.#dataService.resources);
                 
-                // 2. HIZLI AÇILIŞ: Önbellekte (localStorage) veri varsa hemen göster
-                // Bu sayede kullanıcı "Yükleniyor..." yazısını hiç görmez.
+                // 2. Olay Dinleyicilerini (Arama kutusu vb.) BAŞTA bir kere tanımla
+                // Böylece veri her güncellendiğinde tekrar tekrar tanımlanmaz.
+                this.#bindEvents();
+
+                // 3. ÖNBELLEK KONTROLÜ
                 const cachedData = localStorage.getItem('ders_programi_v1');
                 let hasCache = false;
 
                 if (cachedData) {
                     try {
                         const parsedData = JSON.parse(cachedData);
-                        // Eğer önbellek boş değilse ekrana bas
                         if (Object.keys(parsedData).length > 0) {
+                            // Önbellekteki veriyi sessizce bas
                             this.#renderer.renderSchedule(parsedData);
                             hasCache = true;
                         }
                     } catch (e) {
-                        console.error("Önbellek okuma hatası", e);
+                        console.error("Önbellek hatası", e);
                     }
                 }
 
@@ -572,21 +575,24 @@
                     this.#renderer.showLoading();
                 }
 
-                // 3. ARKA PLAN: Güncel veriyi internetten çek
+                // 4. ARKA PLANDA GÜNCEL VERİYİ ÇEK
                 const success = await this.#dataService.loadData();
                 
                 if (success) {
                     const freshData = this.#dataService.groupedSchedule;
-                    
-                    // Veriyi ekrana bas (Güncelle)
-                    this.#renderer.renderSchedule(freshData);
-                    
-                    // Veriyi telefona/tarayıcıya kaydet (Bir sonraki giriş için)
-                    localStorage.setItem('ders_programi_v1', JSON.stringify(freshData));
-                    
-                    this.#bindEvents();
+                    const freshJson = JSON.stringify(freshData);
+
+                    // --- KRİTİK DÜZELTME ---
+                    // Eğer internetten gelen veri, ekrandaki (önbellek) veri ile AYNIYSA
+                    // ekranı tekrar çizme. Bu sayede "titreme" veya "iki kere yükleme" olmaz.
+                    if (cachedData !== freshJson) {
+                        this.#renderer.renderSchedule(freshData);
+                        localStorage.setItem('ders_programi_v1', freshJson);
+                    } else {
+                        console.log("Veri güncel, ekran yenilenmedi.");
+                    }
                 } else {
-                    // Veri çekilemediyse ve ekranda önbellek de yoksa hata göster
+                    // Veri çekilemedi ve önbellek de yoksa hata göster
                     if (!hasCache) {
                         this.#renderer.showError();
                     }
@@ -595,8 +601,10 @@
 
             #bindEvents() {
                 const searchInput = document.getElementById('input-search');
-                // Arama kutusunu temizle ve yeniden olay dinleyicisi ekle (tekrar eklenmesini önlemek için)
+                
+                // Arama kutusu için dinleyici (Sadece 1 kere eklenir)
                 if (searchInput) {
+                    // Eski listenerları temizlemek için clone hack'i
                     const newSearch = searchInput.cloneNode(true);
                     searchInput.parentNode.replaceChild(newSearch, searchInput);
                     
@@ -604,6 +612,7 @@
                         clearTimeout(this.#searchTimer);
                         const val = e.target.value.trim();
                         this.#searchTimer = setTimeout(() => {
+                            // Arama yapılırken önbellek/yeni veri fark etmez, o anki veride arar
                             val ? this.#renderer.renderFiltered(this.#dataService.search(val))
                                 : this.#renderer.renderSchedule(this.#dataService.groupedSchedule);
                         }, CONFIG.searchDebounce);
@@ -618,7 +627,6 @@
                 const menu = document.getElementById('menu-quran');
                 if (!btn || !menu) return;
 
-                // Eski event listenerları temizlemek için klonlama
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
                 
