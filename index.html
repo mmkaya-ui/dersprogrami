@@ -162,7 +162,7 @@ if (window.DERS_PROGRAMI_APP_LOADED) return;
 window.DERS_PROGRAMI_APP_LOADED = true;
 const CONFIG = {
 csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?gid=942881775&single=true&output=csv',
-cacheKey: 'ders_programi_v7_stable',
+cacheKey: 'ders_programi_v6_fix',
 classes: {
 hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
 menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
@@ -248,22 +248,17 @@ return rows.slice(1);
 class DataManager {
 constructor() {
 this.groupedData = {};
-this._isUpdating = false;
 }
 loadFromCache() {
 try {
 const raw = localStorage.getItem(CONFIG.cacheKey);
 if (!raw) return null;
 const parsed = JSON.parse(raw);
-if (!parsed || typeof parsed !== 'object') return null;
-// Deep clone ile referans karmaşasını önle
-this.groupedData = JSON.parse(JSON.stringify(parsed));
-return this.groupedData;
+if (!parsed) return null;
+this.groupedData = parsed;
+return parsed;
 } catch (e) {
-console.error('Cache load error:', e);
-try {
 localStorage.removeItem(CONFIG.cacheKey);
-} catch {}
 return null;
 }
 }
@@ -307,34 +302,18 @@ console.error("Fetch failed:", error);
 return null;
 }
 }
-// Atomik kayıt - removeItem kaldırıldı
 saveToCache(data) {
-if (this._isUpdating) {
-console.warn('Update already in progress');
-return false;
-}
-this._isUpdating = true;
+// DÜZELTME: Hafızayı (this.groupedData) HER ZAMAN güncelle.
+// localStorage hata verse bile uygulama doğru çalışmalı.
+this.groupedData = data;
 try {
 const str = JSON.stringify(data);
-// Direkt setItem - atomik işlem
+localStorage.removeItem(CONFIG.cacheKey);
 localStorage.setItem(CONFIG.cacheKey, str);
-// Deep clone ile referans karmaşasını önle
-this.groupedData = JSON.parse(JSON.stringify(data));
 return true;
 } catch (e) {
-console.error("Cache save failed:", e);
-// Rollback
-try {
-const oldData = localStorage.getItem(CONFIG.cacheKey);
-if (oldData) {
-this.groupedData = JSON.parse(oldData);
-}
-} catch (rollbackError) {
-console.error("Rollback failed:", rollbackError);
-}
+console.error("Cache save failed (storage full?):", e);
 return false;
-} finally {
-this._isUpdating = false;
 }
 }
 get resources() { return EXTRA_RESOURCES; }
@@ -507,49 +486,36 @@ this.#themeManager = new ThemeManager();
 async init() {
 this.#renderer.renderMenu(this.#dataManager.resources);
 this.#setupDropdown();
-// Önce loading göster
-this.#renderer.showLoading();
-// Cache'i yükle (ama render etme)
+this.#bindSearch();
 const cachedData = this.#dataManager.loadFromCache();
-// Fresh data çek
+let hasCache = false;
+if (cachedData && Object.keys(cachedData).length > 0) {
+this.#renderer.renderSchedule(cachedData);
+hasCache = true;
+} else {
+this.#renderer.showLoading();
+}
 const freshData = await this.#dataManager.fetchFreshData();
 if (freshData) {
-// Veri karşılaştır
 const oldJson = JSON.stringify(cachedData || {});
 const newJson = JSON.stringify(freshData);
 if (oldJson !== newJson) {
-// Önce kaydet
-const saved = this.#dataManager.saveToCache(freshData);
-if (saved) {
-// Sonra render et
-this.#renderer.renderSchedule(this.#dataManager.groupedData);
+this.#dataManager.saveToCache(freshData);
+this.#renderer.renderSchedule(freshData);
 }
-} else {
-// Veri aynı, mevcut data'yı render et
-this.#renderer.renderSchedule(this.#dataManager.groupedData);
-}
-} else if (cachedData && Object.keys(cachedData).length > 0) {
-// Fresh data çekilemedi, cache'i kullan
-this.#renderer.renderSchedule(cachedData);
-} else {
-// Hiç veri yok
+} else if (!hasCache) {
 this.#renderer.showError();
 }
-// Render tamamlandıktan SONRA search'i kur
-await new Promise(resolve => setTimeout(resolve, 100));
-this.#bindSearch();
 }
 #bindSearch() {
 const input = document.getElementById('input-search');
 if (!input) return;
-const newInput = input.cloneNode(true);
-input.parentNode.replaceChild(newInput, input);
-newInput.addEventListener('input', (e) => {
+const newInfo = input.cloneNode(true);
+input.parentNode.replaceChild(newInfo, input);
+newInfo.addEventListener('input', (e) => {
 clearTimeout(this.#searchTimer);
 const query = e.target.value.trim();
 this.#searchTimer = setTimeout(() => {
-// Update sırasında arama yapma
-if (this.#dataManager._isUpdating) return;
 if (query) {
 const results = this.#dataManager.search(query);
 this.#renderer.renderFiltered(results);
