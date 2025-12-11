@@ -163,7 +163,8 @@ biz2004571@gmail.com
 if (window.DERS_PROGRAMI_APP_LOADED) return;
 window.DERS_PROGRAMI_APP_LOADED = true;
 const CONFIG = {
-// Updated to fetch XLSX output instead of CSV
+// Cache Key geri eklendi (XLSX sürümü için yeni versiyon)
+cacheKey: 'ders_programi_v8_xlsx',
 csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
 classes: {
 hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
@@ -221,12 +222,37 @@ return new Date(year, monthIndex, day, hour, minute).getTime();
 } catch (e) { return 0; }
 }
 };
-// Removed manual parseCSV function as SheetJS handles parsing
 class DataManager {
 constructor() {
 this.groupedData = {};
 }
-// Cache methods removed as requested previously
+// Cache metodu: localStorage'dan oku
+loadFromCache() {
+try {
+const raw = localStorage.getItem(CONFIG.cacheKey);
+if (!raw) return null;
+const parsed = JSON.parse(raw);
+if (!parsed) return null;
+this.groupedData = parsed;
+return parsed;
+} catch (e) {
+localStorage.removeItem(CONFIG.cacheKey);
+return null;
+}
+}
+// Cache metodu: localStorage'a yaz
+saveToCache(data) {
+this.groupedData = data;
+try {
+const str = JSON.stringify(data);
+localStorage.removeItem(CONFIG.cacheKey);
+localStorage.setItem(CONFIG.cacheKey, str);
+return true;
+} catch (e) {
+console.error("Cache save failed:", e);
+return false;
+}
+}
 async fetchFreshData() {
 try {
 const randomId = Math.floor(Math.random() * 9999999);
@@ -245,10 +271,9 @@ const buffer = await response.arrayBuffer();
 const workbook = XLSX.read(buffer, { type: 'array' });
 const firstSheetName = workbook.SheetNames[0];
 const worksheet = workbook.Sheets[firstSheetName];
-// Convert sheet to JSON array of arrays (header: 1 gives row arrays)
-// raw: false ensures everything comes back as formatted text (dates, numbers)
+// Convert sheet to JSON array of arrays
 const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-// Slice(1) to skip header, similar to previous CSV logic
+// Slice(1) to skip header
 const processed = rows.slice(1).map(cols => {
 const clean = (val) => (val !== null && val !== undefined) ? String(val).trim() : '';
 const item = {
@@ -267,8 +292,8 @@ const newGroupedData = processed.reduce((acc, item) => {
 (acc[item.week] = acc[item.week] || []).push(item);
 return acc;
 }, {});
-// Save to memory
-this.groupedData = newGroupedData;
+// Note: We return newGroupedData but don't set this.groupedData yet.
+// That decision is made in App.init based on version comparison.
 return newGroupedData;
 } catch (error) {
 console.error("Fetch failed:", error);
@@ -446,14 +471,38 @@ async init() {
 this.#renderer.renderMenu(this.#dataManager.resources);
 this.#setupDropdown();
 this.#bindSearch();
-// 1. Yükleniyor Göster
+// 1. Önce Önbelleği (Varsa) Göster
+const cachedData = this.#dataManager.loadFromCache();
+let isCachedDisplayed = false;
+if (cachedData && Object.keys(cachedData).length > 0) {
+this.#renderer.renderSchedule(cachedData);
+isCachedDisplayed = true;
+} else {
 this.#renderer.showLoading();
-// 2. Doğrudan Taze Veri Çek (Cache yok)
+}
+// 2. Arka Planda Taze Veri Çek
 const freshData = await this.#dataManager.fetchFreshData();
-// 3. Ekrana Bas veya Hata Göster
+// 3. Veri Geldiyse Karşılaştır
 if (freshData) {
+// Eğer önbellek hiç yoktuysa direkt bas ve kaydet
+if (!isCachedDisplayed) {
+this.#dataManager.saveToCache(freshData);
 this.#renderer.renderSchedule(freshData);
 } else {
+// Önbellek vardı, fark var mı diye bak (basit stringify karşılaştırması)
+const cachedStr = JSON.stringify(cachedData || {});
+const freshStr = JSON.stringify(freshData);
+if (cachedStr !== freshStr) {
+// 4. Farklıysa: Önbelleği güncelle ve ekrana bas
+console.log("Veri güncellendi.");
+this.#dataManager.saveToCache(freshData);
+this.#renderer.renderSchedule(freshData);
+} else {
+console.log("Veri güncel.");
+}
+}
+} else if (!isCachedDisplayed) {
+// Önbellek yoktu ve taze veri de çekilemedi
 this.#renderer.showError();
 }
 }
