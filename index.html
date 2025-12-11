@@ -535,29 +535,72 @@
             }
         }
 
-        // -------- ANA UYGULAMA --------
+      // -------- MAIN APP CONTROLLER (GÜNCELLENDİ: ÖNBELLEK EKLENDİ) --------
         class App {
             #dataService; #renderer; #themeManager; #searchTimer;
+
             constructor() {
                 this.#dataService = new DataService();
                 this.#renderer = new Renderer();
                 this.#themeManager = new ThemeManager();
             }
+
             async init() {
+                // 1. Menüyü render et
                 this.#renderer.renderMenu(this.#dataService.resources);
-                this.#renderer.showLoading();
+                
+                // 2. HIZLI AÇILIŞ: Önbellekte (localStorage) veri varsa hemen göster
+                // Bu sayede kullanıcı "Yükleniyor..." yazısını hiç görmez.
+                const cachedData = localStorage.getItem('ders_programi_v1');
+                let hasCache = false;
+
+                if (cachedData) {
+                    try {
+                        const parsedData = JSON.parse(cachedData);
+                        // Eğer önbellek boş değilse ekrana bas
+                        if (Object.keys(parsedData).length > 0) {
+                            this.#renderer.renderSchedule(parsedData);
+                            hasCache = true;
+                        }
+                    } catch (e) {
+                        console.error("Önbellek okuma hatası", e);
+                    }
+                }
+
+                // Eğer önbellek yoksa yükleniyor animasyonunu göster
+                if (!hasCache) {
+                    this.#renderer.showLoading();
+                }
+
+                // 3. ARKA PLAN: Güncel veriyi internetten çek
                 const success = await this.#dataService.loadData();
+                
                 if (success) {
-                    this.#renderer.renderSchedule(this.#dataService.groupedSchedule);
+                    const freshData = this.#dataService.groupedSchedule;
+                    
+                    // Veriyi ekrana bas (Güncelle)
+                    this.#renderer.renderSchedule(freshData);
+                    
+                    // Veriyi telefona/tarayıcıya kaydet (Bir sonraki giriş için)
+                    localStorage.setItem('ders_programi_v1', JSON.stringify(freshData));
+                    
                     this.#bindEvents();
                 } else {
-                    this.#renderer.showError();
+                    // Veri çekilemediyse ve ekranda önbellek de yoksa hata göster
+                    if (!hasCache) {
+                        this.#renderer.showError();
+                    }
                 }
             }
+
             #bindEvents() {
                 const searchInput = document.getElementById('input-search');
+                // Arama kutusunu temizle ve yeniden olay dinleyicisi ekle (tekrar eklenmesini önlemek için)
                 if (searchInput) {
-                    searchInput.addEventListener('input', (e) => {
+                    const newSearch = searchInput.cloneNode(true);
+                    searchInput.parentNode.replaceChild(newSearch, searchInput);
+                    
+                    newSearch.addEventListener('input', (e) => {
                         clearTimeout(this.#searchTimer);
                         const val = e.target.value.trim();
                         this.#searchTimer = setTimeout(() => {
@@ -566,14 +609,22 @@
                         }, CONFIG.searchDebounce);
                     });
                 }
+
                 this.#setupDropdown();
             }
+
             #setupDropdown() {
                 const btn = document.getElementById('btn-quran-menu');
                 const menu = document.getElementById('menu-quran');
                 if (!btn || !menu) return;
-                const icon = btn.querySelector('.fa-chevron-down');
+
+                // Eski event listenerları temizlemek için klonlama
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                
+                const icon = newBtn.querySelector('.fa-chevron-down');
                 let isOpen = false;
+
                 const toggle = (force) => {
                     isOpen = force !== undefined ? force : !isOpen;
                     if (isOpen) {
@@ -583,18 +634,19 @@
                             menu.classList.add(...CONFIG.classes.menuIn);
                             icon.classList.add(CONFIG.classes.rotate);
                         });
-                        btn.setAttribute('aria-expanded', 'true');
+                        newBtn.setAttribute('aria-expanded', 'true');
                     } else {
                         menu.classList.remove(...CONFIG.classes.menuIn);
                         menu.classList.add(...CONFIG.classes.menuOut);
                         icon.classList.remove(CONFIG.classes.rotate);
-                        btn.setAttribute('aria-expanded', 'false');
+                        newBtn.setAttribute('aria-expanded', 'false');
                         setTimeout(() => menu.classList.add(CONFIG.classes.hidden), 200);
                     }
                 };
-                btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+
+                newBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
                 document.addEventListener('click', (e) => {
-                    if (isOpen && !btn.contains(e.target) && !menu.contains(e.target)) toggle(false);
+                    if (isOpen && !newBtn.contains(e.target) && !menu.contains(e.target)) toggle(false);
                 });
             }
         }
