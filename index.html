@@ -174,13 +174,15 @@
     (function () {
         'use strict';
 
+        // ----------------------------------------------------
+        // TEK ÇALIŞMA KİLİDİ (Double-Execution Prevention)
+        // ----------------------------------------------------
+        if (window.DERS_PROGRAMI_APP_LOADED) return;
+        window.DERS_PROGRAMI_APP_LOADED = true;
+
         const CONFIG = {
-            // CSV URL değişmedi
             csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?gid=942881775&single=true&output=csv',
-            
-            // YENİ ÖNBELLEK ANAHTARI (Eski bozuk cache'leri çöpe atar)
-            cacheKey: 'ders_programi_v3_final',
-            
+            cacheKey: 'ders_programi_v4_stable', // V4'e geçtik
             classes: {
                 hidden: 'hidden', rotate: 'rotate-icon', dark: 'dark',
                 menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
@@ -209,7 +211,6 @@
             { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
         ];
 
-        // --- YARDIMCI METOTLAR ---
         const normalizeText = (() => {
             const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
             return (val) => {
@@ -226,21 +227,17 @@
                     const dayMatch = normDate.match(/(\d+)/);
                     if (!dayMatch) return 0;
                     const day = parseInt(dayMatch[1]);
-                    
                     let monthIndex = -1;
                     for (const [key, val] of Object.entries(CONFIG.months)) {
                         if (normDate.includes(key) || normDate.includes(key.substring(0, 3))) { monthIndex = val; break; }
                     }
                     if (monthIndex === -1) return 0;
-
                     const [hour, minute] = normTime.split(':').map(n => parseInt(n) || 0);
                     const now = new Date();
                     let year = now.getFullYear();
                     const currentMonth = now.getMonth();
-
                     if (currentMonth > 8 && monthIndex < 3) year += 1;
                     else if (currentMonth < 3 && monthIndex > 8) year -= 1;
-
                     return new Date(year, monthIndex, day, hour, minute).getTime();
                 } catch (e) { return 0; }
             }
@@ -252,13 +249,10 @@
             let cursor = 0;
             let inQuote = false;
             let currentToken = '';
-            
             text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            
             while (cursor < text.length) {
                 const char = text[cursor];
                 const nextChar = text[cursor + 1];
-
                 if (inQuote) {
                     if (char === '"') {
                         if (nextChar === '"') { currentToken += '"'; cursor++; } 
@@ -267,12 +261,8 @@
                 } else {
                     if (char === '"') { inQuote = true; }
                     else if (char === ',') { row.push(currentToken.trim()); currentToken = ''; }
-                    else if (char === '\n') {
-                        row.push(currentToken.trim());
-                        rows.push(row);
-                        row = [];
-                        currentToken = '';
-                    } else { currentToken += char; }
+                    else if (char === '\n') { row.push(currentToken.trim()); rows.push(row); row = []; currentToken = ''; } 
+                    else { currentToken += char; }
                 }
                 cursor++;
             }
@@ -280,52 +270,45 @@
             return rows.slice(1);
         }
 
-        // --- VERİ VE CACHE YÖNETİCİSİ (SIFIRDAN YAZILDI) ---
         class DataManager {
             constructor() {
                 this.groupedData = {};
+                this.latestTimestamp = 0; // En son dersin zamanı
             }
 
-            // 1. ADIM: Güvenli Cache Okuma
             loadFromCache() {
                 try {
                     const raw = localStorage.getItem(CONFIG.cacheKey);
                     if (!raw) return null;
                     const parsed = JSON.parse(raw);
-                    // Veri bozuksa null dön
-                    if (!parsed || typeof parsed !== 'object') return null;
-                    this.groupedData = parsed;
-                    return parsed;
+                    if (!parsed || !parsed.data) return null;
+                    
+                    this.groupedData = parsed.data;
+                    this.latestTimestamp = parsed.latestTimestamp || 0;
+                    return parsed.data;
                 } catch (e) {
-                    // Hata varsa temizle
                     localStorage.removeItem(CONFIG.cacheKey);
                     return null;
                 }
             }
 
-            // 2. ADIM: İnternetten Taze Veri Çekme (Agresif Cache Delici)
             async fetchFreshData() {
                 try {
-                    // Tarayıcının eski dosyayı vermesini engellemek için
-                    // URL sonuna rastgele sayı ve zaman ekliyoruz.
-                    // Google Sheets'in kendisi bazen 5dk gecikmeli gelir ama
-                    // tarayıcı cache'i bu yöntemle %100 aşılır.
                     const randomId = Math.floor(Math.random() * 999999);
                     const cacheBusterUrl = `${CONFIG.csvUrl}&_t=${Date.now()}&_r=${randomId}`;
-
                     const response = await fetch(cacheBusterUrl, { 
-                        cache: 'no-store', // HTTP seviyesinde cache engelle
+                        cache: 'no-store', 
                         headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
                     });
-
                     if (!response.ok) throw new Error('Network error');
 
                     const buffer = await response.arrayBuffer();
                     const decoder = new TextDecoder('utf-8');
                     const csvText = decoder.decode(buffer);
 
-                    // CSV İşleme
                     const rows = parseCSV(csvText);
+                    let maxTs = 0;
+
                     const processed = rows.map(cols => {
                         const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
                         const item = {
@@ -333,9 +316,12 @@
                             time: clean(cols[3]), subject: clean(cols[4]), speaker: clean(cols[5]),
                             link1: clean(cols[6]), link2: clean(cols[7])
                         };
+                        const ts = DateProcessor.parseTimestamp(item.date, item.time);
+                        if (ts > maxTs) maxTs = ts;
+
                         return {
                             ...item,
-                            timestamp: DateProcessor.parseTimestamp(item.date, item.time),
+                            timestamp: ts,
                             searchIndex: normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
                         };
                     }).filter(item => item.subject);
@@ -345,27 +331,40 @@
                         return acc;
                     }, {});
 
-                    return newGroupedData;
+                    return { data: newGroupedData, latestTimestamp: maxTs };
 
                 } catch (error) {
                     console.error("Fetch failed:", error);
-                    return null; // Başarısız olursa null dön
+                    return null;
                 }
             }
 
-            // 3. ADIM: Akıllı Güncelleme (Derin Kontrol)
-            shouldUpdate(newData) {
-                if (!newData) return false;
-                const oldJson = JSON.stringify(this.groupedData);
-                const newJson = JSON.stringify(newData);
+            // GÜVENLİ GÜNCELLEME (Google Stale Data Protection)
+            shouldUpdate(fetchResult) {
+                if (!fetchResult) return false;
                 
-                if (oldJson !== newJson) {
-                    this.groupedData = newData;
-                    // Yeni veriyi temizce kaydet
-                    localStorage.setItem(CONFIG.cacheKey, newJson);
-                    return true;
+                // 1. İçerik birebir aynıysa güncelleme
+                const oldJson = JSON.stringify(this.groupedData);
+                const newJson = JSON.stringify(fetchResult.data);
+                if (oldJson === newJson) return false;
+
+                // 2. KRİTİK KONTROL: İnternetten gelen veri daha mı ESKİ?
+                // Eğer internetten gelen verinin en son ders tarihi, elimizdeki cacheden küçükse
+                // Google bize eski veri gönderiyor demektir. Yoksay.
+                if (this.latestTimestamp > 0 && fetchResult.latestTimestamp < this.latestTimestamp) {
+                    console.warn("Google eski veri gönderdi, önbellek korundu.");
+                    return false;
                 }
-                return false;
+
+                // Güncelle ve kaydet
+                this.groupedData = fetchResult.data;
+                this.latestTimestamp = fetchResult.latestTimestamp;
+                
+                localStorage.setItem(CONFIG.cacheKey, JSON.stringify({
+                    data: fetchResult.data,
+                    latestTimestamp: fetchResult.latestTimestamp
+                }));
+                return true;
             }
 
             get resources() { return EXTRA_RESOURCES; }
@@ -378,7 +377,6 @@
             }
         }
 
-        // --- UI RENDERER (Görsel İşler) ---
         class Renderer {
             #container; #templates;
             constructor() {
@@ -405,11 +403,8 @@
                 node.querySelector('[data-slot="time"]').textContent = time;
 
                 const joinBtn = node.querySelector('[data-slot="join-btn"]');
-                if (joinBtn) {
-                    // Katıl butonu zaman kontrolü
-                    if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
-                        joinBtn.remove();
-                    }
+                if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
+                    joinBtn.remove();
                 }
 
                 if (showWeekBadge) {
@@ -459,16 +454,13 @@
             }
 
             renderSchedule(groupedData) {
-                // UI bloklamadan çizim (requestAnimationFrame)
                 requestAnimationFrame(() => {
                     this.#container.innerHTML = '';
                     const weeks = Object.keys(groupedData).reverse();
-                    
                     if (weeks.length === 0) {
                         this.#container.appendChild(this.#clone('empty'));
                         return;
                     }
-
                     const fragment = document.createDocumentFragment();
                     weeks.forEach((week, index) => {
                         const section = this.#clone('week');
@@ -480,14 +472,11 @@
                         section.querySelector('[data-slot="week-title"]').textContent = week;
                         groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
 
-                        // İlk haftayı açık yap
                         if (index === 0) {
                             content.classList.remove(CONFIG.classes.hidden);
                             icon.classList.add(CONFIG.classes.rotate);
                             header.setAttribute('aria-expanded', 'true');
                         }
-
-                        // Akordeon mantığı
                         header.addEventListener('click', () => {
                             const isHidden = content.classList.contains(CONFIG.classes.hidden);
                             content.classList.toggle(CONFIG.classes.hidden);
@@ -556,10 +545,8 @@
             }
         }
 
-        // --- ANA UYGULAMA (APP) ---
         class App {
             #dataManager; #renderer; #themeManager; #searchTimer;
-
             constructor() {
                 this.#dataManager = new DataManager();
                 this.#renderer = new Renderer();
@@ -571,10 +558,9 @@
                 this.#setupDropdown();
                 this.#bindSearch();
 
-                // 1. ÖNBELLEK: Varsa hemen göster (0 bekleme)
+                // 1. ÖNBELLEK
                 const cachedData = this.#dataManager.loadFromCache();
                 let hasCache = false;
-                
                 if (cachedData && Object.keys(cachedData).length > 0) {
                     this.#renderer.renderSchedule(cachedData);
                     hasCache = true;
@@ -582,18 +568,14 @@
                     this.#renderer.showLoading();
                 }
 
-                // 2. NETWORK: Arka planda tazesini çek
-                const freshData = await this.#dataManager.fetchFreshData();
-
-                if (freshData) {
-                    // Veri geldi, peki ekrandakiyle farklı mı?
-                    if (this.#dataManager.shouldUpdate(freshData)) {
-                        // Evet farklı, o zaman ekranı yenile
-                        this.#renderer.renderSchedule(freshData);
+                // 2. NETWORK (Güvenli)
+                const fetchResult = await this.#dataManager.fetchFreshData();
+                if (fetchResult) {
+                    // Veriyi eski veriyle kıyasla, eğer Google eski veri gönderdiyse güncelleme
+                    if (this.#dataManager.shouldUpdate(fetchResult)) {
+                        this.#renderer.renderSchedule(fetchResult.data);
                     }
-                    // Hayır aynı, ekrana dokunma (Titreme yok)
                 } else if (!hasCache) {
-                    // Hem cache yok hem internet yoksa hata göster
                     this.#renderer.showError();
                 }
             }
@@ -601,10 +583,8 @@
             #bindSearch() {
                 const input = document.getElementById('input-search');
                 if (!input) return;
-                
                 const newInfo = input.cloneNode(true);
                 input.parentNode.replaceChild(newInfo, input);
-                
                 newInfo.addEventListener('input', (e) => {
                     clearTimeout(this.#searchTimer);
                     const query = e.target.value.trim();
@@ -623,12 +603,10 @@
                 const btn = document.getElementById('btn-quran-menu');
                 const menu = document.getElementById('menu-quran');
                 if (!btn || !menu) return;
-
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
                 const icon = newBtn.querySelector('.fa-chevron-down');
                 let isOpen = false;
-
                 const toggle = (force) => {
                     isOpen = force !== undefined ? force : !isOpen;
                     if (isOpen) {
