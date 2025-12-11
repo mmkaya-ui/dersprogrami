@@ -28,7 +28,7 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     transitionProperty: { 'height': 'height', 'spacing': 'margin, padding' },
-                    colors: { emerald: { 450: '#10b981' } } // Custom refine
+                    colors: { emerald: { 450: '#10b981' } }
                 }
             }
         }
@@ -45,7 +45,6 @@
         .smooth-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        /* Mobile tap highlight remove */
         * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
@@ -188,8 +187,7 @@
             months: { 'ocak':0, 'subat':1, 'mart':2, 'nisan':3, 'mayis':4, 'haziran':5, 'temmuz':6, 'agustos':7, 'eylul':8, 'ekim':9, 'kasim':10, 'aralik':11 },
             searchDebounce: 150,
             joinToleranceMinutes: 120,
-            cacheKey: 'ders_programi_data_v2',
-            hashKey: 'ders_programi_hash_v2'
+            cacheKey: 'ders_programi_data_v2'
         };
 
         const EXTRA_RESOURCES = [
@@ -217,14 +215,6 @@
                 return String(val).replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             };
         })();
-
-        // Hash function for data integrity check
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
 
         const DateProcessor = {
             parseTimestamp(dateStr, timeStr) {
@@ -254,7 +244,7 @@
             }
         };
 
-        // Advanced CSV Parser (Handles embedded quotes/commas correctly)
+        // Advanced CSV Parser
         function parseCSV(text) {
             const rows = [];
             let row = [];
@@ -262,7 +252,6 @@
             let inQuote = false;
             let currentToken = '';
             
-            // Normalize line endings
             text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
             
             while (cursor < text.length) {
@@ -271,7 +260,7 @@
 
                 if (inQuote) {
                     if (char === '"') {
-                        if (nextChar === '"') { currentToken += '"'; cursor++; } // Escaped quote
+                        if (nextChar === '"') { currentToken += '"'; cursor++; } 
                         else { inQuote = false; }
                     } else { currentToken += char; }
                 } else {
@@ -287,7 +276,7 @@
                 cursor++;
             }
             if (currentToken || row.length) { row.push(currentToken.trim()); rows.push(row); }
-            return rows.slice(1); // Skip header
+            return rows.slice(1);
         }
 
         // --- DATA LAYER ---
@@ -298,30 +287,24 @@
                 for (let i = 0; i <= retries; i++) {
                     try {
                         const controller = new AbortController();
-                        const id = setTimeout(() => controller.abort(), 8000); // 8s timeout
+                        const id = setTimeout(() => controller.abort(), 8000); 
                         const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
                         clearTimeout(id);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         return await res.arrayBuffer();
                     } catch (err) {
                         if (i === retries) throw err;
-                        await new Promise(r => setTimeout(r, delay * (i + 1))); // Exponential backoff
+                        await new Promise(r => setTimeout(r, delay * (i + 1)));
                     }
                 }
             }
 
-            async loadData(checkForUpdatesOnly = false) {
+            async loadData() {
                 try {
                     const buffer = await this.fetchWithRetry(CONFIG.csvUrl);
                     const decoder = new TextDecoder('utf-8'); 
                     const csvText = decoder.decode(buffer);
                     
-                    // Integrity Check
-                    const newHash = await sha256(csvText);
-                    const oldHash = localStorage.getItem(CONFIG.hashKey);
-                    
-                    if (checkForUpdatesOnly && newHash === oldHash) return { updated: false };
-
                     const rows = parseCSV(csvText);
                     this.#processedSchedule = rows.map(cols => {
                         const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
@@ -343,11 +326,7 @@
                         return acc;
                     }, {});
 
-                    // Cache data
-                    localStorage.setItem(CONFIG.cacheKey, JSON.stringify(grouped));
-                    localStorage.setItem(CONFIG.hashKey, newHash);
-
-                    return { updated: true, data: grouped };
+                    return { success: true, data: grouped };
                 } catch (error) {
                     console.error("Data load error:", error);
                     return { error: true };
@@ -359,7 +338,6 @@
             search(query, data) {
                 if (!query) return null;
                 const normalizedQuery = normalizeText(query);
-                // Flatten grouped data for search
                 const flatData = Object.values(data).flat();
                 return flatData.filter(item => item.searchIndex.includes(normalizedQuery));
             }
@@ -392,7 +370,6 @@
                 node.querySelector('[data-slot="time"]').textContent = time;
 
                 const joinBtn = node.querySelector('[data-slot="join-btn"]');
-                // Smart Join Button Logic
                 if (joinBtn) {
                     if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
                 }
@@ -444,7 +421,6 @@
             }
 
             renderSchedule(groupedData) {
-                // Use requestAnimationFrame for non-blocking UI update
                 requestAnimationFrame(() => {
                     this.#container.innerHTML = '';
                     const weeks = Object.keys(groupedData).reverse();
@@ -539,7 +515,7 @@
             }
         }
 
-        // --- APP CORE (Stale-While-Revalidate) ---
+        // --- APP CORE ---
         class App {
             #dataService; #renderer; #themeManager; #searchTimer; #currentData;
 
@@ -554,7 +530,7 @@
                 this.#setupDropdown();
                 this.#bindSearch();
 
-                // 1. STALE: Load from cache immediately (0ms latency)
+                // 1. ÖNBELLEK: Anında yükle
                 const cachedRaw = localStorage.getItem(CONFIG.cacheKey);
                 let hasCache = false;
                 if (cachedRaw) {
@@ -569,14 +545,23 @@
 
                 if (!hasCache) this.#renderer.showLoading();
 
-                // 2. REVALIDATE: Fetch in background
+                // 2. AĞ: Arka planda güncelle
                 const result = await this.#dataService.loadData();
                 
-                if (result.updated) {
-                    // Only re-render if data actually changed
-                    this.#currentData = result.data;
-                    this.#renderer.renderSchedule(this.#currentData);
-                } else if (result.error && !hasCache) {
+                if (result.success) {
+                    // DEEP EQUALITY CHECK (Titremeyi engelleyen asıl çözüm)
+                    // Gelen veri şu an ekrandakiyle birebir aynı mı?
+                    const currentJson = JSON.stringify(this.#currentData);
+                    const newJson = JSON.stringify(result.data);
+
+                    if (currentJson !== newJson) {
+                        // Sadece veri gerçekten değişmişse ekranı güncelle
+                        this.#currentData = result.data;
+                        this.#renderer.renderSchedule(this.#currentData);
+                        localStorage.setItem(CONFIG.cacheKey, newJson);
+                    }
+                    // Veri aynıysa HİÇBİR ŞEY yapma (Sıfır titreme)
+                } else if (!hasCache) {
                     this.#renderer.showError();
                 }
             }
@@ -585,7 +570,6 @@
                 const input = document.getElementById('input-search');
                 if (!input) return;
                 
-                // Clone to remove old listeners
                 const newInfo = input.cloneNode(true);
                 input.parentNode.replaceChild(newInfo, input);
                 
