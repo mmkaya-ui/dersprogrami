@@ -111,9 +111,9 @@
         </a>
     </template>
 
-    <header class="bg-emerald-700 dark:bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md bg-opacity-95 dark:bg-opacity-95 supports-[backdrop-filter]:bg-opacity-80">
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-[100] transition-colors duration-300">
         <div class="max-w-md mx-auto relative">
-            <button id="btn-theme-toggle" class="absolute right-0 top-0 z-[60] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
+            <button id="btn-theme-toggle" class="absolute right-0 top-0 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                 <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
             </button>
             <div class="mb-3 select-none">
@@ -270,7 +270,6 @@
         
             /**
              * Veri Yönetim Sınıfı
-             * Sorumluluk: Veriyi çekmek, önbelleklemek, filtrelemek.
              */
             class DataManager {
                 constructor() {
@@ -304,7 +303,7 @@
         
                 async fetchFreshData() {
                     try {
-                        // Cache busting ile her zaman taze veri kontrolü
+                        // Cache busting
                         const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
                         const response = await fetch(CONFIG.CSV_URL + cacheBuster, {
                             cache: 'no-store',
@@ -359,7 +358,6 @@
         
             /**
              * Arayüz Yönetim Sınıfı
-             * Sorumluluk: DOM manipülasyonu ve HTML oluşturma.
              */
             class Renderer {
                 #container; 
@@ -378,9 +376,6 @@
         
                 #clone(id) { return this.#templates[id].content.cloneNode(true); }
         
-                /**
-                 * Güvenli metin yerleştirme (XSS koruması için textContent kullanımı)
-                 */
                 #setText(node, selector, text) {
                     const el = node.querySelector(selector);
                     if (el) el.textContent = text || '';
@@ -395,7 +390,7 @@
                     this.#setText(node, '[data-slot="speaker"]', speaker || 'Belirtilmedi');
                     this.#setText(node, '[data-slot="time"]', time);
         
-                    // Join butonu mantığı (Ders zamanı geçtiyse kaldır)
+                    // Join butonu mantığı
                     const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
                     const joinBtn = node.querySelector('[data-slot="join-btn"]');
                     if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
@@ -485,8 +480,7 @@
         
                         this.#container.appendChild(fragment);
                         
-                        // EVENT DELEGATION: Senior Dokunuşu
-                        // 50 tane event listener yerine container üzerinde tek bir listener.
+                        // EVENT DELEGATION
                         this.#container.onclick = (e) => {
                             const header = e.target.closest('.week-header');
                             if (!header) return;
@@ -506,7 +500,6 @@
                 renderFiltered(list) {
                     requestAnimationFrame(() => {
                         this.#container.innerHTML = '';
-                        // Event delegation'ı temizle (arama modunda gerek yok)
                         this.#container.onclick = null; 
         
                         if (!list?.length) {
@@ -633,6 +626,20 @@
                     // Event listener duplication önlemek için
                     const newInfo = input.cloneNode(true);
                     input.parentNode.replaceChild(newInfo, input);
+
+                    // ==========================================
+                    // FIX: Mobile Cursor Jump
+                    // ==========================================
+                    const dismissKeyboard = () => {
+                        if (document.activeElement === newInfo) {
+                            newInfo.blur();
+                        }
+                    };
+
+                    // Detect touch scroll on mobile
+                    window.addEventListener('touchmove', dismissKeyboard, { passive: true });
+                    // Detect mouse scroll on desktop
+                    window.addEventListener('scroll', dismissKeyboard, { passive: true });
         
                     newInfo.addEventListener('input', (e) => {
                         clearTimeout(this.#searchTimer);
@@ -703,4 +710,3 @@
     </script>
 </body>
 </html>
-
