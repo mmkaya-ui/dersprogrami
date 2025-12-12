@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr" class="antialiased h-full">
+<html lang="tr" class="antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -40,15 +40,18 @@
         :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
         .dark { --scroll-thumb: #475569; }
         
-        html, body { 
-            height: 100%; 
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
+        /* Body normal akışına bırakıldı (Native Scroll) */
+        body { 
             font-family: 'Inter', sans-serif; 
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale; 
+            /* ÖNEMLİ: Body'nin arka planını Header rengi yapıyoruz. 
+               Böylece iOS'ta aşağı çekince (bounce) aradan beyazlık değil, yeşil görünüyor. */
+            background-color: #047857; 
         }
+        
+        /* Dark modda body arka planı */
+        .dark body { background-color: #064e3b; }
 
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
@@ -59,36 +62,13 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         * { -webkit-tap-highlight-color: transparent; }
 
+        /* Header Safe Area ayarı */
         header {
             padding-top: env(safe-area-inset-top);
-            flex-shrink: 0; 
         }
-
-        #content-wrapper {
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: contain;
-        }
-
-        /* Pull to Refresh Spinner Stili */
-        #ptr-container {
-            height: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: height 0.2s;
-            background-color: transparent;
-        }
-        .ptr-icon {
-            transition: transform 0.2s;
-            font-size: 1.2rem;
-        }
-        .ptr-rotate { transform: rotate(180deg); }
-        .ptr-spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300 flex flex-col">
+<body class="transition-colors duration-300 min-h-screen flex flex-col">
 
     <template id="tpl-week-section">
         <section class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
@@ -149,7 +129,7 @@
         </a>
     </template>
 
-    <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-[100] transition-colors duration-300 relative">
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg sticky top-0 z-[100] transition-colors duration-300">
         <div class="max-w-md mx-auto relative pt-2">
             <button id="btn-theme-toggle" class="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                 <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
@@ -196,13 +176,7 @@
         </div>
     </header>
 
-    <div id="content-wrapper" class="flex-1 overflow-y-auto w-full relative">
-        <div id="ptr-container">
-            <div class="text-emerald-600 dark:text-emerald-400">
-                <i id="ptr-icon" class="fa-solid fa-arrow-down ptr-icon"></i>
-            </div>
-        </div>
-
+    <div class="bg-gray-100 dark:bg-gray-900 flex-1 w-full min-h-screen">
         <main class="max-w-md mx-auto p-4 w-full" id="main-content" role="main"></main>
 
         <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe">
@@ -594,96 +568,12 @@
                     }
                 }
             }
-
-            class PullToRefresh {
-                constructor(onRefresh) {
-                    this.container = document.getElementById('content-wrapper');
-                    this.ptrContainer = document.getElementById('ptr-container');
-                    this.icon = document.getElementById('ptr-icon');
-                    this.onRefresh = onRefresh;
-                    
-                    this.startY = 0;
-                    this.dist = 0;
-                    this.threshold = 60;
-                    this.isPulling = false;
-                    
-                    this.bindEvents();
-                }
-
-                bindEvents() {
-                    this.container.addEventListener('touchstart', (e) => {
-                        if (this.container.scrollTop === 0) {
-                            this.startY = e.touches[0].clientY;
-                            this.isPulling = true;
-                            this.ptrContainer.style.transition = 'none'; 
-                        }
-                    }, { passive: true });
-
-                    this.container.addEventListener('touchmove', (e) => {
-                        if (!this.isPulling) return;
-                        
-                        const y = e.touches[0].clientY;
-                        const diff = y - this.startY;
-
-                        if (diff > 0 && this.container.scrollTop === 0) {
-                            this.dist = diff;
-                            // Resistance
-                            const resist = Math.min(this.dist * 0.5, 80);
-                            
-                            this.ptrContainer.style.height = `${resist}px`;
-                            
-                            // Rotate icon based on pull
-                            const rotation = Math.min(diff * 2, 180);
-                            this.icon.style.transform = `rotate(${rotation}deg)`;
-                            
-                            if (diff > this.threshold) {
-                                this.icon.classList.add('text-emerald-700');
-                            } else {
-                                this.icon.classList.remove('text-emerald-700');
-                            }
-                        }
-                    }, { passive: true });
-
-                    this.container.addEventListener('touchend', () => {
-                        if (!this.isPulling) return;
-                        this.isPulling = false;
-                        this.ptrContainer.style.transition = 'height 0.3s';
-                        
-                        if (this.dist > this.threshold) {
-                            this.ptrContainer.style.height = '50px';
-                            this.icon.classList.remove('fa-arrow-down');
-                            this.icon.classList.add('fa-circle-notch', 'ptr-spin');
-                            this.icon.style.transform = 'none';
-                            
-                            // Refresh
-                            this.onRefresh().finally(() => {
-                                setTimeout(() => {
-                                    this.reset();
-                                }, 500); 
-                            });
-                        } else {
-                            this.reset();
-                        }
-                        this.dist = 0;
-                    });
-                }
-
-                reset() {
-                    this.ptrContainer.style.height = '0';
-                    setTimeout(() => {
-                        this.icon.classList.remove('fa-circle-notch', 'ptr-spin', 'text-emerald-700');
-                        this.icon.classList.add('fa-arrow-down');
-                        this.icon.style.transform = 'rotate(0deg)';
-                    }, 300);
-                }
-            }
         
             class App {
                 #dataManager; 
                 #renderer; 
                 #themeManager; 
                 #searchTimer;
-                #ptr;
         
                 constructor() {
                     this.#dataManager = new DataManager();
@@ -695,15 +585,6 @@
                     this.#renderer.renderMenu(this.#dataManager.resources);
                     this.#setupDropdown();
                     this.#bindSearch();
-
-                    // Init Pull to Refresh
-                    this.#ptr = new PullToRefresh(async () => {
-                        const freshData = await this.#dataManager.fetchFreshData();
-                        if (freshData) {
-                            this.#dataManager.saveToCache(freshData);
-                            this.#renderer.renderSchedule(freshData);
-                        }
-                    });
         
                     const cachedData = this.#dataManager.loadFromCache();
                     let isCachedDisplayed = false;
