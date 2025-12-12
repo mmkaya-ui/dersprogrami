@@ -2,7 +2,7 @@
 <html lang="tr" class="antialiased">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -48,6 +48,11 @@
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         * { -webkit-tap-highlight-color: transparent; }
+
+        /* FIX 3: iPhone Safe Area Desteği */
+        header {
+            padding-top: max(1rem, env(safe-area-inset-top));
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300 min-h-screen flex flex-col">
@@ -111,9 +116,8 @@
         </a>
     </template>
 
-    <header class="bg-emerald-700 dark:bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-[100] transition-colors duration-300">
-        <div class="max-w-md mx-auto relative">
-            <button id="btn-theme-toggle" class="absolute right-0 top-0 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-4 shadow-lg sticky top-0 z-[100] transition-colors duration-300">
+        <div class="max-w-md mx-auto relative pt-4"> <button id="btn-theme-toggle" class="absolute right-0 top-3 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                 <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
             </button>
             <div class="mb-3 select-none">
@@ -182,7 +186,6 @@
         
             /**
              * Uygulama Konfigürasyonu
-             * Değişmez (Immutable) obje olarak tanımlandı.
              */
             const CONFIG = Object.freeze({
                 CACHE_KEY: 'ders_programi_v8_xlsx',
@@ -256,7 +259,6 @@
                         let year = now.getFullYear();
                         const currentMonth = now.getMonth();
                         
-                        // Yıl geçiş mantığı
                         if (currentMonth > 8 && monthIndex < 3) year += 1;
                         else if (currentMonth < 3 && monthIndex > 8) year -= 1;
                         
@@ -303,7 +305,6 @@
         
                 async fetchFreshData() {
                     try {
-                        // Cache busting
                         const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
                         const response = await fetch(CONFIG.CSV_URL + cacheBuster, {
                             cache: 'no-store',
@@ -325,7 +326,6 @@
                 }
         
                 #processRows(rows) {
-                    // Başlık satırını atla ve veriyi işle
                     const processed = rows.slice(1).map(cols => {
                         const clean = (val) => (val != null) ? String(val).trim() : '';
                         const item = {
@@ -339,9 +339,8 @@
                             timestamp: Utils.parseTimestamp(item.date, item.time),
                             searchIndex: Utils.normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
                         };
-                    }).filter(item => item.subject); // Boş satırları filtrele
+                    }).filter(item => item.subject);
         
-                    // Haftalara göre grupla
                     return processed.reduce((acc, item) => {
                         (acc[item.week] = acc[item.week] || []).push(item);
                         return acc;
@@ -390,7 +389,6 @@
                     this.#setText(node, '[data-slot="speaker"]', speaker || 'Belirtilmedi');
                     this.#setText(node, '[data-slot="time"]', time);
         
-                    // Join butonu mantığı
                     const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
                     const joinBtn = node.querySelector('[data-slot="join-btn"]');
                     if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
@@ -465,10 +463,8 @@
         
                             this.#setText(section, '[data-slot="week-title"]', week);
                             
-                            // İçerik oluştur
                             groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
         
-                            // İlk haftayı varsayılan olarak açık bırak
                             if (index === 0) {
                                 content.classList.remove(CONFIG.CLASSES.hidden);
                                 icon.classList.add(CONFIG.CLASSES.rotate);
@@ -480,7 +476,6 @@
         
                         this.#container.appendChild(fragment);
                         
-                        // EVENT DELEGATION
                         this.#container.onclick = (e) => {
                             const header = e.target.closest('.week-header');
                             if (!header) return;
@@ -594,7 +589,6 @@
                     this.#setupDropdown();
                     this.#bindSearch();
         
-                    // Stale-While-Revalidate Stratejisi
                     const cachedData = this.#dataManager.loadFromCache();
                     let isCachedDisplayed = false;
         
@@ -610,7 +604,6 @@
                     if (freshData) {
                         const hasChanges = JSON.stringify(cachedData || {}) !== JSON.stringify(freshData);
                         if (hasChanges || !isCachedDisplayed) {
-                            console.log(isCachedDisplayed ? "Veri güncellendi." : "Veri yüklendi.");
                             this.#dataManager.saveToCache(freshData);
                             this.#renderer.renderSchedule(freshData);
                         }
@@ -623,22 +616,16 @@
                     const input = document.getElementById('input-search');
                     if (!input) return;
         
-                    // Event listener duplication önlemek için
                     const newInfo = input.cloneNode(true);
                     input.parentNode.replaceChild(newInfo, input);
 
-                    // ==========================================
-                    // FIX: Mobile Cursor Jump
-                    // ==========================================
                     const dismissKeyboard = () => {
                         if (document.activeElement === newInfo) {
                             newInfo.blur();
                         }
                     };
 
-                    // Detect touch scroll on mobile
                     window.addEventListener('touchmove', dismissKeyboard, { passive: true });
-                    // Detect mouse scroll on desktop
                     window.addEventListener('scroll', dismissKeyboard, { passive: true });
         
                     newInfo.addEventListener('input', (e) => {
@@ -684,7 +671,6 @@
                             icon.classList.remove(CONFIG.CLASSES.rotate);
                             newBtn.setAttribute('aria-expanded', 'false');
                             setTimeout(() => {
-                                // Eğer bu süre içinde tekrar açılmadıysa hidden yap
                                 if(!isOpen) menu.classList.add(CONFIG.CLASSES.hidden);
                             }, 200);
                         }
@@ -703,7 +689,6 @@
                 }
             }
         
-            // Uygulamayı Başlat
             document.addEventListener('DOMContentLoaded', () => new App().init());
         
         })();
