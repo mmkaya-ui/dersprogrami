@@ -68,6 +68,24 @@
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
         }
+
+        /* Pull to Refresh Spinner Stili */
+        #ptr-container {
+            height: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: height 0.2s;
+            background-color: transparent;
+        }
+        .ptr-icon {
+            transition: transform 0.2s;
+            font-size: 1.2rem;
+        }
+        .ptr-rotate { transform: rotate(180deg); }
+        .ptr-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300 flex flex-col">
@@ -179,6 +197,12 @@
     </header>
 
     <div id="content-wrapper" class="flex-1 overflow-y-auto w-full relative">
+        <div id="ptr-container">
+            <div class="text-emerald-600 dark:text-emerald-400">
+                <i id="ptr-icon" class="fa-solid fa-arrow-down ptr-icon"></i>
+            </div>
+        </div>
+
         <main class="max-w-md mx-auto p-4 w-full" id="main-content" role="main"></main>
 
         <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe">
@@ -570,12 +594,96 @@
                     }
                 }
             }
+
+            class PullToRefresh {
+                constructor(onRefresh) {
+                    this.container = document.getElementById('content-wrapper');
+                    this.ptrContainer = document.getElementById('ptr-container');
+                    this.icon = document.getElementById('ptr-icon');
+                    this.onRefresh = onRefresh;
+                    
+                    this.startY = 0;
+                    this.dist = 0;
+                    this.threshold = 60;
+                    this.isPulling = false;
+                    
+                    this.bindEvents();
+                }
+
+                bindEvents() {
+                    this.container.addEventListener('touchstart', (e) => {
+                        if (this.container.scrollTop === 0) {
+                            this.startY = e.touches[0].clientY;
+                            this.isPulling = true;
+                            this.ptrContainer.style.transition = 'none'; 
+                        }
+                    }, { passive: true });
+
+                    this.container.addEventListener('touchmove', (e) => {
+                        if (!this.isPulling) return;
+                        
+                        const y = e.touches[0].clientY;
+                        const diff = y - this.startY;
+
+                        if (diff > 0 && this.container.scrollTop === 0) {
+                            this.dist = diff;
+                            // Resistance
+                            const resist = Math.min(this.dist * 0.5, 80);
+                            
+                            this.ptrContainer.style.height = `${resist}px`;
+                            
+                            // Rotate icon based on pull
+                            const rotation = Math.min(diff * 2, 180);
+                            this.icon.style.transform = `rotate(${rotation}deg)`;
+                            
+                            if (diff > this.threshold) {
+                                this.icon.classList.add('text-emerald-700');
+                            } else {
+                                this.icon.classList.remove('text-emerald-700');
+                            }
+                        }
+                    }, { passive: true });
+
+                    this.container.addEventListener('touchend', () => {
+                        if (!this.isPulling) return;
+                        this.isPulling = false;
+                        this.ptrContainer.style.transition = 'height 0.3s';
+                        
+                        if (this.dist > this.threshold) {
+                            this.ptrContainer.style.height = '50px';
+                            this.icon.classList.remove('fa-arrow-down');
+                            this.icon.classList.add('fa-circle-notch', 'ptr-spin');
+                            this.icon.style.transform = 'none';
+                            
+                            // Refresh
+                            this.onRefresh().finally(() => {
+                                setTimeout(() => {
+                                    this.reset();
+                                }, 500); 
+                            });
+                        } else {
+                            this.reset();
+                        }
+                        this.dist = 0;
+                    });
+                }
+
+                reset() {
+                    this.ptrContainer.style.height = '0';
+                    setTimeout(() => {
+                        this.icon.classList.remove('fa-circle-notch', 'ptr-spin', 'text-emerald-700');
+                        this.icon.classList.add('fa-arrow-down');
+                        this.icon.style.transform = 'rotate(0deg)';
+                    }, 300);
+                }
+            }
         
             class App {
                 #dataManager; 
                 #renderer; 
                 #themeManager; 
                 #searchTimer;
+                #ptr;
         
                 constructor() {
                     this.#dataManager = new DataManager();
@@ -587,6 +695,15 @@
                     this.#renderer.renderMenu(this.#dataManager.resources);
                     this.#setupDropdown();
                     this.#bindSearch();
+
+                    // Init Pull to Refresh
+                    this.#ptr = new PullToRefresh(async () => {
+                        const freshData = await this.#dataManager.fetchFreshData();
+                        if (freshData) {
+                            this.#dataManager.saveToCache(freshData);
+                            this.#renderer.renderSchedule(freshData);
+                        }
+                    });
         
                     const cachedData = this.#dataManager.loadFromCache();
                     let isCachedDisplayed = false;
