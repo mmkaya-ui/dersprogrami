@@ -49,9 +49,8 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         * { -webkit-tap-highlight-color: transparent; }
 
-        /* FIX 3: iPhone Safe Area Desteği */
         header {
-            padding-top: max(1rem, env(safe-area-inset-top));
+            padding-top: env(safe-area-inset-top);
         }
     </style>
 </head>
@@ -116,36 +115,38 @@
         </a>
     </template>
 
-    <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-4 shadow-lg sticky top-0 z-[100] transition-colors duration-300">
-        <div class="max-w-md mx-auto relative pt-4"> <button id="btn-theme-toggle" class="absolute right-0 top-3 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg sticky top-0 z-[100] transition-colors duration-300">
+        <div class="max-w-md mx-auto relative pt-2">
+            <button id="btn-theme-toggle" class="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                 <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
             </button>
-            <div class="mb-3 select-none">
-                <h1 class="text-xl font-bold mb-1 flex items-center">
+            
+            <div class="mb-2 select-none">
+                <h1 class="text-xl font-bold mb-0.5 flex items-center">
                     <i class="fa-solid fa-book-open mr-2"></i>Ders Programı
                 </h1>
-                <p class="text-emerald-100 text-xs opacity-90">Ders notları ve tilavet arşivi</p>
+                <p class="text-emerald-100 text-[11px] opacity-90">Ders notları ve tilavet arşivi</p>
             </div>
             
-            <div class="relative mb-3 group">
+            <div class="relative mb-2 group">
                 <input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..." 
-                    class="w-full p-2.5 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
+                    class="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
                     autocomplete="off" enterkeyhint="search">
-                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
+                <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
             </div>
 
             <div class="flex flex-col gap-2 relative z-10">
                 <div class="relative w-full">
-                    <button id="btn-quran-menu" class="w-full p-2.5 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
+                    <button id="btn-quran-menu" class="w-full p-2 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
                         <span class="font-semibold flex items-center pointer-events-none">
-                            <i class="fa-solid fa-layer-group mr-2"></i>Kur'an Dersleri Toplu Kaynaklar
+                            <i class="fa-solid fa-layer-group mr-2"></i>Kur'an Kaynakları
                         </span>
                         <i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
                     </button>
                     <div id="menu-quran" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0"></div>
                 </div>
                 
-                <nav class="flex gap-2 items-stretch h-10">
+                <nav class="flex gap-2 items-stretch h-9">
                     <a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060" target="_blank" rel="noopener noreferrer" 
                        class="flex-1 flex justify-center items-center rounded-lg text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
                         <i class="fa-solid fa-table mr-2 text-emerald-700"></i>
@@ -180,13 +181,9 @@
         (function () {
             'use strict';
         
-            // Global namespace pollution prevention
             if (window.DERS_PROGRAMI_APP_LOADED) return;
             window.DERS_PROGRAMI_APP_LOADED = true;
         
-            /**
-             * Uygulama Konfigürasyonu
-             */
             const CONFIG = Object.freeze({
                 CACHE_KEY: 'ders_programi_v8_xlsx',
                 CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
@@ -200,10 +197,9 @@
                 },
                 MONTHS: { 'ocak': 0, 'subat': 1, 'mart': 2, 'nisan': 3, 'mayis': 4, 'haziran': 5, 'temmuz': 6, 'agustos': 7, 'eylul': 8, 'ekim': 9, 'kasim': 10, 'aralik': 11 },
                 SEARCH_DEBOUNCE_MS: 150,
-                JOIN_TOLERANCE_MIN: 120
+                JOIN_TOLERANCE_MIN: 60
             });
         
-            // Kaynaklar listesi (Veri katmanı)
             const EXTRA_RESOURCES = [
                 { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
                 { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
@@ -221,9 +217,6 @@
                 { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
             ];
         
-            /**
-             * Yardımcı Fonksiyonlar (Utilities)
-             */
             const Utils = {
                 normalizeText(val) {
                     if (!val) return '';
@@ -270,9 +263,6 @@
                 }
             };
         
-            /**
-             * Veri Yönetim Sınıfı
-             */
             class DataManager {
                 constructor() {
                     this.groupedData = {};
@@ -355,9 +345,6 @@
                 }
             }
         
-            /**
-             * Arayüz Yönetim Sınıfı
-             */
             class Renderer {
                 #container; 
                 #templates;
@@ -535,9 +522,6 @@
                 }
             }
         
-            /**
-             * Tema Yönetimi
-             */
             class ThemeManager {
                 constructor() {
                     this.html = document.documentElement;
@@ -569,9 +553,6 @@
                 }
             }
         
-            /**
-             * Ana Uygulama Kontrolcüsü
-             */
             class App {
                 #dataManager; 
                 #renderer; 
