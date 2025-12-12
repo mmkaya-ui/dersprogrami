@@ -40,11 +40,10 @@
         :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
         .dark { --scroll-thumb: #475569; }
         
-        /* TEMİZLİK: Body üzerindeki tüm kilitleri kaldırdık. */
+        /* FIX: HTML ve Body üzerindeki tüm kısıtlamalar kaldırıldı. */
         html {
-            /* Native scroll davranışı için gerekli */
-            overflow-y: auto; 
-            overscroll-behavior-y: auto; /* Pull-to-refresh'e izin ver */
+            /* Pull-refresh yapınca arkada görünen renk (Header ile aynı) */
+            background-color: #047857; 
         }
         
         body { 
@@ -52,12 +51,11 @@
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale; 
             min-height: 100vh;
-            /* Bu yeşil renk, sayfayı aşağı çektiğinde (bounce/refresh anında) 
-               üstte beliren boşluğun rengidir. Header ile bütünlük sağlar. */
-            background-color: #047857;
+            /* İçerik rengi */
+            background-color: #f3f4f6; 
         }
 
-        .dark body { background-color: #064e3b; }
+        .dark body { background-color: #111827; }
 
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
@@ -68,14 +66,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         * { -webkit-tap-highlight-color: transparent; }
 
-        /* HEADER SABİTLEME: fixed yerine sticky kullanıyoruz.
-           Sticky, native scroll akışını bozmadan yapışmayı sağlar. */
+        /* HEADER FIX: Sticky kullanımı */
         header {
-            position: -webkit-sticky; /* Safari desteği */
-            position: sticky;
+            position: -webkit-sticky; /* Safari için */
+            position: sticky;         /* Diğerleri için */
             top: 0;
             z-index: 50;
-            /* Safe area padding'i */
             padding-top: env(safe-area-inset-top);
         }
     </style>
@@ -188,22 +184,20 @@
         </div>
     </header>
 
-    <div class="flex-1 w-full bg-gray-100 dark:bg-gray-900 relative z-0">
-        <main class="max-w-md mx-auto p-4 w-full" id="main-content" role="main"></main>
+    <main class="max-w-md mx-auto p-4 w-full flex-grow relative" id="main-content" role="main"></main>
 
-        <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe">
-            <div class="max-w-md mx-auto px-4">
-                <div class="mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim & Öneri</p>
-                    <a href="mailto:biz2004571@gmail.com" class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-medium group">
-                        <i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
-                        biz2004571@gmail.com
-                    </a>
-                </div>
-                <p class="text-[10px] opacity-60">&copy; 2025 - 2032 Ders Arşivi</p>
+    <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe mt-auto">
+        <div class="max-w-md mx-auto px-4">
+            <div class="mb-4">
+                <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim & Öneri</p>
+                <a href="mailto:biz2004571@gmail.com" class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-medium group">
+                    <i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
+                    biz2004571@gmail.com
+                </a>
             </div>
-        </footer>
-    </div>
+            <p class="text-[10px] opacity-60">&copy; 2025 - 2032 Ders Arşivi</p>
+        </div>
+    </footer>
 
     <script>
         (function () {
