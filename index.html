@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -195,698 +196,504 @@
         </div>
     </footer>
 
-    <!-- ✅ Senior: Offline-first (SW) + XLSX parsing (Web Worker) + sağlam mimari -->
     <script>
-    (function () {
-      'use strict';
-
-      if (window.DERS_PROGRAMI_APP_LOADED) return;
-      window.DERS_PROGRAMI_APP_LOADED = true;
-
-      const CONFIG = Object.freeze({
-        CACHE_KEY: 'ders_programi_v9_xlsx',
-        CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
-        WORKER_URL: './xlsx-worker.js',
-        SW_URL: './sw.js',
-        CLASSES: {
-          hidden: 'hidden',
-          rotate: 'rotate-icon',
-          menuIn: ['scale-100', 'opacity-100'],
-          menuOut: ['scale-95', 'opacity-0'],
-          btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
-          btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
-        },
-        SEARCH_DEBOUNCE_MS: 150,
-        JOIN_TOLERANCE_MIN: 90,
-        FETCH_TIMEOUT_MS: 15000,
-        CACHE_SCHEMA: 1
-      });
-
-      const EXTRA_RESOURCES = [
-        { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
-        { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
-        { name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
-        { name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
-        { name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
-        { name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
-        { name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
-        { name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
-        { name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
-        { name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
-        { name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
-        { name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
-        { name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
-        { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
-      ];
-
-      const $ = (sel, root = document) => root.querySelector(sel);
-
-      const Utils = {
-        normalizeText(val) {
-          if (!val) return '';
-          const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
-          return String(val)
-            .replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c)
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
-        },
-        safeUrl(url) {
-          if (!url) return '';
-          try {
-            const u = new URL(String(url), window.location.href);
-            const p = u.protocol.toLowerCase();
-            if (p !== 'https:' && p !== 'http:') return '';
-            return u.href;
-          } catch {
-            return '';
-          }
-        },
-        async sha256Hex(buffer) {
-          try {
-            if (!window.crypto?.subtle) return '';
-            const hash = await crypto.subtle.digest('SHA-256', buffer);
-            const bytes = new Uint8Array(hash);
-            let hex = '';
-            for (const b of bytes) hex += b.toString(16).padStart(2, '0');
-            return hex;
-          } catch {
-            return '';
-          }
-        }
-      };
-
-      /** -------------------------
-       * Service Worker registration
-       * -------------------------- */
-      const SWManager = {
-        async register() {
-          try {
-            if (!('serviceWorker' in navigator)) return;
-
-            // aynı origin + https/localhost gerektirir
-            const reg = await navigator.serviceWorker.register(CONFIG.SW_URL, { scope: './' });
-
-            // güncelleme olduğunda beklemeyi atlat (sessiz)
-            reg.addEventListener('updatefound', () => {
-              const sw = reg.installing;
-              if (!sw) return;
-              sw.addEventListener('statechange', () => {
-                if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-                  // Yeni SW hazır: beklemeden aktif olsun
-                  sw.postMessage({ type: 'SKIP_WAITING' });
+        (function () {
+            'use strict';
+        
+            if (window.DERS_PROGRAMI_APP_LOADED) return;
+            window.DERS_PROGRAMI_APP_LOADED = true;
+        
+            const CONFIG = Object.freeze({
+                CACHE_KEY: 'ders_programi_v8_xlsx',
+                CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
+                CLASSES: {
+                    hidden: 'hidden',
+                    rotate: 'rotate-icon',
+                    menuIn: ['scale-100', 'opacity-100'],
+                    menuOut: ['scale-95', 'opacity-0'],
+                    btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
+                    btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
+                },
+                MONTHS: { 'ocak': 0, 'subat': 1, 'mart': 2, 'nisan': 3, 'mayis': 4, 'haziran': 5, 'temmuz': 6, 'agustos': 7, 'eylul': 8, 'ekim': 9, 'kasim': 10, 'aralik': 11 },
+                SEARCH_DEBOUNCE_MS: 150,
+                // GUNCELLEME: Tolerans suresi 90 dakika olarak ayarlandi.
+                JOIN_TOLERANCE_MIN: 90
+            });
+        
+            const EXTRA_RESOURCES = [
+                { name: "Harf telaffuzu", url: "https://drive.google.com/file/d/1DLRV_JpC575qT6psdeiL9eI8VHE8usWw/view?usp=drive_link" },
+                { name: "Kur'an Dersi 1", url: "https://drive.google.com/file/d/1-B8LH40llBzn27A3sBQQSBP-dI7P_sWO/view?usp=drive_link" },
+                { name: "Kur'an Dersi 2", url: "https://drive.google.com/file/d/1djd_lLS8PyqmP-_5hjfkGR2jDm7dbRCp/view?usp=drive_link" },
+                { name: "Kur'an Dersi 3", url: "https://drive.google.com/file/d/10YQXMUTkcMyWww5qFm6uKjtoreGaPGwI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 4", url: "https://drive.google.com/file/d/1shMgMEn30NPCrEHbgq0UWqZz21KDsmWI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 5", url: "https://drive.google.com/file/d/1DToY7jOE2OnyLQKhCs0s2WYLrN6AkTE8/view?usp=drive_link" },
+                { name: "Kur'an Dersi 6", url: "https://drive.google.com/file/d/1RgscC_0-riGl4Ocjt46xKljns1MVeAVI/view?usp=drive_link" },
+                { name: "Kur'an Dersi 7", url: "https://drive.google.com/file/d/1tT7208haWxluGZClorbA_KEL9q7CJKWC/view?usp=drive_link" },
+                { name: "Kur'an Dersi 17", url: "https://drive.google.com/file/d/1IF52k3Yj-2mCdvomJ_Yml7Pe6d8au5Ps/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 1", url: "https://drive.google.com/file/d/1qiy60bnYz22o18KpV7UPotZhPqvNbZ2H/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 2", url: "https://drive.google.com/file/d/19BR6RSEGndxEAoyqiIKeEBRtmv5StuG3/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 3", url: "https://drive.google.com/file/d/1FAwK7eYkDEwJmdDL7aBHCvKxH-cLAMQw/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 4", url: "https://drive.google.com/file/d/1RSqFv2Wy16pmM4p4kxPFw3FYuLvNaJTg/view?usp=drive_link" },
+                { name: "Kur'an dersi notlar 5", url: "https://drive.google.com/file/d/18Z8L6uLyV5do0GZaiODcdVSbuBVRiFYw/view?usp=drive_link" }
+            ];
+        
+            const Utils = {
+                normalizeText(val) {
+                    if (!val) return '';
+                    const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
+                    return String(val)
+                        .replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c)
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
+                },
+        
+                parseTimestamp(dateStr, timeStr) {
+                    try {
+                        const normDate = this.normalizeText(dateStr);
+                        const normTime = timeStr ? timeStr.trim() : "00:00";
+                        const dayMatch = normDate.match(/(\d+)/);
+                        if (!dayMatch) return 0;
+                        
+                        const day = parseInt(dayMatch[1], 10);
+                        let monthIndex = -1;
+                        
+                        for (const [key, val] of Object.entries(CONFIG.MONTHS)) {
+                            if (normDate.includes(key) || normDate.includes(key.substring(0, 3))) {
+                                monthIndex = val;
+                                break;
+                            }
+                        }
+                        
+                        if (monthIndex === -1) return 0;
+                        
+                        const [hour, minute] = normTime.split(':').map(n => parseInt(n, 10) || 0);
+                        const now = new Date();
+                        let year = now.getFullYear();
+                        const currentMonth = now.getMonth();
+                        
+                        if (currentMonth > 8 && monthIndex < 3) year += 1;
+                        else if (currentMonth < 3 && monthIndex > 8) year -= 1;
+                        
+                        // GUNCELLEME: Date.UTC ve hour-3 kullanilarak Turkiye Saati (UTC+3) baz alindi.
+                        return Date.UTC(year, monthIndex, day, hour - 3, minute);
+                    } catch (e) {
+                        console.warn('Date parsing error:', e);
+                        return 0;
+                    }
                 }
-              });
-            });
-
-            // Yeni SW aktif olunca sayfayı yenile (sessiz, UI değişmez)
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              // reload loop engeli
-              if (window.__SW_RELOADED__) return;
-              window.__SW_RELOADED__ = true;
-              window.location.reload();
-            });
-          } catch (e) {
-            // SW başarısız olsa bile app çalışır
-            console.warn('SW register failed:', e);
-          }
-        }
-      };
-
-      /** -------------------------
-       * XLSX Worker wrapper
-       * -------------------------- */
-      class XlsxWorker {
-        constructor(url) {
-          this.url = url;
-          this.worker = null;
-          this.reqId = 0;
-          this.pending = new Map();
-        }
-
-        ensure() {
-          if (this.worker) return;
-          this.worker = new Worker(this.url);
-          this.worker.onmessage = (ev) => {
-            const msg = ev.data || {};
-            const { id, ok, data, error } = msg;
-            const p = this.pending.get(id);
-            if (!p) return;
-            this.pending.delete(id);
-            ok ? p.resolve(data) : p.reject(new Error(error || 'Worker error'));
-          };
-          this.worker.onerror = (err) => {
-            // bütün pending’leri düşür
-            for (const [, p] of this.pending) p.reject(err instanceof Error ? err : new Error('Worker crashed'));
-            this.pending.clear();
-          };
-        }
-
-        parse(arrayBuffer) {
-          this.ensure();
-          const id = ++this.reqId;
-          return new Promise((resolve, reject) => {
-            this.pending.set(id, { resolve, reject });
-            // transferable
-            this.worker.postMessage({ type: 'PARSE_XLSX', id, buffer: arrayBuffer }, [arrayBuffer]);
-          });
-        }
-
-        terminate() {
-          try { this.worker?.terminate(); } catch {}
-          this.worker = null;
-          this.pending.clear();
-        }
-      }
-
-      /** -------------------------
-       * DataManager (cache + hash + fetch)
-       * -------------------------- */
-      class DataManager {
-        constructor() {
-          this.groupedData = {};
-          this.flatData = [];
-          this.meta = null;
-        }
-
-        get resources() { return EXTRA_RESOURCES; }
-
-        hydrate(grouped, meta) {
-          this.groupedData = grouped || {};
-          this.flatData = Object.values(this.groupedData).flat();
-          this.meta = meta || null;
-        }
-
-        loadFromCache() {
-          try {
-            const raw = localStorage.getItem(CONFIG.CACHE_KEY);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-
-            // yeni format: { meta, data }
-            if (parsed?.data && parsed?.meta) {
-              this.hydrate(parsed.data, parsed.meta);
-              return parsed.data;
-            }
-
-            // eski format fallback
-            this.hydrate(parsed || {}, null);
-            return parsed;
-          } catch (e) {
-            localStorage.removeItem(CONFIG.CACHE_KEY);
-            this.hydrate({}, null);
-            return null;
-          }
-        }
-
-        saveToCache(grouped, meta) {
-          this.hydrate(grouped, meta);
-          try {
-            localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
-              meta: {
-                schema: CONFIG.CACHE_SCHEMA,
-                savedAt: Date.now(),
-                ...(meta || {})
-              },
-              data: grouped
-            }));
-          } catch (e) {
-            // quota olsa bile app çalışır
-            console.warn('Cache save failed:', e);
-          }
-        }
-
-        async fetchArrayBuffer() {
-          const controller = new AbortController();
-          const t = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT_MS);
-          try {
-            // Cache bust param: SW bunu normalize edip aynı cache key’e map’ler (offline’da da çalışır)
-            const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
-            const res = await fetch(CONFIG.CSV_URL + cacheBuster, {
-              cache: 'no-store',
-              headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' },
-              signal: controller.signal
-            });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return await res.arrayBuffer();
-          } finally {
-            clearTimeout(t);
-          }
-        }
-
-        search(query) {
-          const q = Utils.normalizeText(query);
-          if (!q) return [];
-          return this.flatData.filter(item => item.searchIndex.includes(q));
-        }
-      }
-
-      /** -------------------------
-       * Renderer (UI aynı; event delegation; doğru ARIA)
-       * -------------------------- */
-      class Renderer {
-        constructor() {
-          this.container = $('#main-content');
-          this.templates = {
-            week: $('#tpl-week-section'),
-            card: $('#tpl-card'),
-            btn: $('#tpl-button'),
-            empty: $('#tpl-empty'),
-            menuItem: $('#tpl-menu-item')
-          };
-          this.mode = 'schedule';
-
-          // schedule modunda week toggle event delegation
-          this.container?.addEventListener('click', (e) => {
-            if (this.mode !== 'schedule') return;
-            const header = e.target.closest('.week-header');
-            if (!header) return;
-
-            const section = header.parentElement;
-            const content = section?.querySelector('.week-content');
-            const icon = header.querySelector('[data-slot="toggle-icon"]');
-            if (!content || !icon) return;
-
-            const willOpen = content.classList.contains(CONFIG.CLASSES.hidden);
-            content.classList.toggle(CONFIG.CLASSES.hidden);
-            icon.classList.toggle(CONFIG.CLASSES.rotate);
-            header.setAttribute('aria-expanded', String(willOpen));
-          }, { passive: true });
-        }
-
-        clone(id) {
-          const tpl = this.templates[id];
-          return tpl ? tpl.content.cloneNode(true) : document.createDocumentFragment();
-        }
-
-        setText(node, selector, text) {
-          const el = node.querySelector(selector);
-          if (el) el.textContent = text || '';
-        }
-
-        createButton(url, text, iconClass, type) {
-          const safe = Utils.safeUrl(url);
-          if (!safe) return null;
-          const node = this.clone('btn');
-          const a = node.querySelector('a');
-          if (!a) return null;
-          a.href = safe;
-
-          const classes = type === 'primary' ? CONFIG.CLASSES.btnPrimary : CONFIG.CLASSES.btnSecondary;
-          a.classList.add(...classes);
-
-          const icon = node.querySelector('i');
-          if (icon) icon.classList.add('fa-solid', iconClass);
-
-          const span = node.querySelector('span');
-          if (span) span.textContent = text;
-          return node;
-        }
-
-        createCard(item, showWeekBadge = false) {
-          const node = this.clone('card');
-          const { subject, speaker, time, date, day, week, link1, link2, timestamp } = item;
-
-          this.setText(node, '[data-slot="date-day"]', `${date}, ${day}`);
-          this.setText(node, '[data-slot="subject"]', subject);
-          this.setText(node, '[data-slot="speaker"]', speaker || 'Belirtilmedi');
-          this.setText(node, '[data-slot="time"]', time);
-
-          // join butonu: tolerans sonrası kaldır (davranış aynı)
-          const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
-          const joinBtn = node.querySelector('[data-slot="join-btn"]');
-          if (joinBtn) {
-            const safeJoin = Utils.safeUrl(joinBtn.getAttribute('href'));
-            if (!safeJoin) {
-              joinBtn.remove();
-            } else {
-              joinBtn.setAttribute('href', safeJoin);
-              if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
-            }
-          }
-
-          if (showWeekBadge) {
-            const badge = node.querySelector('[data-slot="week-badge"]');
-            if (badge) {
-              badge.textContent = week;
-              badge.classList.remove('hidden');
-            }
-          }
-
-          const actions = node.querySelector('[data-slot="actions"]');
-          if (actions) {
-            const b1 = link1 ? this.createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary') : null;
-            const b2 = link2 ? this.createButton(link2, 'Tilavet', 'fa-book-quran', 'secondary') : null;
-
-            if (!b1 && !b2) {
-              const span = document.createElement('span');
-              span.className = 'text-xs text-gray-400 italic';
-              span.textContent = 'Kayıt bulunmuyor';
-              actions.appendChild(span);
-            } else {
-              if (b1) actions.appendChild(b1);
-              if (b2) actions.appendChild(b2);
-            }
-          }
-          return node;
-        }
-
-        showLoading() {
-          if (!this.container) return;
-          this.container.innerHTML = `
-            <div class="text-center mt-10 text-emerald-600 dark:text-emerald-400 fade-in">
-              <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
-              <p>Ders programı yükleniyor...</p>
-            </div>`;
-        }
-
-        showError() {
-          if (!this.container) return;
-          this.container.innerHTML = `
-            <div class="text-center mt-10 text-red-500 fade-in">
-              <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
-              <p>Veri yüklenemedi. Bağlantınızı kontrol edin.</p>
-              <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm font-bold">Tekrar Dene</button>
-            </div>`;
-        }
-
-        renderMenu(items) {
-          const menu = $('#menu-quran');
-          if (!menu) return;
-          const fragment = document.createDocumentFragment();
-
-          (items || []).forEach(note => {
-            const safe = Utils.safeUrl(note.url);
-            if (!safe) return;
-
-            const node = this.clone('menuItem');
-            const a = node.querySelector('a');
-            if (!a) return;
-            a.href = safe;
-
-            this.setText(node, '[data-slot="text"]', note.name);
-
-            const isAudio = String(note.name || '').toLowerCase().includes("dersi") && !String(note.name || '').toLowerCase().includes("not");
-            const icon = node.querySelector('[data-slot="icon"]');
-            if (icon) icon.classList.add(isAudio ? "fa-file-audio" : "fa-file-lines");
-
-            fragment.appendChild(node);
-          });
-
-          menu.innerHTML = '';
-          menu.appendChild(fragment);
-        }
-
-        renderSchedule(groupedData) {
-          if (!this.container) return;
-          this.mode = 'schedule';
-
-          requestAnimationFrame(() => {
-            this.container.innerHTML = '';
-            const weeks = Object.keys(groupedData || {}).reverse();
-
-            if (!weeks.length) {
-              this.container.appendChild(this.clone('empty'));
-              return;
-            }
-
-            const frag = document.createDocumentFragment();
-
-            weeks.forEach((week, idx) => {
-              const section = this.clone('week');
-              const sectionEl = section.querySelector('section');
-              const header = sectionEl?.querySelector('.week-header');
-              const content = sectionEl?.querySelector('.week-content');
-              const icon = header?.querySelector('[data-slot="toggle-icon"]');
-
-              this.setText(section, '[data-slot="week-title"]', week);
-
-              if (content) {
-                (groupedData[week] || []).forEach(item => content.appendChild(this.createCard(item)));
-              }
-
-              // en güncel hafta açık
-              if (idx === 0 && content && icon && header) {
-                content.classList.remove(CONFIG.CLASSES.hidden);
-                icon.classList.add(CONFIG.CLASSES.rotate);
-                header.setAttribute('aria-expanded', 'true');
-              }
-
-              frag.appendChild(section);
-            });
-
-            this.container.appendChild(frag);
-          });
-        }
-
-        renderFiltered(list) {
-          if (!this.container) return;
-          this.mode = 'filtered';
-
-          requestAnimationFrame(() => {
-            this.container.innerHTML = '';
-            if (!list?.length) {
-              this.container.appendChild(this.clone('empty'));
-              return;
-            }
-            const sorted = [...list].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            const wrap = document.createElement('div');
-            wrap.className = 'p-2 fade-in';
-            sorted.forEach(item => wrap.appendChild(this.createCard(item, true)));
-            this.container.appendChild(wrap);
-          });
-        }
-      }
-
-      /** -------------------------
-       * ThemeManager (aynı UI)
-       * -------------------------- */
-      class ThemeManager {
-        constructor() {
-          this.html = document.documentElement;
-          this.btn = $('#btn-theme-toggle');
-          this.icon = this.btn?.querySelector('i');
-          if (this.btn) this.init();
-        }
-        init() {
-          const local = localStorage.getItem('theme');
-          const sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const isDark = local === 'dark' || (!local && sys);
-          this.apply(isDark);
-          this.btn.addEventListener('click', () => {
-            const cur = this.html.classList.contains('dark');
-            this.apply(!cur);
-          }, { passive: true });
-        }
-        apply(isDark) {
-          this.html.classList.toggle('dark', isDark);
-          localStorage.setItem('theme', isDark ? 'dark' : 'light');
-          if (this.icon) {
-            this.icon.className = isDark ? 'fa-solid fa-sun text-white text-xs' : 'fa-solid fa-moon text-white text-xs';
-          }
-        }
-      }
-
-      /** -------------------------
-       * App (Offline-first + Worker parse + fallback)
-       * -------------------------- */
-      class App {
-        constructor() {
-          this.data = new DataManager();
-          this.renderer = new Renderer();
-          this.theme = new ThemeManager();
-          this.worker = new XlsxWorker(CONFIG.WORKER_URL);
-          this.abort = new AbortController();
-          this.searchTimer = null;
-        }
-
-        bindSearch() {
-          const input = $('#input-search');
-          if (!input) return;
-
-          const dismiss = () => {
-            if (document.activeElement === input) input.blur();
-          };
-
-          window.addEventListener('touchmove', dismiss, { passive: true, signal: this.abort.signal });
-          window.addEventListener('scroll', dismiss, { passive: true, signal: this.abort.signal });
-
-          input.addEventListener('input', (e) => {
-            clearTimeout(this.searchTimer);
-            const q = (e.target.value || '').trim();
-            this.searchTimer = setTimeout(() => {
-              if (q) this.renderer.renderFiltered(this.data.search(q));
-              else this.renderer.renderSchedule(this.data.groupedData);
-            }, CONFIG.SEARCH_DEBOUNCE_MS);
-          }, { signal: this.abort.signal });
-
-          input.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-              input.value = '';
-              this.renderer.renderSchedule(this.data.groupedData);
-              input.blur();
-            }
-          }, { signal: this.abort.signal });
-        }
-
-        setupDropdown() {
-          const btn = $('#btn-quran-menu');
-          const menu = $('#menu-quran');
-          if (!btn || !menu) return;
-
-          const icon = btn.querySelector('.fa-chevron-down');
-          let isOpen = false;
-
-          const open = () => {
-            if (isOpen) return;
-            isOpen = true;
-            menu.classList.remove(CONFIG.CLASSES.hidden);
-            requestAnimationFrame(() => {
-              menu.classList.remove(...CONFIG.CLASSES.menuOut);
-              menu.classList.add(...CONFIG.CLASSES.menuIn);
-              icon?.classList.add(CONFIG.CLASSES.rotate);
-            });
-            btn.setAttribute('aria-expanded', 'true');
-          };
-
-          const close = () => {
-            if (!isOpen) return;
-            isOpen = false;
-            menu.classList.remove(...CONFIG.CLASSES.menuIn);
-            menu.classList.add(...CONFIG.CLASSES.menuOut);
-            icon?.classList.remove(CONFIG.CLASSES.rotate);
-            btn.setAttribute('aria-expanded', 'false');
-            setTimeout(() => { if (!isOpen) menu.classList.add(CONFIG.CLASSES.hidden); }, 200);
-          };
-
-          const toggle = () => (isOpen ? close() : open());
-
-          btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); }, { signal: this.abort.signal });
-          document.addEventListener('click', (e) => {
-            if (!isOpen) return;
-            if (!btn.contains(e.target) && !menu.contains(e.target)) close();
-          }, { signal: this.abort.signal });
-          document.addEventListener('keydown', (e) => { if (isOpen && e.key === 'Escape') close(); }, { signal: this.abort.signal });
-        }
-
-        // Worker başarısız olursa: mevcut global XLSX ile main-thread fallback (son çare)
-        parseOnMainThread(buffer) {
-          const MONTHS = { 'ocak': 0, 'subat': 1, 'mart': 2, 'nisan': 3, 'mayis': 4, 'haziran': 5, 'temmuz': 6, 'agustos': 7, 'eylul': 8, 'ekim': 9, 'kasim': 10, 'aralik': 11 };
-
-          const parseTimestamp = (dateStr, timeStr) => {
-            try {
-              const normDate = Utils.normalizeText(dateStr);
-              const normTime = (timeStr || '00:00').trim().replace('.', ':');
-              const dayMatch = normDate.match(/(\d+)/);
-              if (!dayMatch) return 0;
-
-              const day = parseInt(dayMatch[1], 10);
-              let monthIndex = -1;
-              for (const [k, v] of Object.entries(MONTHS)) {
-                if (normDate.includes(k) || normDate.includes(k.substring(0, 3))) { monthIndex = v; break; }
-              }
-              if (monthIndex === -1) return 0;
-
-              const [hh, mm] = normTime.split(':').map(n => parseInt(n, 10) || 0);
-              const now = new Date();
-              let year = now.getFullYear();
-              const currentMonth = now.getMonth();
-              if (currentMonth > 8 && monthIndex < 3) year += 1;
-              else if (currentMonth < 3 && monthIndex > 8) year -= 1;
-
-              // Fallback: eski davranış gibi UTC sabitleme (worker asıl “doğru” yolu yapar)
-              return Date.UTC(year, monthIndex, day, hh - 3, mm);
-            } catch { return 0; }
-          };
-
-          const workbook = XLSX.read(buffer, { type: 'array' });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-
-          const clean = (v) => (v != null) ? String(v).trim() : '';
-          const processed = (rows || []).slice(1).map(cols => {
-            const c = Array.isArray(cols) ? cols : [];
-            const item = {
-              week: clean(c[0]), date: clean(c[1]), day: clean(c[2]),
-              time: clean(c[3]), subject: clean(c[4]), speaker: clean(c[5]),
-              link1: clean(c[6]), link2: clean(c[7])
             };
-            return {
-              ...item,
-              timestamp: parseTimestamp(item.date, item.time),
-              searchIndex: Utils.normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day} ${item.week}`)
-            };
-          }).filter(x => x.subject);
-
-          return processed.reduce((acc, item) => {
-            (acc[item.week] = acc[item.week] || []).push(item);
-            return acc;
-          }, {});
-        }
-
-        async init() {
-          await SWManager.register();
-
-          this.renderer.renderMenu(this.data.resources);
-          this.setupDropdown();
-          this.bindSearch();
-
-          const cached = this.data.loadFromCache();
-          let cachedShown = false;
-
-          if (cached && Object.keys(cached).length) {
-            this.renderer.renderSchedule(this.data.groupedData);
-            cachedShown = true;
-          } else {
-            this.renderer.showLoading();
-          }
-
-          let buffer;
-          try {
-            buffer = await this.data.fetchArrayBuffer(); // SW: offline’da cache’ten dönebilir
-          } catch (e) {
-            if (!cachedShown) this.renderer.showError();
-            return;
-          }
-
-          // Hash ile değişiklik kontrolü
-          const knownHash = this.data.meta?.hash || '';
-          const hash = await Utils.sha256Hex(buffer);
-
-          if (hash && knownHash && hash === knownHash && cachedShown) {
-            // Dosya aynı: render etme, boşuna worker çalıştırma
-            return;
-          }
-
-          // Worker parse (ana thread’i yormaz)
-          let grouped = null;
-          try {
-            const transferable = buffer.slice(0); // kopya (fallback için buffer kalsın)
-            const result = await this.worker.parse(transferable);
-            grouped = result?.grouped || null;
-          } catch (e) {
-            // Worker/importScripts offline ilk yüklemede yoksa fallback
-            try {
-              grouped = this.parseOnMainThread(buffer);
-            } catch {
-              grouped = null;
+        
+            class DataManager {
+                constructor() {
+                    this.groupedData = {};
+                }
+        
+                get resources() { return EXTRA_RESOURCES; }
+        
+                loadFromCache() {
+                    try {
+                        const raw = localStorage.getItem(CONFIG.CACHE_KEY);
+                        if (!raw) return null;
+                        const parsed = JSON.parse(raw);
+                        if (parsed) this.groupedData = parsed;
+                        return parsed;
+                    } catch (e) {
+                        console.warn('Cache corrupted, clearing.');
+                        localStorage.removeItem(CONFIG.CACHE_KEY);
+                        return null;
+                    }
+                }
+        
+                saveToCache(data) {
+                    this.groupedData = data;
+                    try {
+                        localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify(data));
+                    } catch (e) {
+                        console.error("Storage quota exceeded or error:", e);
+                    }
+                }
+        
+                async fetchFreshData() {
+                    try {
+                        const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
+                        const response = await fetch(CONFIG.CSV_URL + cacheBuster, {
+                            cache: 'no-store',
+                            headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                        });
+        
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        
+                        const buffer = await response.arrayBuffer();
+                        const workbook = XLSX.read(buffer, { type: 'array' });
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+        
+                        return this.#processRows(rows);
+                    } catch (error) {
+                        console.error("Fetch failed:", error);
+                        return null;
+                    }
+                }
+        
+                #processRows(rows) {
+                    const processed = rows.slice(1).map(cols => {
+                        const clean = (val) => (val != null) ? String(val).trim() : '';
+                        const item = {
+                            week: clean(cols[0]), date: clean(cols[1]), day: clean(cols[2]),
+                            time: clean(cols[3]), subject: clean(cols[4]), speaker: clean(cols[5]),
+                            link1: clean(cols[6]), link2: clean(cols[7])
+                        };
+                        
+                        return {
+                            ...item,
+                            timestamp: Utils.parseTimestamp(item.date, item.time),
+                            searchIndex: Utils.normalizeText(`${item.subject} ${item.speaker} ${item.date} ${item.day}`)
+                        };
+                    }).filter(item => item.subject);
+        
+                    return processed.reduce((acc, item) => {
+                        (acc[item.week] = acc[item.week] || []).push(item);
+                        return acc;
+                    }, {});
+                }
+        
+                search(query) {
+                    if (!query) return [];
+                    const normQ = Utils.normalizeText(query);
+                    return Object.values(this.groupedData).flat()
+                        .filter(item => item.searchIndex.includes(normQ));
+                }
             }
-          }
+        
+            class Renderer {
+                #container; 
+                #templates;
+        
+                constructor() {
+                    this.#container = document.getElementById('main-content');
+                    this.#templates = {
+                        week: document.getElementById('tpl-week-section'),
+                        card: document.getElementById('tpl-card'),
+                        btn: document.getElementById('tpl-button'),
+                        empty: document.getElementById('tpl-empty'),
+                        menuItem: document.getElementById('tpl-menu-item')
+                    };
+                }
+        
+                #clone(id) { return this.#templates[id].content.cloneNode(true); }
+        
+                #setText(node, selector, text) {
+                    const el = node.querySelector(selector);
+                    if (el) el.textContent = text || '';
+                }
+        
+                #createCard(item, showWeekBadge = false) {
+                    const node = this.#clone('card');
+                    const { subject, speaker, time, date, day, week, link1, link2, timestamp } = item;
+                    
+                    this.#setText(node, '[data-slot="date-day"]', `${date}, ${day}`);
+                    this.#setText(node, '[data-slot="subject"]', subject);
+                    this.#setText(node, '[data-slot="speaker"]', speaker || 'Belirtilmedi');
+                    this.#setText(node, '[data-slot="time"]', time);
+        
+                    const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
+                    const joinBtn = node.querySelector('[data-slot="join-btn"]');
+                    if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) {
+                        joinBtn.remove();
+                    }
+        
+                    if (showWeekBadge) {
+                        const badge = node.querySelector('[data-slot="week-badge"]');
+                        badge.textContent = week;
+                        badge.classList.remove('hidden');
+                    }
+        
+                    const actionsContainer = node.querySelector('[data-slot="actions"]');
+                    if (!link1 && !link2) {
+                        const span = document.createElement('span');
+                        span.className = 'text-xs text-gray-400 italic';
+                        span.textContent = 'Kayıt bulunmuyor';
+                        actionsContainer.appendChild(span);
+                    } else {
+                        if (link1) actionsContainer.appendChild(this.#createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary'));
+                        if (link2) actionsContainer.appendChild(this.#createButton(link2, 'Tilavet', 'fa-book-quran', 'secondary'));
+                    }
+                    return node;
+                }
+        
+                #createButton(url, text, iconClass, type) {
+                    const node = this.#clone('btn');
+                    const a = node.querySelector('a');
+                    a.href = url;
+                    const classes = type === 'primary' ? CONFIG.CLASSES.btnPrimary : CONFIG.CLASSES.btnSecondary;
+                    a.classList.add(...classes);
+                    node.querySelector('i').classList.add('fa-solid', iconClass);
+                    node.querySelector('span').textContent = text;
+                    return node;
+                }
+        
+                showLoading() {
+                    this.#container.innerHTML = `
+                        <div class="text-center mt-10 text-emerald-600 dark:text-emerald-400 fade-in">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
+                            <p>Ders programı yükleniyor...</p>
+                        </div>`;
+                }
+        
+                showError() {
+                    this.#container.innerHTML = `
+                        <div class="text-center mt-10 text-red-500 fade-in">
+                            <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
+                            <p>Veri yüklenemedi. Bağlantınızı kontrol edin.</p>
+                            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm font-bold">Tekrar Dene</button>
+                        </div>`;
+                }
+        
+                renderSchedule(groupedData) {
+                    requestAnimationFrame(() => {
+                        this.#container.innerHTML = '';
+                        const weeks = Object.keys(groupedData).reverse();
+                        
+                        if (weeks.length === 0) {
+                            this.#container.appendChild(this.#clone('empty'));
+                            return;
+                        }
+        
+                        const fragment = document.createDocumentFragment();
+                        
+                        weeks.forEach((week, index) => {
+                            const section = this.#clone('week');
+                            const sectionEl = section.querySelector('section');
+                            const header = sectionEl.querySelector('.week-header');
+                            const content = sectionEl.querySelector('.week-content');
+                            const icon = header.querySelector('[data-slot="toggle-icon"]');
+        
+                            this.#setText(section, '[data-slot="week-title"]', week);
+                            
+                            groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
+        
+                            if (index === 0) {
+                                content.classList.remove(CONFIG.CLASSES.hidden);
+                                icon.classList.add(CONFIG.CLASSES.rotate);
+                                header.setAttribute('aria-expanded', 'true');
+                            }
+                            
+                            fragment.appendChild(section);
+                        });
+        
+                        this.#container.appendChild(fragment);
+                        
+                        this.#container.onclick = (e) => {
+                            const header = e.target.closest('.week-header');
+                            if (!header) return;
+                            
+                            const section = header.parentElement;
+                            const content = section.querySelector('.week-content');
+                            const icon = header.querySelector('[data-slot="toggle-icon"]');
+                            const isHidden = content.classList.contains(CONFIG.CLASSES.hidden);
+        
+                            content.classList.toggle(CONFIG.CLASSES.hidden);
+                            icon.classList.toggle(CONFIG.CLASSES.rotate);
+                            header.setAttribute('aria-expanded', isHidden);
+                        };
+                    });
+                }
+        
+                renderFiltered(list) {
+                    requestAnimationFrame(() => {
+                        this.#container.innerHTML = '';
+                        this.#container.onclick = null; 
+        
+                        if (!list?.length) {
+                            this.#container.appendChild(this.#clone('empty'));
+                            return;
+                        }
+        
+                        const sortedList = [...list].sort((a, b) => b.timestamp - a.timestamp);
+                        const fragment = document.createDocumentFragment();
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'p-2 fade-in';
+                        
+                        sortedList.forEach(item => wrapper.appendChild(this.#createCard(item, true)));
+                        fragment.appendChild(wrapper);
+                        this.#container.appendChild(fragment);
+                    });
+                }
+        
+                renderMenu(items) {
+                    const menu = document.getElementById('menu-quran');
+                    if (!menu) return;
+                    
+                    const fragment = document.createDocumentFragment();
+                    items.forEach(note => {
+                        const node = this.#clone('menuItem');
+                        const a = node.querySelector('a');
+                        a.href = note.url;
+                        
+                        this.#setText(node, '[data-slot="text"]', note.name);
+                        
+                        const isAudio = note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not");
+                        node.querySelector('[data-slot="icon"]').classList.add(isAudio ? "fa-file-audio" : "fa-file-lines");
+                        
+                        fragment.appendChild(node);
+                    });
+                    menu.innerHTML = '';
+                    menu.appendChild(fragment);
+                }
+            }
+        
+            class ThemeManager {
+                constructor() {
+                    this.html = document.documentElement;
+                    this.btn = document.getElementById('btn-theme-toggle');
+                    this.icon = this.btn?.querySelector('i');
+                    if(this.btn) this.init();
+                }
+        
+                init() {
+                    const local = localStorage.getItem('theme');
+                    const sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const isDark = local === 'dark' || (!local && sys);
+                    this.apply(isDark);
+                    
+                    this.btn.addEventListener('click', () => {
+                        const isCurrentDark = this.html.classList.contains('dark');
+                        this.apply(!isCurrentDark);
+                    });
+                }
+        
+                apply(isDark) {
+                    this.html.classList.toggle('dark', isDark);
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    if (this.icon) {
+                        this.icon.className = isDark 
+                            ? 'fa-solid fa-sun text-white text-xs' 
+                            : 'fa-solid fa-moon text-white text-xs';
+                    }
+                }
+            }
+        
+            class App {
+                #dataManager; 
+                #renderer; 
+                #themeManager; 
+                #searchTimer;
+        
+                constructor() {
+                    this.#dataManager = new DataManager();
+                    this.#renderer = new Renderer();
+                    this.#themeManager = new ThemeManager();
+                }
+        
+                async init() {
+                    this.#renderer.renderMenu(this.#dataManager.resources);
+                    this.#setupDropdown();
+                    this.#bindSearch();
+        
+                    const cachedData = this.#dataManager.loadFromCache();
+                    let isCachedDisplayed = false;
+        
+                    if (cachedData && Object.keys(cachedData).length > 0) {
+                        this.#renderer.renderSchedule(cachedData);
+                        isCachedDisplayed = true;
+                    } else {
+                        this.#renderer.showLoading();
+                    }
+        
+                    const freshData = await this.#dataManager.fetchFreshData();
+        
+                    if (freshData) {
+                        const hasChanges = JSON.stringify(cachedData || {}) !== JSON.stringify(freshData);
+                        if (hasChanges || !isCachedDisplayed) {
+                            this.#dataManager.saveToCache(freshData);
+                            this.#renderer.renderSchedule(freshData);
+                        }
+                    } else if (!isCachedDisplayed) {
+                        this.#renderer.showError();
+                    }
+                }
+        
+                #bindSearch() {
+                    const input = document.getElementById('input-search');
+                    if (!input) return;
+        
+                    const newInfo = input.cloneNode(true);
+                    input.parentNode.replaceChild(newInfo, input);
 
-          if (grouped) {
-            this.data.saveToCache(grouped, { hash });
-            this.renderer.renderSchedule(this.data.groupedData);
-          } else if (!cachedShown) {
-            this.renderer.showError();
-          }
-        }
-      }
+                    const dismissKeyboard = () => {
+                        if (document.activeElement === newInfo) {
+                            newInfo.blur();
+                        }
+                    };
 
-      document.addEventListener('DOMContentLoaded', () => {
-        new App().init();
-      }, { once: true });
-
-    })();
+                    window.addEventListener('touchmove', dismissKeyboard, { passive: true });
+                    window.addEventListener('scroll', dismissKeyboard, { passive: true });
+        
+                    newInfo.addEventListener('input', (e) => {
+                        clearTimeout(this.#searchTimer);
+                        const query = e.target.value.trim();
+                        
+                        this.#searchTimer = setTimeout(() => {
+                            if (query) {
+                                const results = this.#dataManager.search(query);
+                                this.#renderer.renderFiltered(results);
+                            } else {
+                                this.#renderer.renderSchedule(this.#dataManager.groupedData);
+                            }
+                        }, CONFIG.SEARCH_DEBOUNCE_MS);
+                    });
+                }
+        
+                #setupDropdown() {
+                    const btn = document.getElementById('btn-quran-menu');
+                    const menu = document.getElementById('menu-quran');
+                    if (!btn || !menu) return;
+        
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    const icon = newBtn.querySelector('.fa-chevron-down');
+        
+                    let isOpen = false;
+        
+                    const toggle = (forceState) => {
+                        isOpen = forceState !== undefined ? forceState : !isOpen;
+                        
+                        if (isOpen) {
+                            menu.classList.remove(CONFIG.CLASSES.hidden);
+                            requestAnimationFrame(() => {
+                                menu.classList.remove(...CONFIG.CLASSES.menuOut);
+                                menu.classList.add(...CONFIG.CLASSES.menuIn);
+                                icon.classList.add(CONFIG.CLASSES.rotate);
+                            });
+                            newBtn.setAttribute('aria-expanded', 'true');
+                        } else {
+                            menu.classList.remove(...CONFIG.CLASSES.menuIn);
+                            menu.classList.add(...CONFIG.CLASSES.menuOut);
+                            icon.classList.remove(CONFIG.CLASSES.rotate);
+                            newBtn.setAttribute('aria-expanded', 'false');
+                            setTimeout(() => {
+                                if(!isOpen) menu.classList.add(CONFIG.CLASSES.hidden);
+                            }, 200);
+                        }
+                    };
+        
+                    newBtn.addEventListener('click', (e) => { 
+                        e.stopPropagation(); 
+                        toggle(); 
+                    });
+        
+                    document.addEventListener('click', (e) => {
+                        if (isOpen && !newBtn.contains(e.target) && !menu.contains(e.target)) {
+                            toggle(false);
+                        }
+                    });
+                }
+            }
+        
+            document.addEventListener('DOMContentLoaded', () => new App().init());
+        
+        })();
     </script>
 </body>
 </html>
