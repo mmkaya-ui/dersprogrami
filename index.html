@@ -600,6 +600,12 @@
             tr_ates: "tr.ates"
         };
         const SURAH_NAMES_TR = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şu'arâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saff", "Cum'a", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirah", "Tîn", "Alak", "Kadir", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
+        
+        // Static Revelation Order Map (Surah Number -> Order)
+        const REVELATION_ORDER_MAP = {
+            1: 5, 2: 87, 3: 89, 4: 92, 5: 112, 6: 55, 7: 39, 8: 88, 9: 113, 10: 51, 11: 52, 12: 53, 13: 96, 14: 72, 15: 54, 16: 70, 17: 50, 18: 69, 19: 44, 20: 45, 21: 73, 22: 103, 23: 74, 24: 102, 25: 42, 26: 47, 27: 48, 28: 49, 29: 85, 30: 84, 31: 57, 32: 75, 33: 90, 34: 58, 35: 43, 36: 41, 37: 56, 38: 38, 39: 59, 40: 60, 41: 61, 42: 62, 43: 63, 44: 64, 45: 65, 46: 66, 47: 95, 48: 111, 49: 106, 50: 34, 51: 67, 52: 76, 53: 23, 54: 37, 55: 97, 56: 46, 57: 94, 58: 105, 59: 101, 60: 91, 61: 109, 62: 110, 63: 104, 64: 108, 65: 99, 66: 107, 67: 77, 68: 2, 69: 78, 70: 79, 71: 71, 72: 40, 73: 3, 74: 4, 75: 31, 76: 98, 77: 33, 78: 80, 79: 81, 80: 24, 81: 7, 82: 82, 83: 86, 84: 83, 85: 27, 86: 36, 87: 8, 88: 68, 89: 10, 90: 35, 91: 26, 92: 9, 93: 11, 94: 12, 95: 28, 96: 1, 97: 25, 98: 100, 99: 93, 100: 14, 101: 30, 102: 16, 103: 13, 104: 32, 105: 19, 106: 29, 107: 17, 108: 15, 109: 18, 110: 114, 111: 6, 112: 22, 113: 20, 114: 21
+        };
+
         const getSurahNameTR = (number) => (number < 1 || number > 114) ? "" : SURAH_NAMES_TR[number - 1];
         const normalizeText = (text) => {
             if (!text) return "";
@@ -607,20 +613,43 @@
         };
 
         const SurahList = ({ activeSurah, onSelectSurah, surahs }) => {
+            const [sortType, setSortType] = useState('mushaf'); // 'mushaf' | 'revelation'
+
+            const sortedSurahs = [...surahs].sort((a, b) => {
+                if (sortType === 'mushaf') {
+                    return a.number - b.number;
+                } else {
+                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
+                }
+            });
+
             return (
                 <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-gray-900 dark:border-gray-700 w-full md:w-64 flex-shrink-0">
                     <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
-                        <h2 className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                            <i className="fa-solid fa-book-open text-emerald-600"></i> Sureler
-                        </h2>
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i className="fa-solid fa-book-open text-emerald-600"></i> Sureler
+                            </h2>
+                            <button 
+                                onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')}
+                                className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center gap-1"
+                                title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
+                            >
+                                <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
+                                {sortType === 'mushaf' ? 'Sıra' : 'İniş'}
+                            </button>
+                        </div>
                     </div>
                     <ul>
-                        {surahs.map((surah) => (
+                        {sortedSurahs.map((surah) => (
                             <li key={surah.number}>
                                 <button onClick={() => onSelectSurah(surah)} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 transition-colors border-b border-slate-100 dark:border-gray-800 flex justify-between items-center ${activeSurah?.number === surah.number ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 font-semibold' : 'text-slate-600 dark:text-slate-400'}`}>
                                     <div className="flex items-center gap-3">
-                                        <span className="bg-slate-200 dark:bg-gray-700 text-xs w-6 h-6 flex items-center justify-center rounded-full">{surah.number}</span>
-                                        <span>{getSurahNameTR(surah.number)} <span className="text-xs opacity-60">({surah.name})</span></span>
+                                        <span className="bg-slate-200 dark:bg-gray-700 text-xs w-6 h-6 flex items-center justify-center rounded-full text-[10px]">{surah.number}</span>
+                                        <div className="flex flex-col">
+                                            <span>{getSurahNameTR(surah.number)} <span className="text-xs opacity-60">({surah.name})</span></span>
+                                            {sortType === 'revelation' && <span className="text-[10px] opacity-60 text-emerald-600 dark:text-emerald-400">İniş: {REVELATION_ORDER_MAP[surah.number]}</span>}
+                                        </div>
                                     </div>
                                     {activeSurah?.number === surah.number && <i className="fa-solid fa-chevron-right text-xs"></i>}
                                 </button>
@@ -790,14 +819,32 @@
                 setViewMode('reader'); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
                 try {
                     const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
-                    const response = await fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`);
-                    const data = await response.json();
-                    if (data.data && data.data[0]) { setActiveSurah({ ...surah, ...data.data[0] }); }
-                    const combinedAyahs = data.data[0].ayahs.map((ayah, index) => {
+                    
+                    // Paralel Fetch: Hem ayetleri (Editions) hem de detaylı sure bilgisini (Metadata) çek
+                    const editionsFetch = fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`);
+                    const metaFetch = fetch(`${API_BASE}/surah/${surah.number}`);
+
+                    const [editionsRes, metaRes] = await Promise.all([editionsFetch, metaFetch]);
+                    const editionsData = await editionsRes.json();
+                    const metaData = await metaRes.json();
+
+                    // Detaylı sure bilgisini (revelationOrder vb.) güncelle
+                    if (metaData.code === 200 && metaData.data) {
+                         setActiveSurah(prev => ({ ...prev, ...metaData.data }));
+                    }
+
+                    if (editionsData.data && editionsData.data[0]) {
+                        // Eğer meta fetch başarısız olursa yedek olarak edition'dan gelen bilgiyi kullan (eksik olabilir)
+                        if (metaData.code !== 200) {
+                             setActiveSurah(prev => ({ ...prev, ...editionsData.data[0] }));
+                        }
+                    }
+
+                    const combinedAyahs = editionsData.data[0].ayahs.map((ayah, index) => {
                         return {
                             number: ayah.number, numberInSurah: ayah.numberInSurah, surahName: getSurahNameTR(surah.number),
-                            text: ayah.text, transliteration: data.data[1].ayahs[index].text, diyanet: data.data[2].ayahs[index].text,
-                            yazir: data.data[3].ayahs[index].text, ates: data.data[4].ayahs[index].text, audio: data.data[5].ayahs[index].audio
+                            text: ayah.text, transliteration: editionsData.data[1].ayahs[index].text, diyanet: editionsData.data[2].ayahs[index].text,
+                            yazir: editionsData.data[3].ayahs[index].text, ates: editionsData.data[4].ayahs[index].text, audio: editionsData.data[5].ayahs[index].audio
                         };
                     });
                     setAyahs(combinedAyahs);
@@ -931,7 +978,7 @@
                                             <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                  <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">{activeSurah?.numberOfAyahs} Ayet</span>
                                                  <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">{activeSurah?.revelationType === 'Meccan' ? 'Mekke Dönemi (610-622)' : 'Medine Dönemi (622-632)'}</span>
-                                                 {activeSurah?.revelationOrder && <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">İniş Sırası: {activeSurah.revelationOrder}</span>}
+                                                 <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
                                             </div>
                                         </div>
                                         {activeSurah?.number !== 9 && <div className="text-center mb-10 font-arabic text-3xl text-emerald-700 dark:text-emerald-400 select-none" style={{ fontFamily: "'Amiri', serif" }}>بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>}
