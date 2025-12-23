@@ -661,14 +661,30 @@
             );
         };
 
-        const AyahCard = ({ ayahData, isPlaying, isActive, onTogglePlay, fontSize }) => {
+        const AyahCard = ({ ayahData, isPlaying, isActive, onTogglePlay, fontSize, onAddToPlaylist, showRemoveBtn, onRemoveFromPlaylist, isSelected, onToggleSelect }) => {
             return (
-                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-100 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50 shadow-md transform scale-[1.01]' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:shadow-md'}`}>
+                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-100 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50 shadow-md transform scale-[1.01]' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:shadow-md'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : ''}`}>
                     <div className="bg-slate-50 dark:bg-gray-900/50 px-4 py-2 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center">
-                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - Ayet {ayahData.numberInSurah}</span>
-                        <button onClick={() => onTogglePlay(ayahData)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive && isPlaying ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 animate-pulse' : 'bg-slate-200 text-slate-700 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-gray-700 dark:text-slate-300'}`}>
-                            {isActive && isPlaying ? <><i className="fa-solid fa-pause"></i> Duraklat</> : <><i className="fa-solid fa-play"></i> Dinle</>}
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => onToggleSelect(ayahData)} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
+                                {isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
+                            </button>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - Ayet {ayahData.numberInSurah}</span>
+                        </div>
+                        <div className="flex gap-2">
+                            {showRemoveBtn ? (
+                                <button onClick={() => onRemoveFromPlaylist(ayahData)} className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 transition-colors" title="Listeden Çıkar">
+                                    <i className="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            ) : (
+                                <button onClick={() => onAddToPlaylist(ayahData)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600 transition-colors" title="Listeye Ekle">
+                                    <i className="fa-solid fa-folder-plus text-xs"></i>
+                                </button>
+                            )}
+                            <button onClick={() => onTogglePlay(ayahData)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive && isPlaying ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 animate-pulse' : 'bg-slate-200 text-slate-700 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-gray-700 dark:text-slate-300'}`}>
+                                {isActive && isPlaying ? <><i className="fa-solid fa-pause"></i> Duraklat</> : <><i className="fa-solid fa-play"></i> Dinle</>}
+                            </button>
+                        </div>
                     </div>
                     <div className="p-6">
                         <div className="text-right mb-6 leading-loose" dir="rtl">
@@ -729,7 +745,7 @@
             const [surahs, setSurahs] = useState([]);
             const [activeSurah, setActiveSurah] = useState(null);
             const [ayahs, setAyahs] = useState([]);
-            const [viewMode, setViewMode] = useState('reader');
+            const [viewMode, setViewMode] = useState('reader'); // reader, search, playlist_list, playlist_view
             const [searchQuery, setSearchQuery] = useState('');
             const [searching, setSearching] = useState(false);
             const [loadingMore, setLoadingMore] = useState(false);
@@ -745,9 +761,17 @@
             const [darkMode, setDarkMode] = useState(false);
             const [sortType, setSortType] = useState('mushaf');
             
+            // Playlist States
+            const [playlists, setPlaylists] = useState([]);
+            const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+            const [ayahToAdd, setAyahToAdd] = useState(null);
+            const [newPlaylistName, setNewPlaylistName] = useState("");
+            const [activePlaylist, setActivePlaylist] = useState(null);
+            const [selectedAyahs, setSelectedAyahs] = useState([]); // Array of ayah objects
+            
             const audioRef = useRef(new Audio());
             const shouldAutoPlayRef = useRef(false);
-            const rawMatchesRef = useRef([]); // Hold latest rawMatches
+            const rawMatchesRef = useRef([]); 
             const ITEMS_PER_PAGE = 5;
 
             // Use refs for state inside event listener
@@ -758,8 +782,24 @@
                 activeAyah,
                 sortedSurahs: [],
                 activeSurah,
-                isPlaying
+                isPlaying,
+                activePlaylist
             });
+
+            // Load playlists from local storage on mount
+            useEffect(() => {
+                const savedPlaylists = localStorage.getItem('quran_playlists');
+                if (savedPlaylists) {
+                    try {
+                        setPlaylists(JSON.parse(savedPlaylists));
+                    } catch (e) { console.error("Playlist parse error", e); }
+                }
+            }, []);
+
+            // Save playlists whenever they change
+            useEffect(() => {
+                localStorage.setItem('quran_playlists', JSON.stringify(playlists));
+            }, [playlists]);
 
             const sortedSurahs = React.useMemo(() => {
                 return [...surahs].sort((a, b) => {
@@ -774,8 +814,8 @@
             // Sync ref for effect usage
             useEffect(() => { 
                 rawMatchesRef.current = rawMatches; 
-                stateRef.current = { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, isPlaying };
-            }, [rawMatches, viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, isPlaying]);
+                stateRef.current = { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, isPlaying, activePlaylist };
+            }, [rawMatches, viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, isPlaying, activePlaylist]);
 
             const toggleSort = () => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf');
 
@@ -795,8 +835,18 @@
                 const handleEnded = () => {
                     setIsPlaying(false);
                     // Use ref to access latest state without re-binding listener
-                    const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
+                    const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, activePlaylist } = stateRef.current;
                     
+                    // Logic for playlist view
+                    if (viewMode === 'playlist_view' && activePlaylist) {
+                         const list = activePlaylist.items;
+                         const idx = list.findIndex(a => a.number === activeAyah?.number);
+                         if (idx !== -1 && idx < list.length - 1) {
+                             playAyah(list[idx+1]);
+                         }
+                         return; 
+                    }
+
                     const list = viewMode === 'search' ? detailedResults : ayahs;
                     const idx = list.findIndex(a => a.number === activeAyah?.number);
                     
@@ -809,11 +859,6 @@
                         if (currentSurahIdx !== -1 && currentSurahIdx < sortedSurahs.length - 1) {
                             const nextSurah = sortedSurahs[currentSurahIdx + 1];
                             shouldAutoPlayRef.current = true;
-                            // Call the function directly, but we need to pass it or access it.
-                            // Since handleSelectSurah is defined in the component scope and uses state setters,
-                            // we need a way to call it.
-                            // We can use a ref to hold the function or just trigger an effect.
-                            // Triggering via window/ref is safest for closure issues.
                             if (window.selectSurahFn) window.selectSurahFn(nextSurah);
                         }
                     }
@@ -838,10 +883,9 @@
             }, []);
 
             // Expose handleSelectSurah to the event listener via window/ref pattern
-            // This is a bit hacky but works reliably for this structure without context
             useEffect(() => {
                 window.selectSurahFn = handleSelectSurah;
-            }, [handleSelectSurah]); // Dependent on handleSelectSurah definition
+            }, [handleSelectSurah]);
 
             // Re-sort search results when sortType changes
             useEffect(() => {
@@ -897,7 +941,7 @@
                     navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
                     navigator.mediaSession.setActionHandler('nexttrack', playNext);
                 }
-            }, [activeAyah]); // Removed isPlaying dependency to avoid resets
+            }, [activeAyah]);
 
             // Auto-play next Surah when ayahs load and flag is set
             useEffect(() => {
@@ -919,9 +963,18 @@
             };
 
             const playNext = () => {
-                // Logic is now in handleEnded, we can reuse or just trigger manually if needed
-                // But for buttons, we need explicit logic
-                const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
+                const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, activePlaylist } = stateRef.current;
+                
+                // Logic for playlist view
+                if (viewMode === 'playlist_view' && activePlaylist) {
+                        const list = activePlaylist.items;
+                        const idx = list.findIndex(a => a.number === activeAyah?.number);
+                        if (idx !== -1 && idx < list.length - 1) {
+                            playAyah(list[idx+1]);
+                        }
+                        return; 
+                }
+
                 const list = viewMode === 'search' ? detailedResults : ayahs;
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
                 
@@ -938,7 +991,17 @@
             };
 
             const playPrevious = () => {
-                const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
+                const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, activePlaylist } = stateRef.current;
+                
+                if (viewMode === 'playlist_view' && activePlaylist) {
+                    const list = activePlaylist.items;
+                    const idx = list.findIndex(a => a.number === activeAyah?.number);
+                    if (idx > 0) {
+                        playAyah(list[idx-1]);
+                    }
+                    return; 
+                }
+
                 const list = viewMode === 'search' ? detailedResults : ayahs;
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
                 
@@ -952,6 +1015,110 @@
                         handleSelectSurah(prevSurah);
                     }
                 }
+            };
+
+            // Playlist Functions
+            const handleToggleSelect = (ayah) => {
+                setSelectedAyahs(prev => {
+                    const exists = prev.some(item => item.number === ayah.number);
+                    if (exists) {
+                        return prev.filter(item => item.number !== ayah.number);
+                    } else {
+                        // Ensure we store unique items by ID, even if object ref differs
+                        return [...prev, ayah];
+                    }
+                });
+            };
+
+            const clearSelection = () => {
+                setSelectedAyahs([]);
+            };
+
+            const openAddToPlaylistModal = (ayah = null) => {
+                setAyahToAdd(ayah);
+                setShowPlaylistModal(true);
+            };
+
+            const createPlaylist = () => {
+                if (!newPlaylistName.trim()) return;
+                const newPlaylist = {
+                    id: Date.now(),
+                    name: newPlaylistName,
+                    items: []
+                };
+                
+                // Logic: If ayahToAdd exists (single add), use it.
+                // Else if selectedAyahs has items (bulk add), use them.
+                if (ayahToAdd) {
+                    newPlaylist.items.push(ayahToAdd);
+                } else if (selectedAyahs.length > 0) {
+                    newPlaylist.items = [...selectedAyahs];
+                }
+
+                setPlaylists([...playlists, newPlaylist]);
+                setNewPlaylistName("");
+                
+                // Cleanup
+                if (ayahToAdd || selectedAyahs.length > 0) {
+                    setShowPlaylistModal(false);
+                    setAyahToAdd(null);
+                    clearSelection();
+                }
+            };
+
+            const addToPlaylist = (playlistId) => {
+                // Determine what to add: Single item or Bulk selection
+                const itemsToAdd = ayahToAdd ? [ayahToAdd] : selectedAyahs;
+                if (itemsToAdd.length === 0) return;
+
+                setPlaylists(prev => prev.map(p => {
+                    if (p.id === playlistId) {
+                        // Filter out duplicates based on ayah number
+                        const currentNumbers = new Set(p.items.map(i => i.number));
+                        const uniqueNewItems = itemsToAdd.filter(i => !currentNumbers.has(i.number));
+                        
+                        if (uniqueNewItems.length > 0) {
+                            return { ...p, items: [...p.items, ...uniqueNewItems] };
+                        }
+                    }
+                    return p;
+                }));
+                setShowPlaylistModal(false);
+                setAyahToAdd(null);
+                clearSelection();
+            };
+
+            const deletePlaylist = (e, id) => {
+                e.stopPropagation();
+                if (confirm("Bu listeyi silmek istediğinize emin misiniz?")) {
+                    setPlaylists(prev => prev.filter(p => p.id !== id));
+                    if (activePlaylist?.id === id) {
+                        setViewMode('playlists_list');
+                        setActivePlaylist(null);
+                    }
+                }
+            };
+
+            const removeFromPlaylist = (ayah) => {
+                if (!activePlaylist) return;
+                const updatedPlaylist = {
+                    ...activePlaylist,
+                    items: activePlaylist.items.filter(item => item.number !== ayah.number)
+                };
+                // Update local state for immediate feedback
+                setAyahs(updatedPlaylist.items);
+                setActivePlaylist(updatedPlaylist);
+                
+                // Update global playlists state
+                setPlaylists(prev => prev.map(p => p.id === updatedPlaylist.id ? updatedPlaylist : p));
+            };
+
+            const openPlaylist = (playlist) => {
+                setActivePlaylist(playlist);
+                setAyahs(playlist.items);
+                setViewMode('playlist_view');
+                setActiveSurah(null); // Clear active surah context
+                clearSelection(); // Clear selection when entering playlist view to avoid confusion
             };
 
             const handleTogglePlay = (ayah) => {
@@ -974,6 +1141,15 @@
             };
 
             const handleGoBack = () => {
+                if (viewMode === 'playlist_view') {
+                    setViewMode('playlists_list');
+                    return;
+                }
+                if (viewMode === 'playlists_list') {
+                    setViewMode('reader');
+                    if (surahs.length > 0 && !activeSurah) handleSelectSurah(surahs[0]);
+                    return;
+                }
                 closePlayer();
                 window.toggleQuranView(false);
             };
@@ -1001,6 +1177,7 @@
             const handleSelectSurah = async (surah) => {
                 setLoading(true); setLoadingText(`${getSurahNameTR(surah.number)} suresi yükleniyor...`);
                 setViewMode('reader'); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
+                // Don't clear selection here to allow cross-surah selection if desired
                 try {
                     const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
                     
@@ -1097,7 +1274,82 @@
             };
 
             return (
-                <div className="flex flex-col h-full font-sans">
+                <div className="flex flex-col h-full font-sans relative">
+                    {/* Playlist Add Modal */}
+                    {showPlaylistModal && (
+                        <div className="fixed inset-0 z-[150] bg-black/50 flex items-center justify-center p-4 fade-in">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+                                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-emerald-700 text-white">
+                                    <h3 className="font-bold flex items-center gap-2"><i className="fa-solid fa-folder-plus"></i> Listeye Ekle</h3>
+                                    <button onClick={() => { setShowPlaylistModal(false); setAyahToAdd(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i className="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div className="p-4">
+                                    {/* Display Info: Single or Bulk */}
+                                    {ayahToAdd ? (
+                                        <div className="mb-4 text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 p-2 rounded border border-emerald-100 dark:border-emerald-800">
+                                            <strong>Seçili Ayet:</strong> {ayahToAdd.surahName} {ayahToAdd.numberInSurah}. Ayet
+                                        </div>
+                                    ) : selectedAyahs.length > 0 && (
+                                        <div className="mb-4 text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 p-2 rounded border border-emerald-100 dark:border-emerald-800">
+                                            <strong>Toplu İşlem:</strong> {selectedAyahs.length} ayet seçildi.
+                                        </div>
+                                    )}
+                                    
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Yeni Liste Oluştur</label>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                value={newPlaylistName}
+                                                onChange={(e) => setNewPlaylistName(e.target.value)}
+                                                placeholder="Örn: Sabah Duaları" 
+                                                className="flex-1 p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                            />
+                                            <button onClick={createPlaylist} disabled={!newPlaylistName.trim()} className="bg-emerald-600 text-white px-3 py-2 rounded hover:bg-emerald-700 disabled:opacity-50 transition text-sm font-bold">
+                                                <i className="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="max-h-60 overflow-y-auto">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Mevcut Listeler</label>
+                                        {playlists.length === 0 ? (
+                                            <p className="text-sm text-gray-400 italic text-center py-2">Henüz liste yok.</p>
+                                        ) : (
+                                            <ul className="space-y-2">
+                                                {playlists.map(p => (
+                                                    <li key={p.id}>
+                                                        <button 
+                                                            onClick={() => addToPlaylist(p.id)}
+                                                            className="w-full text-left p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-gray-200 dark:border-gray-600 flex justify-between items-center group transition-colors"
+                                                        >
+                                                            <span className="font-medium text-gray-700 dark:text-gray-200">{p.name}</span>
+                                                            <span className="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">{p.items.length} Ayet</span>
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bulk Actions Bar */}
+                    {selectedAyahs.length > 0 && !showPlaylistModal && (
+                        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-emerald-800 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 animate-bounce-in">
+                            <span className="font-bold text-sm whitespace-nowrap">{selectedAyahs.length} Ayet Seçildi</span>
+                            <div className="h-4 w-px bg-white/30"></div>
+                            <button onClick={() => openAddToPlaylistModal(null)} className="font-bold text-sm hover:text-emerald-200 flex items-center gap-2">
+                                <i className="fa-solid fa-folder-plus"></i> Listeye Ekle
+                            </button>
+                            <button onClick={clearSelection} className="w-6 h-6 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-xs ml-2">
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    )}
+
                     <header className="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-20 transition-colors duration-300 sticky top-0">
                         <div className="max-w-md mx-auto relative pt-2">
                             {/* Theme Toggle - Positioned exactly as in Schedule App */}
@@ -1121,19 +1373,28 @@
                                 </div>
                             </div>
 
-                            {/* Search Bar */}
-                            <form onSubmit={handleSearch} className="relative mb-2 group">
-                                <input
-                                    type="text"
-                                    placeholder="Örn: namaz, sabır..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
-                                />
-                                <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-emerald-500 transition-colors">
-                                    <i className="fa-solid fa-search text-sm"></i>
+                            {/* Search Bar & Playlist Button */}
+                            <div className="flex gap-2 items-center mb-2">
+                                <form onSubmit={handleSearch} className="relative group flex-1">
+                                    <input
+                                        type="text"
+                                        placeholder="Örn: namaz, sabır..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
+                                    />
+                                    <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-emerald-500 transition-colors">
+                                        <i className="fa-solid fa-search text-sm"></i>
+                                    </button>
+                                </form>
+                                <button 
+                                    onClick={() => { setViewMode('playlists_list'); setSearchQuery(''); }}
+                                    className="bg-emerald-800 dark:bg-emerald-950 text-white p-2 rounded-lg w-10 h-10 flex items-center justify-center shadow-sm hover:bg-emerald-600 transition border border-emerald-600/30"
+                                    title="Listelerim"
+                                >
+                                    <i className="fa-solid fa-layer-group"></i>
                                 </button>
-                            </form>
+                            </div>
 
                             {/* Font Controls */}
                             <div className="flex justify-end">
@@ -1149,7 +1410,7 @@
 
                     {/* Main Content */}
                     <div className="flex flex-1 overflow-hidden relative">
-                        <div className="hidden md:block h-full shadow-inner">
+                        <div className={`hidden md:block h-full shadow-inner ${viewMode.startsWith('playlist') ? 'opacity-50 pointer-events-none' : ''}`}>
                             <SurahList 
                                 surahs={sortedSurahs} 
                                 activeSurah={activeSurah} 
@@ -1158,33 +1419,40 @@
                                 onSortChange={toggleSort}
                             />
                         </div>
-                        <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm flex gap-2">
-                            <select 
-                                onChange={(e) => { 
-                                    const surah = surahs.find(s => s.number === parseInt(e.target.value)); 
-                                    if(surah) handleSelectSurah(surah); 
-                                }} 
-                                className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm" 
-                                value={activeSurah?.number || 1}
-                            >
-                                {sortedSurahs.map(s => (
-                                    <option key={s.number} value={s.number}>
-                                        {s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
-                                    </option>
-                                ))}
-                            </select>
-                            
-                            <button 
-                                onClick={toggleSort}
-                                className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
-                                title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
-                            >
-                                <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
-                            </button>
-                        </div>
+                        
+                        {/* Mobile Surah Select - Only show in reader mode */}
+                        {viewMode === 'reader' && (
+                            <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm flex gap-2">
+                                <select 
+                                    onChange={(e) => { 
+                                        const surah = surahs.find(s => s.number === parseInt(e.target.value)); 
+                                        if(surah) handleSelectSurah(surah); 
+                                    }} 
+                                    className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm" 
+                                    value={activeSurah?.number || 1}
+                                >
+                                    {sortedSurahs.map(s => (
+                                        <option key={s.number} value={s.number}>
+                                            {s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                
+                                <button 
+                                    onClick={toggleSort}
+                                    className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
+                                    title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
+                                >
+                                    <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
+                                </button>
+                            </div>
+                        )}
+
                         <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-gray-900/50 p-4 md:p-8 pt-16 md:pt-8 scroll-smooth">
                             <div className="max-w-4xl mx-auto pb-32">
                                 {(loading || searching) && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 dark:text-emerald-400 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p className="text-lg font-medium">{loadingText || "İşleniyor..."}</p></div>}
+                                
+                                {/* READER MODE */}
                                 {!loading && !searching && viewMode === 'reader' && (
                                     <>
                                         <div className="text-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-6 fade-in">
@@ -1195,9 +1463,23 @@
                                                  <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
                                             </div>
                                         </div>
-                                        {ayahs.map((ayah) => <AyahCard key={ayah.number} ayahData={ayah} isActive={activeAyah?.number === ayah.number} isPlaying={isPlaying} onTogglePlay={handleTogglePlay} fontSize={fontSize} />)}
+                                        {ayahs.map((ayah) => (
+                                            <AyahCard 
+                                                key={ayah.number} 
+                                                ayahData={ayah} 
+                                                isActive={activeAyah?.number === ayah.number} 
+                                                isPlaying={isPlaying} 
+                                                onTogglePlay={handleTogglePlay} 
+                                                fontSize={fontSize} 
+                                                onAddToPlaylist={openAddToPlaylistModal} 
+                                                isSelected={selectedAyahs.some(s => s.number === ayah.number)}
+                                                onToggleSelect={handleToggleSelect}
+                                            />
+                                        ))}
                                     </>
                                 )}
+                                
+                                {/* SEARCH RESULTS MODE */}
                                 {!searching && viewMode === 'search' && (
                                     <>
                                         <div className="flex items-center justify-between mb-6">
@@ -1207,11 +1489,104 @@
                                         {rawMatches.length === 0 ? <div className="text-center py-20 text-gray-500"><i className="fa-solid fa-filter-circle-xmark text-5xl mb-4 opacity-30"></i><p>Sonuç bulunamadı.</p></div> : (
                                             <div>
                                                  <p className="mb-4 text-sm text-gray-500">Toplam {rawMatches.length} sonuç bulundu. ({detailedResults.length} gösteriliyor)</p>
-                                                 {detailedResults.map((ayah) => <AyahCard key={`search-${ayah.number}`} ayahData={ayah} isActive={activeAyah?.number === ayah.number} isPlaying={isPlaying} onTogglePlay={handleTogglePlay} fontSize={fontSize} />)}
+                                                 {detailedResults.map((ayah) => (
+                                                     <AyahCard 
+                                                        key={`search-${ayah.number}`} 
+                                                        ayahData={ayah} 
+                                                        isActive={activeAyah?.number === ayah.number} 
+                                                        isPlaying={isPlaying} 
+                                                        onTogglePlay={handleTogglePlay} 
+                                                        fontSize={fontSize} 
+                                                        onAddToPlaylist={openAddToPlaylistModal} 
+                                                        isSelected={selectedAyahs.some(s => s.number === ayah.number)}
+                                                        onToggleSelect={handleToggleSelect}
+                                                    />
+                                                 ))}
                                                 {nextLoadIndex < rawMatches.length && <div className="flex justify-center mt-8 pb-10"><button onClick={loadMoreResults} disabled={loadingMore} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md">{loadingMore ? <><i className="fa-solid fa-circle-notch fa-spin"></i> Yükleniyor...</> : <><i className="fa-solid fa-chevron-down"></i> Daha Fazla Göster ({rawMatches.length - nextLoadIndex} kaldı)</>}</button></div>}
                                             </div>
                                         )}
                                     </>
+                                )}
+
+                                {/* PLAYLISTS LIST MODE */}
+                                {viewMode === 'playlists_list' && (
+                                    <div className="fade-in">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                                                <i className="fa-solid fa-layer-group text-emerald-600"></i> Listelerim
+                                            </h2>
+                                            <button onClick={() => setShowPlaylistModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">
+                                                <i className="fa-solid fa-plus mr-2"></i> Yeni Liste
+                                            </button>
+                                        </div>
+                                        
+                                        {playlists.length === 0 ? (
+                                            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                                                <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                    <i className="fa-solid fa-folder-plus text-3xl text-emerald-600 dark:text-emerald-400"></i>
+                                                </div>
+                                                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Henüz Listeniz Yok</h3>
+                                                <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-6">Ayetleri okurken yanlarındaki klasör simgesine tıklayarak kendinize özel listeler oluşturabilirsiniz.</p>
+                                                <button onClick={() => setShowPlaylistModal(true)} className="text-emerald-600 font-bold hover:underline">İlk listeni oluştur</button>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {playlists.map(playlist => (
+                                                    <div key={playlist.id} onClick={() => openPlaylist(playlist)} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition group relative">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                                                <i className="fa-solid fa-list-ul"></i>
+                                                            </div>
+                                                            <button onClick={(e) => deletePlaylist(e, playlist.id)} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition z-10">
+                                                                <i className="fa-solid fa-trash text-xs"></i>
+                                                            </button>
+                                                        </div>
+                                                        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 mb-1 group-hover:text-emerald-600 transition-colors">{playlist.name}</h3>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{playlist.items.length} Ayet</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* SINGLE PLAYLIST VIEW MODE */}
+                                {viewMode === 'playlist_view' && activePlaylist && (
+                                    <div className="fade-in">
+                                        <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-6 mb-6 border border-emerald-100 dark:border-emerald-900/30 text-center">
+                                            <h2 className="text-2xl font-bold text-gray-800 dark:text-emerald-100 mb-2">{activePlaylist.name}</h2>
+                                            <p className="text-emerald-600 dark:text-emerald-400 text-sm mb-4">{activePlaylist.items.length} Ayet içeriyor</p>
+                                            <div className="flex justify-center gap-3 flex-wrap">
+                                                <button onClick={() => { if(activePlaylist.items.length > 0) playAyah(activePlaylist.items[0]); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-full font-bold shadow-md transition flex items-center gap-2">
+                                                    <i className="fa-solid fa-play"></i> Listeyi Oynat
+                                                </button>
+                                                <button onClick={() => { setViewMode('reader'); }} className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-5 py-2 rounded-full font-bold shadow-sm transition flex items-center gap-2">
+                                                    <i className="fa-solid fa-book-open"></i> Surelere Dön
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        {activePlaylist.items.length === 0 ? (
+                                            <div className="text-center py-10 text-gray-500 italic">Bu liste boş.</div>
+                                        ) : (
+                                            activePlaylist.items.map((ayah, index) => (
+                                                <div key={`${ayah.number}-${index}`} className="relative">
+                                                    <div className="absolute -left-3 top-4 w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 border border-white dark:border-gray-800 shadow-sm z-10">
+                                                        {index + 1}
+                                                    </div>
+                                                    <AyahCard 
+                                                        ayahData={ayah} 
+                                                        isActive={activeAyah?.number === ayah.number} 
+                                                        isPlaying={isPlaying} 
+                                                        onTogglePlay={handleTogglePlay} 
+                                                        fontSize={fontSize} 
+                                                        showRemoveBtn={true}
+                                                        onRemoveFromPlaylist={removeFromPlaylist}
+                                                    />
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </main>
