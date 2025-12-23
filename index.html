@@ -750,18 +750,98 @@
             const rawMatchesRef = useRef([]); // Hold latest rawMatches
             const ITEMS_PER_PAGE = 5;
 
-            // Sync ref for effect usage
-            useEffect(() => { rawMatchesRef.current = rawMatches; }, [rawMatches]);
-
-            const sortedSurahs = [...surahs].sort((a, b) => {
-                if (sortType === 'mushaf') {
-                    return a.number - b.number;
-                } else {
-                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
-                }
+            // Use refs for state inside event listener
+            const stateRef = useRef({
+                viewMode,
+                detailedResults,
+                ayahs,
+                activeAyah,
+                sortedSurahs: [],
+                activeSurah,
+                isPlaying
             });
 
+            const sortedSurahs = React.useMemo(() => {
+                return [...surahs].sort((a, b) => {
+                    if (sortType === 'mushaf') {
+                        return a.number - b.number;
+                    } else {
+                        return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
+                    }
+                });
+            }, [surahs, sortType]);
+
+            // Sync ref for effect usage
+            useEffect(() => { 
+                rawMatchesRef.current = rawMatches; 
+                stateRef.current = { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, isPlaying };
+            }, [rawMatches, viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah, isPlaying]);
+
             const toggleSort = () => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf');
+
+            // Setup Audio Events ONCE to fix sync issues
+            useEffect(() => {
+                const audio = audioRef.current;
+                
+                // Allow background audio
+                audio.preload = "auto";
+                // Some browsers require this attribute
+                audio.setAttribute('playsinline', 'true');
+
+                const updateState = () => {
+                    setIsPlaying(!audio.paused);
+                };
+
+                const handleEnded = () => {
+                    setIsPlaying(false);
+                    // Use ref to access latest state without re-binding listener
+                    const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
+                    
+                    const list = viewMode === 'search' ? detailedResults : ayahs;
+                    const idx = list.findIndex(a => a.number === activeAyah?.number);
+                    
+                    if (idx !== -1 && idx < list.length - 1) {
+                        const nextAyah = list[idx + 1];
+                        playAyah(nextAyah);
+                    } else if (viewMode === 'reader' && idx === list.length - 1) {
+                        // End of Surah -> Next Surah based on sort order
+                        const currentSurahIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
+                        if (currentSurahIdx !== -1 && currentSurahIdx < sortedSurahs.length - 1) {
+                            const nextSurah = sortedSurahs[currentSurahIdx + 1];
+                            shouldAutoPlayRef.current = true;
+                            // Call the function directly, but we need to pass it or access it.
+                            // Since handleSelectSurah is defined in the component scope and uses state setters,
+                            // we need a way to call it.
+                            // We can use a ref to hold the function or just trigger an effect.
+                            // Triggering via window/ref is safest for closure issues.
+                            if (window.selectSurahFn) window.selectSurahFn(nextSurah);
+                        }
+                    }
+                };
+
+                const handleError = (e) => {
+                    console.error("Audio Error", e);
+                    setIsPlaying(false);
+                };
+
+                audio.addEventListener('play', updateState);
+                audio.addEventListener('pause', updateState);
+                audio.addEventListener('ended', handleEnded);
+                audio.addEventListener('error', handleError);
+
+                return () => {
+                    audio.removeEventListener('play', updateState);
+                    audio.removeEventListener('pause', updateState);
+                    audio.removeEventListener('ended', handleEnded);
+                    audio.removeEventListener('error', handleError);
+                };
+            }, []);
+
+            // Expose handleSelectSurah to the event listener via window/ref pattern
+            // This is a bit hacky but works reliably for this structure without context
+            useEffect(() => {
+                window.selectSurahFn = handleSelectSurah;
+            }, [handleSelectSurah]); // Dependent on handleSelectSurah definition
 
             // Re-sort search results when sortType changes
             useEffect(() => {
@@ -771,7 +851,6 @@
                     setDetailedResults([]);
                     setNextLoadIndex(0);
                     
-                    // Fetch first page of new sort
                     (async () => {
                         setLoadingText("Sıralama güncelleniyor...");
                         const initialBatch = sorted.slice(0, ITEMS_PER_PAGE);
@@ -781,7 +860,7 @@
                         setLoadingText("");
                     })();
                 }
-            }, [sortType]); // Only trigger on sort type change
+            }, [sortType]);
 
             // Global Sync Helper for Vanilla JS
             useEffect(() => {
@@ -813,12 +892,12 @@
                         artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3254/3254050.png', sizes: '512x512', type: 'image/png' }]
                     });
 
-                    navigator.mediaSession.setActionHandler('play', () => { audioRef.current.play(); setIsPlaying(true); });
-                    navigator.mediaSession.setActionHandler('pause', () => { audioRef.current.pause(); setIsPlaying(false); });
+                    navigator.mediaSession.setActionHandler('play', () => { audioRef.current.play(); });
+                    navigator.mediaSession.setActionHandler('pause', () => { audioRef.current.pause(); });
                     navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
                     navigator.mediaSession.setActionHandler('nexttrack', playNext);
                 }
-            }, [activeAyah, isPlaying]);
+            }, [activeAyah]); // Removed isPlaying dependency to avoid resets
 
             // Auto-play next Surah when ayahs load and flag is set
             useEffect(() => {
@@ -826,21 +905,29 @@
                     shouldAutoPlayRef.current = false;
                     const firstAyah = ayahs[0];
                     if (firstAyah) {
-                        handleTogglePlay(firstAyah);
+                        playAyah(firstAyah);
                     }
                 }
             }, [ayahs]);
 
+            const playAyah = (ayah) => {
+                setActiveAyah(ayah);
+                const audio = audioRef.current;
+                audio.src = ayah.audio;
+                audio.load(); // Reload to fix stalled state
+                audio.play().catch(e => console.error("Play error:", e));
+            };
+
             const playNext = () => {
+                // Logic is now in handleEnded, we can reuse or just trigger manually if needed
+                // But for buttons, we need explicit logic
+                const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
                 const list = viewMode === 'search' ? detailedResults : ayahs;
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
                 
                 if (idx !== -1 && idx < list.length - 1) {
-                    // Next Ayah in current list
-                    const nextAyah = list[idx + 1];
-                    handleTogglePlay(nextAyah);
+                    playAyah(list[idx + 1]);
                 } else if (viewMode === 'reader' && idx === list.length - 1) {
-                    // End of Surah -> Next Surah based on sort order
                     const currentSurahIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
                     if (currentSurahIdx !== -1 && currentSurahIdx < sortedSurahs.length - 1) {
                         const nextSurah = sortedSurahs[currentSurahIdx + 1];
@@ -851,14 +938,13 @@
             };
 
             const playPrevious = () => {
+                const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
                 const list = viewMode === 'search' ? detailedResults : ayahs;
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
                 
                 if (idx > 0) {
-                    const prevAyah = list[idx - 1];
-                    handleTogglePlay(prevAyah);
+                    playAyah(list[idx - 1]);
                 } else if (viewMode === 'reader' && idx === 0) {
-                    // Start of Surah -> Go to previous Surah
                     const currentSurahIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
                     if (currentSurahIdx > 0) {
                         const prevSurah = sortedSurahs[currentSurahIdx - 1];
@@ -869,17 +955,23 @@
             };
 
             const handleTogglePlay = (ayah) => {
+                const audio = audioRef.current;
                 if (activeAyah?.number === ayah.number) {
-                    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); } 
-                    else { audioRef.current.play(); setIsPlaying(true); }
+                    if (!audio.paused) { 
+                        audio.pause(); 
+                    } else { 
+                        audio.play(); 
+                    }
                 } else {
-                    setActiveAyah(ayah); setIsPlaying(true);
-                    audioRef.current.src = ayah.audio;
-                    audioRef.current.play().catch(e => console.error(e));
+                    playAyah(ayah);
                 }
             };
 
-            const closePlayer = () => { audioRef.current.pause(); setIsPlaying(false); setActiveAyah(null); };
+            const closePlayer = () => { 
+                const audio = audioRef.current;
+                audio.pause(); 
+                setActiveAyah(null); 
+            };
 
             const handleGoBack = () => {
                 closePlayer();
@@ -892,16 +984,6 @@
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }, [activeAyah]);
-
-            // Handle Audio Ended -> Next Track
-            useEffect(() => {
-                const handleEnded = () => {
-                    playNext();
-                };
-                const audioEl = audioRef.current;
-                audioEl.onended = handleEnded;
-                return () => { audioEl.onended = null; };
-            }, [activeAyah, ayahs, detailedResults, viewMode, sortedSurahs, activeSurah]); 
 
             useEffect(() => {
                 setLoadingText("Sure verileri yükleniyor...");
