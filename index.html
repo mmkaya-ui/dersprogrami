@@ -612,17 +612,7 @@
             return text.toLocaleLowerCase('tr').replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
         };
 
-        const SurahList = ({ activeSurah, onSelectSurah, surahs }) => {
-            const [sortType, setSortType] = useState('mushaf'); // 'mushaf' | 'revelation'
-
-            const sortedSurahs = [...surahs].sort((a, b) => {
-                if (sortType === 'mushaf') {
-                    return a.number - b.number;
-                } else {
-                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
-                }
-            });
-
+        const SurahList = ({ activeSurah, onSelectSurah, surahs, sortType, onSortChange }) => {
             return (
                 <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-gray-900 dark:border-gray-700 w-full md:w-64 flex-shrink-0">
                     <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
@@ -631,7 +621,7 @@
                                 <i className="fa-solid fa-book-open text-emerald-600"></i> Sureler
                             </h2>
                             <button 
-                                onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')}
+                                onClick={onSortChange}
                                 className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center gap-1"
                                 title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
                             >
@@ -641,7 +631,7 @@
                         </div>
                     </div>
                     <ul>
-                        {sortedSurahs.map((surah) => (
+                        {surahs.map((surah) => (
                             <li key={surah.number}>
                                 <button onClick={() => onSelectSurah(surah)} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 transition-colors border-b border-slate-100 dark:border-gray-800 flex justify-between items-center ${activeSurah?.number === surah.number ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 font-semibold' : 'text-slate-600 dark:text-slate-400'}`}>
                                     <div className="flex items-center gap-3">
@@ -736,9 +726,20 @@
             const [fullQuranIndex, setFullQuranIndex] = useState(null);
             const [fontSize, setFontSize] = useState(18);
             const [darkMode, setDarkMode] = useState(false);
+            const [sortType, setSortType] = useState('mushaf');
             
             const audioRef = useRef(new Audio());
             const ITEMS_PER_PAGE = 5;
+
+            const sortedSurahs = [...surahs].sort((a, b) => {
+                if (sortType === 'mushaf') {
+                    return a.number - b.number;
+                } else {
+                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
+                }
+            });
+
+            const toggleSort = () => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf');
 
             // Global Sync Helper for Vanilla JS
             useEffect(() => {
@@ -962,11 +963,38 @@
 
                     {/* Main Content */}
                     <div className="flex flex-1 overflow-hidden relative">
-                        <div className="hidden md:block h-full shadow-inner"><SurahList surahs={surahs} activeSurah={activeSurah} onSelectSurah={handleSelectSurah} /></div>
-                        <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm">
-                            <select onChange={(e) => { const surah = surahs.find(s => s.number === parseInt(e.target.value)); if(surah) handleSelectSurah(surah); }} className="w-full p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500" value={activeSurah?.number || 1}>
-                                {surahs.map(s => <option key={s.number} value={s.number}>{s.number}. {getSurahNameTR(s.number)}</option>)}
+                        <div className="hidden md:block h-full shadow-inner">
+                            <SurahList 
+                                surahs={sortedSurahs} 
+                                activeSurah={activeSurah} 
+                                onSelectSurah={handleSelectSurah}
+                                sortType={sortType}
+                                onSortChange={toggleSort}
+                            />
+                        </div>
+                        <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm flex gap-2">
+                            <select 
+                                onChange={(e) => { 
+                                    const surah = surahs.find(s => s.number === parseInt(e.target.value)); 
+                                    if(surah) handleSelectSurah(surah); 
+                                }} 
+                                className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm" 
+                                value={activeSurah?.number || 1}
+                            >
+                                {sortedSurahs.map(s => (
+                                    <option key={s.number} value={s.number}>
+                                        {s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
+                                    </option>
+                                ))}
                             </select>
+                            
+                            <button 
+                                onClick={toggleSort}
+                                className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
+                                title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
+                            >
+                                <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
+                            </button>
                         </div>
                         <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-gray-900/50 p-4 md:p-8 pt-16 md:pt-8 scroll-smooth">
                             <div className="max-w-4xl mx-auto pb-32">
