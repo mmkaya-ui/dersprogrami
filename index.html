@@ -601,7 +601,6 @@
         };
         const SURAH_NAMES_TR = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şu'arâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saff", "Cum'a", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirah", "Tîn", "Alak", "Kadir", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
         
-        // Static Revelation Order Map (Surah Number -> Order)
         const REVELATION_ORDER_MAP = {
             1: 5, 2: 87, 3: 89, 4: 92, 5: 112, 6: 55, 7: 39, 8: 88, 9: 113, 10: 51, 11: 52, 12: 53, 13: 96, 14: 72, 15: 54, 16: 70, 17: 50, 18: 69, 19: 44, 20: 45, 21: 73, 22: 103, 23: 74, 24: 102, 25: 42, 26: 47, 27: 48, 28: 49, 29: 85, 30: 84, 31: 57, 32: 75, 33: 90, 34: 58, 35: 43, 36: 41, 37: 56, 38: 38, 39: 59, 40: 60, 41: 61, 42: 62, 43: 63, 44: 64, 45: 65, 46: 66, 47: 95, 48: 111, 49: 106, 50: 34, 51: 67, 52: 76, 53: 23, 54: 37, 55: 97, 56: 46, 57: 94, 58: 105, 59: 101, 60: 91, 61: 109, 62: 110, 63: 104, 64: 108, 65: 99, 66: 107, 67: 77, 68: 2, 69: 78, 70: 79, 71: 71, 72: 40, 73: 3, 74: 4, 75: 31, 76: 98, 77: 33, 78: 80, 79: 81, 80: 24, 81: 7, 82: 82, 83: 86, 84: 83, 85: 27, 86: 36, 87: 8, 88: 68, 89: 10, 90: 35, 91: 26, 92: 9, 93: 11, 94: 12, 95: 28, 96: 1, 97: 25, 98: 100, 99: 93, 100: 14, 101: 30, 102: 16, 103: 13, 104: 32, 105: 19, 106: 29, 107: 17, 108: 15, 109: 18, 110: 114, 111: 6, 112: 22, 113: 20, 114: 21
         };
@@ -610,6 +609,18 @@
         const normalizeText = (text) => {
             if (!text) return "";
             return text.toLocaleLowerCase('tr').replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
+        };
+
+        const sortMatches = (matches, type) => {
+            return [...matches].sort((a, b) => {
+                if (type === 'mushaf') {
+                    return (a.surah.number - b.surah.number) || (a.numberInSurah - b.numberInSurah);
+                } else {
+                    const orderA = REVELATION_ORDER_MAP[a.surah.number] || 999;
+                    const orderB = REVELATION_ORDER_MAP[b.surah.number] || 999;
+                    return (orderA - orderB) || (a.numberInSurah - b.numberInSurah);
+                }
+            });
         };
 
         const SurahList = ({ activeSurah, onSelectSurah, surahs, sortType, onSortChange }) => {
@@ -688,7 +699,7 @@
             );
         };
 
-        const PlayerBar = ({ activeAyah, isPlaying, onTogglePlay, onClose }) => {
+        const PlayerBar = ({ activeAyah, isPlaying, onTogglePlay, onClose, onPrev, onNext }) => {
             if (!activeAyah) return null;
             return (
                 <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-900 border-t border-emerald-500/30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4 z-50 flex items-center justify-between transition-transform duration-300">
@@ -696,11 +707,17 @@
                         <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-0.5">Şu an Okunuyor</p>
                         <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{activeAyah.surahName} Suresi, {activeAyah.numberInSurah}. Ayet</h3>
                     </div>
-                    <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0">
+                        <button onClick={onPrev} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-emerald-100 hover:text-emerald-600 transition-colors flex items-center justify-center">
+                            <i className="fa-solid fa-backward-step text-xs"></i>
+                        </button>
                         <button onClick={() => onTogglePlay(activeAyah)} className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95">
                             {isPlaying ? <i className="fa-solid fa-pause text-lg"></i> : <i className="fa-solid fa-play text-lg ml-1"></i>}
                         </button>
-                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center" title="Kapat">
+                        <button onClick={onNext} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-emerald-100 hover:text-emerald-600 transition-colors flex items-center justify-center">
+                            <i className="fa-solid fa-forward-step text-xs"></i>
+                        </button>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center ml-1" title="Kapat">
                             <i className="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -729,7 +746,12 @@
             const [sortType, setSortType] = useState('mushaf');
             
             const audioRef = useRef(new Audio());
+            const shouldAutoPlayRef = useRef(false);
+            const rawMatchesRef = useRef([]); // Hold latest rawMatches
             const ITEMS_PER_PAGE = 5;
+
+            // Sync ref for effect usage
+            useEffect(() => { rawMatchesRef.current = rawMatches; }, [rawMatches]);
 
             const sortedSurahs = [...surahs].sort((a, b) => {
                 if (sortType === 'mushaf') {
@@ -740,6 +762,26 @@
             });
 
             const toggleSort = () => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf');
+
+            // Re-sort search results when sortType changes
+            useEffect(() => {
+                if (viewMode === 'search' && rawMatchesRef.current.length > 0) {
+                    const sorted = sortMatches(rawMatchesRef.current, sortType);
+                    setRawMatches(sorted);
+                    setDetailedResults([]);
+                    setNextLoadIndex(0);
+                    
+                    // Fetch first page of new sort
+                    (async () => {
+                        setLoadingText("Sıralama güncelleniyor...");
+                        const initialBatch = sorted.slice(0, ITEMS_PER_PAGE);
+                        const details = await fetchDetailsForMatches(initialBatch);
+                        setDetailedResults(details);
+                        setNextLoadIndex(ITEMS_PER_PAGE);
+                        setLoadingText("");
+                    })();
+                }
+            }, [sortType]); // Only trigger on sort type change
 
             // Global Sync Helper for Vanilla JS
             useEffect(() => {
@@ -760,6 +802,71 @@
                     localStorage.setItem('theme', 'light');
                 }
             }, [darkMode]);
+
+            // Media Session API Setup
+            useEffect(() => {
+                if ('mediaSession' in navigator && activeAyah) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: `${activeAyah.surahName} - Ayet ${activeAyah.numberInSurah}`,
+                        artist: 'Mishary Rashid Alafasy',
+                        album: 'Kur\'an Rehberi',
+                        artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3254/3254050.png', sizes: '512x512', type: 'image/png' }]
+                    });
+
+                    navigator.mediaSession.setActionHandler('play', () => { audioRef.current.play(); setIsPlaying(true); });
+                    navigator.mediaSession.setActionHandler('pause', () => { audioRef.current.pause(); setIsPlaying(false); });
+                    navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
+                    navigator.mediaSession.setActionHandler('nexttrack', playNext);
+                }
+            }, [activeAyah, isPlaying]);
+
+            // Auto-play next Surah when ayahs load and flag is set
+            useEffect(() => {
+                if (shouldAutoPlayRef.current && ayahs.length > 0) {
+                    shouldAutoPlayRef.current = false;
+                    const firstAyah = ayahs[0];
+                    if (firstAyah) {
+                        handleTogglePlay(firstAyah);
+                    }
+                }
+            }, [ayahs]);
+
+            const playNext = () => {
+                const list = viewMode === 'search' ? detailedResults : ayahs;
+                const idx = list.findIndex(a => a.number === activeAyah?.number);
+                
+                if (idx !== -1 && idx < list.length - 1) {
+                    // Next Ayah in current list
+                    const nextAyah = list[idx + 1];
+                    handleTogglePlay(nextAyah);
+                } else if (viewMode === 'reader' && idx === list.length - 1) {
+                    // End of Surah -> Next Surah based on sort order
+                    const currentSurahIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
+                    if (currentSurahIdx !== -1 && currentSurahIdx < sortedSurahs.length - 1) {
+                        const nextSurah = sortedSurahs[currentSurahIdx + 1];
+                        shouldAutoPlayRef.current = true;
+                        handleSelectSurah(nextSurah);
+                    }
+                }
+            };
+
+            const playPrevious = () => {
+                const list = viewMode === 'search' ? detailedResults : ayahs;
+                const idx = list.findIndex(a => a.number === activeAyah?.number);
+                
+                if (idx > 0) {
+                    const prevAyah = list[idx - 1];
+                    handleTogglePlay(prevAyah);
+                } else if (viewMode === 'reader' && idx === 0) {
+                    // Start of Surah -> Go to previous Surah
+                    const currentSurahIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
+                    if (currentSurahIdx > 0) {
+                        const prevSurah = sortedSurahs[currentSurahIdx - 1];
+                        shouldAutoPlayRef.current = true;
+                        handleSelectSurah(prevSurah);
+                    }
+                }
+            };
 
             const handleTogglePlay = (ayah) => {
                 if (activeAyah?.number === ayah.number) {
@@ -786,21 +893,15 @@
                 }
             }, [activeAyah]);
 
+            // Handle Audio Ended -> Next Track
             useEffect(() => {
                 const handleEnded = () => {
-                    const list = viewMode === 'search' ? detailedResults : ayahs;
-                    const idx = list.findIndex(a => a.number === activeAyah?.number);
-                    if (idx !== -1 && idx < list.length - 1) {
-                        const nextAyah = list[idx + 1];
-                        setActiveAyah(nextAyah); setIsPlaying(true);
-                        audioRef.current.src = nextAyah.audio;
-                        audioRef.current.play().catch(e => console.error(e));
-                    } else { setIsPlaying(false); }
+                    playNext();
                 };
                 const audioEl = audioRef.current;
                 audioEl.onended = handleEnded;
                 return () => { audioEl.onended = null; };
-            }, [activeAyah, ayahs, detailedResults, viewMode]);
+            }, [activeAyah, ayahs, detailedResults, viewMode, sortedSurahs, activeSurah]); 
 
             useEffect(() => {
                 setLoadingText("Sure verileri yükleniyor...");
@@ -821,7 +922,6 @@
                 try {
                     const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
                     
-                    // Paralel Fetch: Hem ayetleri (Editions) hem de detaylı sure bilgisini (Metadata) çek
                     const editionsFetch = fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`);
                     const metaFetch = fetch(`${API_BASE}/surah/${surah.number}`);
 
@@ -829,13 +929,11 @@
                     const editionsData = await editionsRes.json();
                     const metaData = await metaRes.json();
 
-                    // Detaylı sure bilgisini (revelationOrder vb.) güncelle
                     if (metaData.code === 200 && metaData.data) {
                          setActiveSurah(prev => ({ ...prev, ...metaData.data }));
                     }
 
                     if (editionsData.data && editionsData.data[0]) {
-                        // Eğer meta fetch başarısız olursa yedek olarak edition'dan gelen bilgiyi kullan (eksik olabilir)
                         if (metaData.code !== 200) {
                              setActiveSurah(prev => ({ ...prev, ...editionsData.data[0] }));
                         }
@@ -898,7 +996,13 @@
                     }
                     setLoadingText("Aranıyor...");
                     const normalizedQuery = normalizeText(searchQuery);
-                    const allMatches = quranData.filter(item => normalizeText(item.text).includes(normalizedQuery));
+                    
+                    // Filter
+                    let allMatches = quranData.filter(item => normalizeText(item.text).includes(normalizedQuery));
+                    
+                    // Sort using the current sortType
+                    allMatches = sortMatches(allMatches, sortType);
+
                     setRawMatches(allMatches);
                     if (allMatches.length > 0) {
                         setLoadingText(`Bulunan ${allMatches.length} sonuçtan ilk ${ITEMS_PER_PAGE} tanesi getiriliyor...`);
@@ -1030,7 +1134,7 @@
                                 )}
                             </div>
                         </main>
-                        <PlayerBar activeAyah={activeAyah} isPlaying={isPlaying} onTogglePlay={handleTogglePlay} onClose={closePlayer} />
+                        <PlayerBar activeAyah={activeAyah} isPlaying={isPlaying} onTogglePlay={handleTogglePlay} onClose={closePlayer} onPrev={playPrevious} onNext={playNext} />
                     </div>
                 </div>
             );
