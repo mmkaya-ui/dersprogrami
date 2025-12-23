@@ -172,7 +172,7 @@
 
                 <div class="flex flex-col gap-2 relative z-10">
                     <div class="relative w-full">
-                        <button id="btn-quran-menu" class="w-full p-2 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
+                        <button id="btn-quran-menu" class="w-full p-2 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
                             <span class="font-semibold flex items-center pointer-events-none">
                                 <i class="fa-solid fa-layer-group mr-2"></i>Kur'an Kaynakları
                             </span>
@@ -241,9 +241,13 @@
                     // Ensure the React app theme matches
                     const isDark = document.documentElement.classList.contains('dark');
                     if(window.syncReactTheme) window.syncReactTheme(isDark);
+                    // Trigger wake lock request if defined
+                    if(window.requestWakeLock) window.requestWakeLock();
                 } else {
                     quranApp.classList.add('hidden');
                     scheduleApp.classList.remove('hidden');
+                    // Release wake lock
+                    if(window.releaseWakeLock) window.releaseWakeLock();
                 }
             };
 
@@ -583,6 +587,38 @@
                 }
             }
             document.addEventListener('DOMContentLoaded', () => new App().init());
+
+            // Global Wake Lock Logic
+            window.wakeLockObj = null;
+            window.requestWakeLock = async () => {
+                if ('wakeLock' in navigator) {
+                    try {
+                        window.wakeLockObj = await navigator.wakeLock.request('screen');
+                        window.wakeLockObj.addEventListener('release', () => {
+                            console.log('Wake Lock released');
+                        });
+                        console.log('Wake Lock active');
+                    } catch (err) {
+                        if (err.name === 'NotAllowedError') {
+                             console.warn('Wake Lock not allowed by system/browser policy. Screen may turn off.');
+                        } else {
+                             console.error('Wake Lock failed:', err);
+                        }
+                    }
+                }
+            };
+            window.releaseWakeLock = async () => {
+                if (window.wakeLockObj) {
+                    await window.wakeLockObj.release();
+                    window.wakeLockObj = null;
+                }
+            };
+            // Re-request on visibility change if active
+            document.addEventListener('visibilitychange', async () => {
+                if (window.wakeLockObj !== null && document.visibilityState === 'visible') {
+                    window.requestWakeLock();
+                }
+            });
         })();
     </script>
 
@@ -597,7 +633,7 @@
             transliteration: "tr.transliteration",
             tr_diyanet: "tr.diyanet",
             tr_yazir: "tr.yazir",
-            tr_ates: "tr.ates"
+            tr_ates: "tr.yildirim" // Using Suat Yildirim as replacement
         };
         const SURAH_NAMES_TR = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şu'arâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saff", "Cum'a", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirah", "Tîn", "Alak", "Kadir", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
         
@@ -689,7 +725,7 @@
                                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yazir}</p>
                                 </div>
                                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
-                                    <h4 className="text-xs font-bold text-slate-500 mb-2">Süleyman Ateş</h4>
+                                    <h4 className="text-xs font-bold text-slate-500 mb-2">Suat Yıldırım</h4>
                                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ates}</p>
                                 </div>
                             </div>
@@ -745,9 +781,9 @@
             const [darkMode, setDarkMode] = useState(false);
             const [sortType, setSortType] = useState('mushaf');
             
-            const audioRef = useRef(new Audio());
+            const audioRef = useRef(null);
             const shouldAutoPlayRef = useRef(false);
-            const rawMatchesRef = useRef([]); // Hold latest rawMatches
+            const rawMatchesRef = useRef([]); 
             const ITEMS_PER_PAGE = 5;
 
             // Use refs for state inside event listener
@@ -781,11 +817,13 @@
 
             // Setup Audio Events ONCE to fix sync issues
             useEffect(() => {
+                if (!audioRef.current) {
+                    audioRef.current = new Audio();
+                }
                 const audio = audioRef.current;
                 
                 // Allow background audio
                 audio.preload = "auto";
-                // Some browsers require this attribute
                 audio.setAttribute('playsinline', 'true');
 
                 const updateState = () => {
@@ -794,7 +832,6 @@
 
                 const handleEnded = () => {
                     setIsPlaying(false);
-                    // Use ref to access latest state without re-binding listener
                     const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
                     
                     const list = viewMode === 'search' ? detailedResults : ayahs;
@@ -804,16 +841,10 @@
                         const nextAyah = list[idx + 1];
                         playAyah(nextAyah);
                     } else if (viewMode === 'reader' && idx === list.length - 1) {
-                        // End of Surah -> Next Surah based on sort order
                         const currentSurahIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
                         if (currentSurahIdx !== -1 && currentSurahIdx < sortedSurahs.length - 1) {
                             const nextSurah = sortedSurahs[currentSurahIdx + 1];
                             shouldAutoPlayRef.current = true;
-                            // Call the function directly, but we need to pass it or access it.
-                            // Since handleSelectSurah is defined in the component scope and uses state setters,
-                            // we need a way to call it.
-                            // We can use a ref to hold the function or just trigger an effect.
-                            // Triggering via window/ref is safest for closure issues.
                             if (window.selectSurahFn) window.selectSurahFn(nextSurah);
                         }
                     }
@@ -837,11 +868,22 @@
                 };
             }, []);
 
-            // Expose handleSelectSurah to the event listener via window/ref pattern
-            // This is a bit hacky but works reliably for this structure without context
+            // Handle Wake Lock re-acquisition on visibility change
+            useEffect(() => {
+                const handleVisibilityChange = () => {
+                    if (document.visibilityState === 'visible') {
+                         // Attempt to re-request if playing or user just came back
+                         if(window.requestWakeLock) window.requestWakeLock();
+                    }
+                };
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+            }, []);
+
+            // Expose handleSelectSurah
             useEffect(() => {
                 window.selectSurahFn = handleSelectSurah;
-            }, [handleSelectSurah]); // Dependent on handleSelectSurah definition
+            }, [handleSelectSurah]);
 
             // Re-sort search results when sortType changes
             useEffect(() => {
@@ -892,14 +934,19 @@
                         artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3254/3254050.png', sizes: '512x512', type: 'image/png' }]
                     });
 
-                    navigator.mediaSession.setActionHandler('play', () => { audioRef.current.play(); });
-                    navigator.mediaSession.setActionHandler('pause', () => { audioRef.current.pause(); });
+                    const audio = audioRef.current;
+                    navigator.mediaSession.setActionHandler('play', () => { 
+                        if(audio) audio.play().catch(e => console.error(e)); 
+                    });
+                    navigator.mediaSession.setActionHandler('pause', () => { 
+                        if(audio) audio.pause(); 
+                    });
                     navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
                     navigator.mediaSession.setActionHandler('nexttrack', playNext);
                 }
-            }, [activeAyah]); // Removed isPlaying dependency to avoid resets
+            }, [activeAyah]);
 
-            // Auto-play next Surah when ayahs load and flag is set
+            // Auto-play next Surah
             useEffect(() => {
                 if (shouldAutoPlayRef.current && ayahs.length > 0) {
                     shouldAutoPlayRef.current = false;
@@ -913,14 +960,17 @@
             const playAyah = (ayah) => {
                 setActiveAyah(ayah);
                 const audio = audioRef.current;
+                if(!audio) return;
+                
                 audio.src = ayah.audio;
-                audio.load(); // Reload to fix stalled state
-                audio.play().catch(e => console.error("Play error:", e));
+                audio.load(); 
+                audio.play().catch(e => {
+                    console.error("Play error:", e);
+                    setIsPlaying(false);
+                });
             };
 
             const playNext = () => {
-                // Logic is now in handleEnded, we can reuse or just trigger manually if needed
-                // But for buttons, we need explicit logic
                 const { viewMode, detailedResults, ayahs, activeAyah, sortedSurahs, activeSurah } = stateRef.current;
                 const list = viewMode === 'search' ? detailedResults : ayahs;
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
@@ -956,11 +1006,18 @@
 
             const handleTogglePlay = (ayah) => {
                 const audio = audioRef.current;
+                if(!audio) return;
+
                 if (activeAyah?.number === ayah.number) {
                     if (!audio.paused) { 
                         audio.pause(); 
                     } else { 
-                        audio.play(); 
+                        // Try to resume
+                        audio.play().catch(e => {
+                            // If resume fails (e.g. source expired), reload
+                            console.warn("Resume failed, reloading src", e);
+                            playAyah(ayah);
+                        }); 
                     }
                 } else {
                     playAyah(ayah);
@@ -969,8 +1026,9 @@
 
             const closePlayer = () => { 
                 const audio = audioRef.current;
-                audio.pause(); 
+                if(audio) audio.pause(); 
                 setActiveAyah(null); 
+                if(window.releaseWakeLock) window.releaseWakeLock();
             };
 
             const handleGoBack = () => {
@@ -995,7 +1053,10 @@
                         setLoading(false);
                     })
                     .catch(err => { console.error(err); setLoading(false); });
-                return () => { audioRef.current.pause(); };
+                return () => { 
+                    const audio = audioRef.current;
+                    if(audio) audio.pause(); 
+                };
             }, []);
 
             const handleSelectSurah = async (surah) => {
@@ -1025,7 +1086,7 @@
                         return {
                             number: ayah.number, numberInSurah: ayah.numberInSurah, surahName: getSurahNameTR(surah.number),
                             text: ayah.text, transliteration: editionsData.data[1].ayahs[index].text, diyanet: editionsData.data[2].ayahs[index].text,
-                            yazir: editionsData.data[3].ayahs[index].text, ates: editionsData.data[4].ayahs[index].text, audio: editionsData.data[5].ayahs[index].audio
+                            yazir: editionsData.data[3].ayahs[index].text, ates: editionsData.data[4].ayahs[index].text.replace(/(\s*[\(\[]\s*\d+\s*[\)\]])+/g, ''), audio: editionsData.data[5].ayahs[index].audio
                         };
                     });
                     setAyahs(combinedAyahs);
@@ -1043,7 +1104,7 @@
                         const ayahDataRaw = await ayahRes.json(); const d = ayahDataRaw.data;
                         newResults.push({
                             number: d[0].number, numberInSurah: d[0].numberInSurah, surahName: getSurahNameTR(surahNum),
-                            text: d[0].text, transliteration: d[1].text, diyanet: d[2].text, yazir: d[3].text, ates: d[4].text, audio: d[5].audio
+                            text: d[0].text, transliteration: d[1].text, diyanet: d[2].text, yazir: d[3].text, ates: d[4].text.replace(/(\s*[\(\[]\s*\d+\s*[\)\]])+/g, ''), audio: d[5].audio
                         });
                     } catch(fetchErr) {}
                 }
@@ -1078,13 +1139,7 @@
                     }
                     setLoadingText("Aranıyor...");
                     const normalizedQuery = normalizeText(searchQuery);
-                    
-                    // Filter
-                    let allMatches = quranData.filter(item => normalizeText(item.text).includes(normalizedQuery));
-                    
-                    // Sort using the current sortType
-                    allMatches = sortMatches(allMatches, sortType);
-
+                    const allMatches = quranData.filter(item => normalizeText(item.text).includes(normalizedQuery));
                     setRawMatches(allMatches);
                     if (allMatches.length > 0) {
                         setLoadingText(`Bulunan ${allMatches.length} sonuçtan ilk ${ITEMS_PER_PAGE} tanesi getiriliyor...`);
@@ -1195,7 +1250,7 @@
                                                  <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
                                             </div>
                                         </div>
-                                        {activeSurah?.number !== 9 && <div className="text-center mb-10 font-arabic text-3xl text-emerald-700 dark:text-emerald-400 select-none" style={{ fontFamily: "'Amiri', serif" }}>بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>}
+                                        
                                         {ayahs.map((ayah) => <AyahCard key={ayah.number} ayahData={ayah} isActive={activeAyah?.number === ayah.number} isPlaying={isPlaying} onTogglePlay={handleTogglePlay} fontSize={fontSize} />)}
                                     </>
                                 )}
