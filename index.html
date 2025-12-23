@@ -627,13 +627,15 @@
         const { useState, useEffect, useRef } = React;
 
         const API_BASE = "https://api.alquran.cloud/v1";
+        const CUSTOM_API_BASE = "https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions";
+        
         const EDITIONS = {
             arabic: "quran-uthmani",
             audio: "ar.alafasy",
             transliteration: "tr.transliteration",
             tr_diyanet: "tr.diyanet",
             tr_yazir: "tr.yazir",
-            tr_ates: "tr.yildirim" // Using Suat Yildirim as replacement
+            tr_ates: "custom:tur-mahmutkisa" // Changed to Mahmut Kısa
         };
         const SURAH_NAMES_TR = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şu'arâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saff", "Cum'a", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirah", "Tîn", "Alak", "Kadir", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
         
@@ -698,8 +700,20 @@
         };
 
         const AyahCard = ({ ayahData, isPlaying, isActive, onTogglePlay, fontSize }) => {
+            const cardRef = useRef(null);
+
+            useEffect(() => {
+                if (isActive && cardRef.current) {
+                    cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, [isActive]);
+
             return (
-                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-500 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50 shadow-md transform scale-[1.01]' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:shadow-md'}`}>
+                <div 
+                    id={`ayah-${ayahData.number}`}
+                    ref={cardRef}
+                    className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-300 ease-in-out ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-500 ring-1 ring-emerald-500/50 shadow-lg scale-[1.02]' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:shadow-md'}`}
+                >
                     <div className="bg-slate-50 dark:bg-gray-900/50 px-4 py-2 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center">
                         <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - Ayet {ayahData.numberInSurah}</span>
                         <button onClick={() => onTogglePlay(ayahData)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive && isPlaying ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 animate-pulse' : 'bg-slate-200 text-slate-700 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-gray-700 dark:text-slate-300'}`}>
@@ -725,7 +739,7 @@
                                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yazir}</p>
                                 </div>
                                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
-                                    <h4 className="text-xs font-bold text-slate-500 mb-2">Suat Yıldırım</h4>
+                                    <h4 className="text-xs font-bold text-slate-500 mb-2">Mahmut Kısa (Feyzül Furkan)</h4>
                                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ates}</p>
                                 </div>
                             </div>
@@ -1036,12 +1050,7 @@
                 window.toggleQuranView(false);
             };
 
-            useEffect(() => {
-                if (activeAyah) {
-                    const el = document.getElementById(`ayah-${activeAyah.number}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, [activeAyah]);
+            // Removed duplicated useEffect for scrollIntoView here since it is now in AyahCard
 
             useEffect(() => {
                 setLoadingText("Sure verileri yükleniyor...");
@@ -1059,16 +1068,36 @@
                 };
             }, []);
 
+            const fetchCustomSurah = async (surahNumber) => {
+                try {
+                    const res = await fetch(`${CUSTOM_API_BASE}/tur-mahmutkisa/${surahNumber}.json`);
+                    if(!res.ok) return null;
+                    return await res.json();
+                } catch(e) {
+                    console.warn("Custom fetch failed", e);
+                    return null;
+                }
+            };
+
             const handleSelectSurah = async (surah) => {
                 setLoading(true); setLoadingText(`${getSurahNameTR(surah.number)} suresi yükleniyor...`);
                 setViewMode('reader'); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
                 try {
-                    const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
+                    // Check if 3rd source is custom
+                    const isCustom = EDITIONS.tr_ates.startsWith("custom:");
+                    let editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.audio}`;
                     
+                    if (!isCustom) {
+                        editionsStr += `,${EDITIONS.tr_ates}`;
+                    }
+
                     const editionsFetch = fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`);
                     const metaFetch = fetch(`${API_BASE}/surah/${surah.number}`);
+                    
+                    // Fetch custom separately if needed
+                    const customFetch = isCustom ? fetchCustomSurah(surah.number) : Promise.resolve(null);
 
-                    const [editionsRes, metaRes] = await Promise.all([editionsFetch, metaFetch]);
+                    const [editionsRes, metaRes, customData] = await Promise.all([editionsFetch, metaFetch, customFetch]);
                     const editionsData = await editionsRes.json();
                     const metaData = await metaRes.json();
 
@@ -1076,17 +1105,33 @@
                          setActiveSurah(prev => ({ ...prev, ...metaData.data }));
                     }
 
-                    if (editionsData.data && editionsData.data[0]) {
-                        if (metaData.code !== 200) {
-                             setActiveSurah(prev => ({ ...prev, ...editionsData.data[0] }));
-                        }
-                    }
+                    const mainData = editionsData.data;
+                    const arabic = mainData[0];
+                    const translit = mainData[1];
+                    const diyanet = mainData[2];
+                    const yazir = mainData[3];
+                    const audio = mainData[4];
+                    // If not custom, index 5 is 3rd translation. If custom, we use customData
+                    const ates = isCustom ? null : mainData[5];
 
-                    const combinedAyahs = editionsData.data[0].ayahs.map((ayah, index) => {
+                    const combinedAyahs = arabic.ayahs.map((ayah, index) => {
+                        let thirdText = "";
+                        if (isCustom && customData && customData.verse && customData.verse[index]) {
+                            thirdText = customData.verse[index].text;
+                        } else if (ates) {
+                            thirdText = ates.ayahs[index].text;
+                        }
+
                         return {
-                            number: ayah.number, numberInSurah: ayah.numberInSurah, surahName: getSurahNameTR(surah.number),
-                            text: ayah.text, transliteration: editionsData.data[1].ayahs[index].text, diyanet: editionsData.data[2].ayahs[index].text,
-                            yazir: editionsData.data[3].ayahs[index].text, ates: editionsData.data[4].ayahs[index].text.replace(/(\s*[\(\[]\s*\d+\s*[\)\]])+/g, ''), audio: editionsData.data[5].ayahs[index].audio
+                            number: ayah.number, 
+                            numberInSurah: ayah.numberInSurah, 
+                            surahName: getSurahNameTR(surah.number),
+                            text: ayah.text, 
+                            transliteration: translit.ayahs[index].text, 
+                            diyanet: diyanet.ayahs[index].text,
+                            yazir: yazir.ayahs[index].text, 
+                            ates: thirdText, 
+                            audio: audio.ayahs[index].audio
                         };
                     });
                     setAyahs(combinedAyahs);
@@ -1095,16 +1140,44 @@
 
             const fetchDetailsForMatches = async (matchesToFetch) => {
                 const newResults = [];
+                
+                const uniqueSurahs = [...new Set(matchesToFetch.map(m => m.surah.number))];
+                const customSurahCache = {};
+                
+                if (EDITIONS.tr_ates.startsWith("custom:")) {
+                    await Promise.all(uniqueSurahs.map(async (num) => {
+                        customSurahCache[num] = await fetchCustomSurah(num);
+                    }));
+                }
+
                 for (const match of matchesToFetch) {
-                    const surahNum = match.surah.number; const ayahNum = match.numberInSurah;
-                    const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
+                    const surahNum = match.surah.number; 
+                    const ayahNum = match.numberInSurah;
+                    
+                    const isCustom = EDITIONS.tr_ates.startsWith("custom:");
+                    let editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.audio}`;
+                    if(!isCustom) editionsStr += `,${EDITIONS.tr_ates}`;
+
                     try {
                         const ayahRes = await fetch(`${API_BASE}/ayah/${surahNum}:${ayahNum}/editions/${editionsStr}`);
                         if(!ayahRes.ok) continue;
-                        const ayahDataRaw = await ayahRes.json(); const d = ayahDataRaw.data;
+                        const ayahDataRaw = await ayahRes.json(); 
+                        const d = ayahDataRaw.data;
+                        
+                        let thirdText = "";
+                        if (isCustom) {
+                            const sData = customSurahCache[surahNum];
+                            if(sData && sData.verse) {
+                                const vObj = sData.verse.find(v => v.verse === ayahNum);
+                                if(vObj) thirdText = vObj.text;
+                            }
+                        } else {
+                            thirdText = d[5].text;
+                        }
+
                         newResults.push({
                             number: d[0].number, numberInSurah: d[0].numberInSurah, surahName: getSurahNameTR(surahNum),
-                            text: d[0].text, transliteration: d[1].text, diyanet: d[2].text, yazir: d[3].text, ates: d[4].text.replace(/(\s*[\(\[]\s*\d+\s*[\)\]])+/g, ''), audio: d[5].audio
+                            text: d[0].text, transliteration: d[1].text, diyanet: d[2].text, yazir: d[3].text, ates: thirdText, audio: d[4].audio 
                         });
                     } catch(fetchErr) {}
                 }
@@ -1155,42 +1228,22 @@
                 <div className="flex flex-col h-full font-sans">
                     <header className="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-20 transition-colors duration-300 sticky top-0">
                         <div className="max-w-md mx-auto relative pt-2">
-                            {/* Theme Toggle - Positioned exactly as in Schedule App */}
-                            <button
-                                onClick={() => setDarkMode(!darkMode)}
-                                className="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800"
-                            >
+                            <button onClick={() => setDarkMode(!darkMode)} className="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                                 {darkMode ? <i className="fa-solid fa-sun text-white text-xs pointer-events-none"></i> : <i className="fa-solid fa-moon text-white text-xs pointer-events-none"></i>}
                             </button>
-
-                            {/* Title & Back Button Area */}
                             <div className="mb-2 select-none flex items-center gap-3 pr-10">
                                 <button onClick={handleGoBack} className="bg-emerald-800 dark:bg-emerald-950 p-2 rounded-lg hover:bg-emerald-600 transition h-9 w-9 flex items-center justify-center" title="Geri Dön">
                                     <i className="fa-solid fa-arrow-left text-sm"></i>
                                 </button>
                                 <div>
-                                    <h1 className="text-xl font-bold mb-0.5 flex items-center leading-none">
-                                        <i className="fa-solid fa-book-open mr-2 text-sm"></i> Kuran Rehberi
-                                    </h1>
+                                    <h1 className="text-xl font-bold mb-0.5 flex items-center leading-none"><i className="fa-solid fa-book-open mr-2 text-sm"></i> Kuran Rehberi</h1>
                                     <p className="text-emerald-100 text-[11px] opacity-90 leading-none">Oku, Dinle, Araştır</p>
                                 </div>
                             </div>
-
-                            {/* Search Bar */}
                             <form onSubmit={handleSearch} className="relative mb-2 group">
-                                <input
-                                    type="text"
-                                    placeholder="Örn: namaz, sabır..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
-                                />
-                                <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-emerald-500 transition-colors">
-                                    <i className="fa-solid fa-search text-sm"></i>
-                                </button>
+                                <input type="text" placeholder="Örn: namaz, sabır..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md" />
+                                <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-emerald-500 transition-colors"><i className="fa-solid fa-search text-sm"></i></button>
                             </form>
-
-                            {/* Font Controls */}
                             <div className="flex justify-end">
                                  <div className="flex items-center bg-emerald-800 dark:bg-emerald-950 rounded-lg px-2 py-1 gap-2 shadow-sm border border-emerald-600/30">
                                     <i className="fa-solid fa-font text-emerald-200 ml-1 text-[10px]"></i>
@@ -1201,41 +1254,13 @@
                             </div>
                         </div>
                     </header>
-
-                    {/* Main Content */}
                     <div className="flex flex-1 overflow-hidden relative">
-                        <div className="hidden md:block h-full shadow-inner">
-                            <SurahList 
-                                surahs={sortedSurahs} 
-                                activeSurah={activeSurah} 
-                                onSelectSurah={handleSelectSurah}
-                                sortType={sortType}
-                                onSortChange={toggleSort}
-                            />
-                        </div>
+                        <div className="hidden md:block h-full shadow-inner"><SurahList surahs={sortedSurahs} activeSurah={activeSurah} onSelectSurah={handleSelectSurah} sortType={sortType} onSortChange={toggleSort} /></div>
                         <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm flex gap-2">
-                            <select 
-                                onChange={(e) => { 
-                                    const surah = surahs.find(s => s.number === parseInt(e.target.value)); 
-                                    if(surah) handleSelectSurah(surah); 
-                                }} 
-                                className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm" 
-                                value={activeSurah?.number || 1}
-                            >
-                                {sortedSurahs.map(s => (
-                                    <option key={s.number} value={s.number}>
-                                        {s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
-                                    </option>
-                                ))}
+                            <select onChange={(e) => { const surah = surahs.find(s => s.number === parseInt(e.target.value)); if(surah) handleSelectSurah(surah); }} className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm" value={activeSurah?.number || 1}>
+                                {sortedSurahs.map(s => <option key={s.number} value={s.number}>{s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}</option>)}
                             </select>
-                            
-                            <button 
-                                onClick={toggleSort}
-                                className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
-                                title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
-                            >
-                                <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
-                            </button>
+                            <button onClick={toggleSort} className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]" title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}><i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i></button>
                         </div>
                         <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-gray-900/50 p-4 md:p-8 pt-16 md:pt-8 scroll-smooth">
                             <div className="max-w-4xl mx-auto pb-32">
