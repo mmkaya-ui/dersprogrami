@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -707,11 +708,11 @@
                     .then(res => res.json())
                     .then(data => {
                         setSurahs(data.data);
-                        // If no bookmark, select first surah, otherwise wait for user action
-                        if (!savedBookmark && data.data && data.data.length > 0) {
+                        // Always select first surah (Fatiha) on load
+                        if (data.data && data.data.length > 0) {
                             fetchSurah(data.data[0]);
                         } else {
-                            setLoading(false); // Just stop loading to show bookmark option
+                            setLoading(false);
                         }
                     })
                     .catch(e => { console.error(e); setLoading(false); });
@@ -727,6 +728,7 @@
                     const newBookmark = { 
                         surah: activeAyah.surahName, 
                         number: activeAyah.number, 
+                        numberInSurah: activeAyah.numberInSurah,
                         surahNumber: activeAyah.surahNumber || activeSurah?.number 
                     };
                     setBookmark(newBookmark);
@@ -734,15 +736,65 @@
                 }
             }, [activeAyah, activeSurah]);
 
+            const loadingRef = useRef(false);
+
+            // Hydrate partial items in active playlist
+            useEffect(() => {
+                if (activePlaylist && activePlaylist.items.some(i => i.isPartial)) {
+                    const partials = activePlaylist.items.filter(i => i.isPartial);
+                    const uniquePartials = [...new Map(partials.map(item => [item.number, item])).values()];
+                    
+                    if (uniquePartials.length === 0) return;
+
+                    const hydrate = async () => {
+                        if (loadingRef.current) return; 
+                        loadingRef.current = true;
+                        setLoadingText("Liste detayları güncelleniyor...");
+                        
+                        try {
+                            const chunkSizes = 5; 
+                            const newItemsMap = {};
+                            
+                            for (let i = 0; i < uniquePartials.length; i += chunkSizes) {
+                                const chunk = uniquePartials.slice(i, i + chunkSizes);
+                                const matches = chunk.map(p => ({ surah: { number: p.surahNumber }, numberInSurah: p.numberInSurah }));
+                                const details = await fetchDetailsForMatches(matches);
+                                details.forEach(d => { newItemsMap[d.number] = d; });
+                            }
+
+                            const updater = (list) => list.map(item => newItemsMap[item.number] || item);
+
+                            setPlaylists(prev => prev.map(p => {
+                                if (p.id === activePlaylist.id) {
+                                    return { ...p, items: updater(p.items) };
+                                }
+                                return p;
+                            }));
+                            
+                            setActivePlaylist(prev => ({ ...prev, items: updater(prev.items) }));
+                        } catch (e) {
+                            console.error("Hydration failed", e);
+                        } finally {
+                            setLoadingText("");
+                            loadingRef.current = false;
+                        }
+                    };
+                    
+                    hydrate();
+                }
+            }, [activePlaylist]);
+
             // Audio Controls
             const playAyah = (ayah) => {
                 if(activeAyah?.number === ayah.number) {
                     audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause();
                 } else {
                     setActiveAyah(ayah);
-                    audioRef.current.src = ayah.audio;
-                    audioRef.current.load();
-                    audioRef.current.play().catch(console.error);
+                    audioRef.current.src = ayah.audio || "";
+                    if(ayah.audio) {
+                        audioRef.current.load();
+                        audioRef.current.play().catch(console.error);
+                    }
                 }
             };
 
@@ -1140,21 +1192,50 @@
                 }
             }, [viewMode, displayLimit, ayahs.length, detailedResults.length, rawMatches, fetchDetailsForMatches]);
 
+            // Determine all items in current context (for Select All)
+            const allItemsInContext = useMemo(() => {
+                if (viewMode === 'reader') return ayahs;
+                if (viewMode === 'search') return rawMatches;
+                if (viewMode === 'playlist_view' && activePlaylist) return activePlaylist.items;
+                return [];
+            }, [viewMode, ayahs, rawMatches, activePlaylist]);
+
             // Select All Toggle
             const handleToggleSelectAll = () => {
-                const list = viewMode === 'search' ? detailedResults : ayahs;
-                const visibleItems = list.slice(0, viewMode === 'reader' ? displayLimit : list.length);
-                if (visibleItems.length === 0) return;
+                const list = allItemsInContext;
+                if (list.length === 0) return;
                 
-                const isAllSelected = visibleItems.every(item => selectedAyahs.some(s => s.number === item.number));
+                const isAllSelected = list.every(item => selectedAyahs.some(s => s.number === item.number));
 
                 if (isAllSelected) {
-                    setSelectedAyahs(prev => prev.filter(s => !visibleItems.some(v => v.number === s.number)));
+                    setSelectedAyahs(prev => prev.filter(s => !list.some(l => l.number === s.number)));
                 } else {
+                    const newItems = list.map(item => {
+                        // If it's a raw match (search mode), prefer detailed version if available, otherwise partial
+                        if (viewMode === 'search') {
+                            const existingFull = detailedResults.find(d => d.number === item.number);
+                            if (existingFull) return existingFull;
+                            return {
+                                number: item.number,
+                                numberInSurah: item.numberInSurah,
+                                surahName: getSurahNameTR(item.surah.number),
+                                surahNumber: item.surah.number,
+                                text: "", 
+                                transliteration: "",
+                                diyanet: item.text, // rawMatches has turkish text
+                                yazir: "",
+                                ates: "",
+                                audio: "",
+                                isPartial: true
+                            };
+                        }
+                        return item;
+                    });
+
                     setSelectedAyahs(prev => {
-                        const existing = new Set(prev.map(a => a.number));
-                        const newItems = visibleItems.filter(a => !existing.has(a.number));
-                        return [...prev, ...newItems];
+                        const existingIds = new Set(prev.map(a => a.number));
+                        const toAdd = newItems.filter(a => !existingIds.has(a.number));
+                        return [...prev, ...toAdd];
                     });
                 }
             };
@@ -1202,7 +1283,7 @@
                         )}
 
                         {/* Bookmark Prompt */}
-                        {!loading && bookmark && viewMode !== 'reader' && surahs.length > 0 && (
+                        {showContinueReading && surahs.length > 0 && (
                             <div className="mb-6 bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex justify-between items-center shadow-sm border border-emerald-200 dark:border-emerald-800">
                                 <div>
                                     <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Son Okunan</h4>
@@ -1219,9 +1300,9 @@
                         {!loading && !searching && viewMode === 'reader' && (
                             <div className="text-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-6 fade-in relative">
                                 {ayahs.length > 0 && (
-                                    <button onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${itemsToRender.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'}`}>
-                                        <i className={`fa-solid ${itemsToRender.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
-                                        {itemsToRender.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
+                                    <button onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'}`}>
+                                        <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
+                                        {allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
                                     </button>
                                 )}
                                 <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{getSurahNameTR(activeSurah?.number)}</h2>
@@ -1241,7 +1322,7 @@
                                     <>
                                         <div className="flex items-center justify-between mb-6">
                                             <div className="flex flex-col gap-1">
-                                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">"{searchQuery}" Sonuçları</h2>
+                                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">"{searchQuery}" Sonuçları ({rawMatches.length})</h2>
                                                 <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} className="text-xs text-left bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded w-fit hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors flex items-center gap-1">
                                                     <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
                                                     {sortType === 'mushaf' ? 'Sıraya göre sıralı' : 'İniş sırasına göre sıralı'}
@@ -1252,13 +1333,13 @@
                                                     <button 
                                                         onClick={handleToggleSelectAll} 
                                                         className={`text-sm font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${
-                                                            detailedResults.every(item => selectedAyahs.some(s => s.number === item.number))
+                                                            allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number))
                                                             ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                                             : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'
                                                         }`}
                                                     >
-                                                        <i className={`fa-solid ${detailedResults.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
-                                                        {detailedResults.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
+                                                        <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
+                                                        {allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
                                                     </button>
                                                 )}
                                                 <button onClick={() => { setViewMode('reader'); setSearchQuery(''); }} className="text-sm text-emerald-600 hover:underline flex items-center">Listeye Dön</button>
