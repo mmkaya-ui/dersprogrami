@@ -608,7 +608,17 @@
         const getSurahNameTR = (number) => (number < 1 || number > 114) ? "" : SURAH_NAMES_TR[number - 1];
         const normalizeText = (text) => {
             if (!text) return "";
-            return text.toLocaleLowerCase('tr').replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
+            return text.toLocaleLowerCase('tr')
+                .replace(/['’‘]/g, '') // Ignore apostrophes
+                .replace(/â/g, 'a')
+                .replace(/î/g, 'i')
+                .replace(/û/g, 'u')
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ı/g, 'i')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c');
         };
 
         const sortMatches = (matches, type) => {
@@ -1237,8 +1247,28 @@
                 setLoadingMore(false);
             };
 
+            const handleToggleSelectAll = () => {
+                const list = viewMode === 'search' ? detailedResults : ayahs;
+                if (!list || list.length === 0) return;
+                
+                const isAllSelected = list.every(item => selectedAyahs.some(s => s.number === item.number));
+
+                if (isAllSelected) {
+                    setSelectedAyahs(prev => prev.filter(s => !list.some(l => l.number === s.number)));
+                } else {
+                    setSelectedAyahs(prev => {
+                        const existing = new Set(prev.map(a => a.number));
+                        const newItems = list.filter(a => !existing.has(a.number));
+                        return [...prev, ...newItems];
+                    });
+                }
+            };
+
             const handleSearch = async (e) => {
-                e.preventDefault(); if (!searchQuery.trim()) return;
+                e.preventDefault(); 
+                const queryRaw = searchQuery.trim();
+                if (!queryRaw) return;
+                
                 setSearching(true); setViewMode('search'); setRawMatches([]); setDetailedResults([]); setNextLoadIndex(0);
                 try {
                     let quranData = fullQuranIndex;
@@ -1253,11 +1283,44 @@
                         data.data.surahs.forEach(surah => { surah.ayahs.forEach(ayah => { quranData.push({ surah: { number: surah.number }, number: ayah.number, numberInSurah: ayah.numberInSurah, text: ayah.text }); }); });
                         setFullQuranIndex(quranData);
                     }
-                    setLoadingText("Aranıyor...");
-                    const normalizedQuery = normalizeText(searchQuery);
                     
+                    setLoadingText("Aranıyor...");
+                    const normQuery = normalizeText(queryRaw);
+                    
+                    // Scope Detection
+                    let targetSurahID = null;
+                    let searchTerm = normQuery;
+                    
+                    // Check if query starts with a Surah name
+                    const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
+                    const foundSurah = surahMatches.find(s => normQuery.startsWith(s.norm));
+                    
+                    if (foundSurah) {
+                        const remainder = normQuery.slice(foundSurah.norm.length).trim();
+                        targetSurahID = foundSurah.id;
+                        searchTerm = remainder;
+                    }
+
                     // Filter
-                    let allMatches = quranData.filter(item => normalizeText(item.text).includes(normalizedQuery));
+                    let allMatches = quranData.filter(item => {
+                        // If scoped, check surah first
+                        if (targetSurahID && item.surah.number !== targetSurahID) return false;
+
+                        const normText = normalizeText(item.text);
+                        
+                        // If we have a target surah but no search term (e.g. user typed "Bakara"), show all
+                        if (targetSurahID && !searchTerm) return true;
+
+                        const textMatch = normText.includes(searchTerm);
+                        
+                        // Global search: check text OR surah name
+                        if (!targetSurahID) {
+                            const sName = normalizeText(getSurahNameTR(item.surah.number));
+                            return textMatch || sName.includes(searchTerm);
+                        }
+                        
+                        return textMatch;
+                    });
                     
                     // Sort using the current sortType
                     allMatches = sortMatches(allMatches, sortType);
@@ -1455,7 +1518,20 @@
                                 {/* READER MODE */}
                                 {!loading && !searching && viewMode === 'reader' && (
                                     <>
-                                        <div className="text-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-6 fade-in">
+                                        <div className="text-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-6 fade-in relative">
+                                            {ayahs.length > 0 && (
+                                                <button 
+                                                    onClick={handleToggleSelectAll} 
+                                                    className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${
+                                                        ayahs.every(item => selectedAyahs.some(s => s.number === item.number))
+                                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                                        : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'
+                                                    }`}
+                                                >
+                                                    <i className={`fa-solid ${ayahs.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
+                                                    {ayahs.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
+                                                </button>
+                                            )}
                                             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{getSurahNameTR(activeSurah?.number)} Suresi</h2>
                                             <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                  <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">{activeSurah?.numberOfAyahs} Ayet</span>
@@ -1484,7 +1560,22 @@
                                     <>
                                         <div className="flex items-center justify-between mb-6">
                                             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">"{searchQuery}" için Sonuçlar</h2>
-                                            <button onClick={() => { setViewMode('reader'); setSearchQuery(''); }} className="text-sm text-emerald-600 hover:underline">Listeye Dön</button>
+                                            <div className="flex gap-3">
+                                                {rawMatches.length > 0 && (
+                                                    <button 
+                                                        onClick={handleToggleSelectAll} 
+                                                        className={`text-sm font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${
+                                                            detailedResults.every(item => selectedAyahs.some(s => s.number === item.number))
+                                                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                                            : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'
+                                                        }`}
+                                                    >
+                                                        <i className={`fa-solid ${detailedResults.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
+                                                        {detailedResults.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
+                                                    </button>
+                                                )}
+                                                <button onClick={() => { setViewMode('reader'); setSearchQuery(''); }} className="text-sm text-emerald-600 hover:underline flex items-center">Listeye Dön</button>
+                                            </div>
                                         </div>
                                         {rawMatches.length === 0 ? <div className="text-center py-20 text-gray-500"><i className="fa-solid fa-filter-circle-xmark text-5xl mb-4 opacity-30"></i><p>Sonuç bulunamadı.</p></div> : (
                                             <div>
