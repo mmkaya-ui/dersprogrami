@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -1181,10 +1180,21 @@
                 viewMode, setViewMode, activeSurah, ayahs, 
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists, 
-                selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType
+                selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
+                activeAyah
             } = useQuran();
             
             const [displayLimit, setDisplayLimit] = useState(10);
+
+            // Auto-scroll to active ayah
+            useEffect(() => {
+                if (activeAyah) {
+                    const el = document.getElementById(`ayah-${activeAyah.number}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }, [activeAyah]);
 
             const sortedSurahsMobile = useMemo(() => {
                 return [...surahs].sort((a, b) => {
