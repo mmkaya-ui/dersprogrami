@@ -1186,15 +1186,29 @@
             
             const [displayLimit, setDisplayLimit] = useState(10);
 
+            const lastScrolledAyah = useRef(null);
+
             // Auto-scroll to active ayah
             useEffect(() => {
                 if (activeAyah) {
-                    const el = document.getElementById(`ayah-${activeAyah.number}`);
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Handle lazy loading for reader mode
+                    if (viewMode === 'reader') {
+                        const idx = ayahs.findIndex(a => a.number === activeAyah.number);
+                        if (idx !== -1 && idx >= displayLimit) {
+                            setDisplayLimit(idx + 5);
+                            return; // Wait for render to scroll
+                        }
+                    }
+
+                    if (activeAyah.number !== lastScrolledAyah.current) {
+                        const el = document.getElementById(`ayah-${activeAyah.number}`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            lastScrolledAyah.current = activeAyah.number;
+                        }
                     }
                 }
-            }, [activeAyah]);
+            }, [activeAyah, displayLimit, ayahs, viewMode]);
 
             const sortedSurahsMobile = useMemo(() => {
                 return [...surahs].sort((a, b) => {
