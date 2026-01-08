@@ -1,37 +1,33 @@
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="description" content="Ders notları, tilavet arşivi ve haftalık ders programı.">
-    <meta name="theme-color" content="#047857">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Ders Programı">
-    <meta name="format-detection" content="telephone=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="description" content="Ders notları, tilavet arşivi ve haftalık ders programı." />
+    <meta name="theme-color" content="#047857" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Ders Programı" />
+    <meta name="format-detection" content="telephone=no" />
     <title>Ders Programı ve Notlar</title>
-    
     <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <!-- React & Babel -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin="" src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin="" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
     <script>
-        tailwind.config = {
+      tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
@@ -42,9 +38,8 @@
             }
         }
     </script>
-    
     <style>
-        :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
+      :root { --scroll-thumb: #cbd5e1; --scroll-track: transparent; }
         .dark { --scroll-thumb: #475569; }
         
         html {
@@ -82,163 +77,126 @@
             padding-top: env(safe-area-inset-top);
         }
     </style>
-</head>
-<body class="transition-colors duration-300 flex flex-col">
-
-    <!-- ========================================== -->
-    <!-- SCHEDULE APP CONTAINER (Vanilla JS)        -->
-    <!-- ========================================== -->
+  </head>
+  <body class="transition-colors duration-300 flex flex-col">
+    <!-- SCHEDULE APP -->
     <div id="app-schedule" class="flex flex-col min-h-screen">
-        <!-- Templates -->
-        <template id="tpl-week-section">
-            <section class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
-                <div class="week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700 cursor-pointer select-none active:bg-emerald-100 dark:active:bg-gray-600 transition-colors" role="button" aria-expanded="false">
-                    <h2 class="font-bold text-emerald-800 dark:text-emerald-400 flex items-center">
-                        <i class="fa-regular fa-calendar-days mr-2 text-emerald-600 dark:text-emerald-400"></i>
-                        <span data-slot="week-title"></span>
-                    </h2>
-                    <i class="fa-solid fa-chevron-down text-gray-400 smooth-transition" data-slot="toggle-icon"></i>
-                </div>
-                <div class="week-content p-2 bg-gray-50 dark:bg-gray-900 hidden transition-colors duration-300" data-slot="content-area"></div>
-            </section>
-        </template>
+      <template id="tpl-week-section">
+        <section class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
+          <div class="week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700 cursor-pointer select-none active:bg-emerald-100 dark:active:bg-gray-600 transition-colors" role="button">
+            <h2 class="font-bold text-emerald-800 dark:text-emerald-400 flex items-center">
+              <i class="fa-regular fa-calendar-days mr-2 text-emerald-600 dark:text-emerald-400"></i>
+              <span data-slot="week-title"></span>
+            </h2>
+            <i class="fa-solid fa-chevron-down text-gray-400 smooth-transition" data-slot="toggle-icon"></i>
+          </div>
+          <div class="week-content p-2 bg-gray-50 dark:bg-gray-900 hidden transition-colors duration-300" data-slot="content-area"></div>
+        </section>
+      </template>
+      <template id="tpl-card">
+        <article class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md will-change-transform">
+          <div class="flex justify-between items-start mb-3">
+            <div class="pr-2">
+              <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide flex items-center gap-2">
+                <span data-slot="date-day"></span>
+                <span data-slot="week-badge" class="hidden text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded"></span>
+              </div>
+              <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight mt-1" data-slot="subject"></h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center">
+                <i class="fa-solid fa-user-tag mr-1 opacity-50 text-xs"></i>
+                <span data-slot="speaker"></span>
+              </p>
+            </div>
+            <div class="flex flex-col items-end gap-1 shrink-0">
+              <time data-slot="time" class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
+              <a href="https://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
+                <i class="fa-solid fa-video text-red-500 mr-1"></i> Katıl
+              </a>
+            </div>
+          </div>
+          <div class="flex mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 gap-2" data-slot="actions"></div>
+        </article>
+      </template>
+      <template id="tpl-button">
+        <a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition duration-200 flex items-center justify-center hover:-translate-y-0.5 shadow-sm hover:shadow-md active:scale-95">
+          <i class="mr-1"></i> <span></span>
+        </a>
+      </template>
+      <template id="tpl-empty">
+        <div class="text-center text-gray-500 mt-10 fade-in select-none">
+          <i class="fa-solid fa-filter-circle-xmark text-4xl mb-3 opacity-50"></i>
+          <p>Sonuç bulunamadı.</p>
+        </div>
+      </template>
+      <template id="tpl-menu-item">
+        <a target="_blank" rel="noopener noreferrer" class="flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0 group">
+          <i class="fa-solid mr-3 text-emerald-500 w-5 text-center group-hover:scale-110 transition-transform" data-slot="icon"></i>
+          <span data-slot="text"></span>
+        </a>
+      </template>
 
-        <template id="tpl-card">
-            <article class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md will-change-transform">
-                <div class="flex justify-between items-start mb-3">
-                    <div class="pr-2">
-                        <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide flex items-center gap-2">
-                            <span data-slot="date-day"></span>
-                            <span data-slot="week-badge" class="hidden text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded"></span>
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight mt-1" data-slot="subject"></h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center">
-                            <i class="fa-solid fa-user-tag mr-1 opacity-50 text-xs"></i>
-                            <span data-slot="speaker"></span>
-                        </p>
-                    </div>
-                    <div class="flex flex-col items-end gap-1 shrink-0">
-                        <time data-slot="time" class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
-                        <a href="https://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank" rel="noopener noreferrer" class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
-                            <i class="fa-solid fa-video text-red-500 mr-1"></i> Katıl
-                        </a>
-                    </div>
-                </div>
-                <div class="flex mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 gap-2" data-slot="actions"></div>
-            </article>
-        </template>
-
-        <template id="tpl-button">
-            <a target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 rounded-md text-sm font-semibold transition duration-200 flex items-center justify-center hover:-translate-y-0.5 shadow-sm hover:shadow-md active:scale-95">
-                <i class="mr-1"></i>
-                <span></span>
+      <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg transition-colors duration-300">
+        <div class="max-w-md mx-auto relative pt-2">
+          <button id="btn-theme-toggle" class="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer">
+            <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
+          </button>
+          <div class="mb-2 select-none">
+            <h1 class="text-xl font-bold mb-0.5 flex items-center"><i class="fa-solid fa-book-open mr-2"></i> Ders Programı</h1>
+            <p class="text-emerald-100 text-[11px] opacity-90">Ders notları ve tilavet arşivi</p>
+          </div>
+          <div class="relative mb-2 group">
+            <input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..." class="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm transition-all duration-300" autocomplete="off" />
+            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 dark:text-gray-500 text-sm"></i>
+          </div>
+          <div class="flex flex-col gap-2 relative z-10">
+            <div class="relative w-full">
+              <button id="btn-quran-menu" class="w-full p-2 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30">
+                <span class="font-semibold flex items-center pointer-events-none"><i class="fa-solid fa-layer-group mr-2"></i> Kur'an Kaynakları</span>
+                <i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
+              </button>
+              <div id="menu-quran" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0"></div>
+            </div>
+            <nav class="flex gap-2 items-stretch h-9">
+              <a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060" target="_blank" rel="noopener noreferrer" class="flex-1 flex justify-center items-center rounded-lg text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-200 shadow-md text-xs font-bold text-center h-full">
+                <i class="fa-solid fa-table mr-2 text-emerald-700"></i> Ders Tablosu
+              </a>
+              <button id="btn-open-quran" class="flex-1 flex justify-center items-center rounded-lg text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition duration-200 shadow-md text-xs font-bold text-center h-full">
+                <i class="fa-solid fa-book-quran mr-2 text-amber-700"></i> Kur'an Oku
+              </button>
+            </nav>
+          </div>
+        </div>
+      </header>
+      <main class="max-w-md mx-auto p-4 w-full flex-grow relative" id="main-content"></main>
+      <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe mt-auto">
+        <div class="max-w-md mx-auto px-4">
+          <div class="mb-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim &amp; Öneri</p>
+            <a href="mailto:biz2004571@gmail.com" class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 text-xs font-medium group">
+              <i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i> biz2004571@gmail.com
             </a>
-        </template>
-
-        <template id="tpl-empty">
-            <div class="text-center text-gray-500 mt-10 fade-in select-none">
-                <i class="fa-solid fa-filter-circle-xmark text-4xl mb-3 opacity-50"></i>
-                <p>Sonuç bulunamadı.</p>
-            </div>
-        </template>
-
-        <template id="tpl-menu-item">
-            <a target="_blank" rel="noopener noreferrer" class="flex items-center p-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0 group">
-                <i class="fa-solid mr-3 text-emerald-500 w-5 text-center group-hover:scale-110 transition-transform" data-slot="icon"></i>
-                <span data-slot="text"></span>
-            </a>
-        </template>
-
-        <!-- Header -->
-        <header class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg transition-colors duration-300">
-            <div class="max-w-md mx-auto relative pt-2">
-                <button id="btn-theme-toggle" class="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
-                    <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
-                </button>
-                
-                <div class="mb-2 select-none">
-                    <h1 class="text-xl font-bold mb-0.5 flex items-center">
-                        <i class="fa-solid fa-book-open mr-2"></i>Ders Programı
-                    </h1>
-                    <p class="text-emerald-100 text-[11px] opacity-90">Ders notları ve tilavet arşivi</p>
-                </div>
-                
-                <div class="relative mb-2 group">
-                    <input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..." 
-                        class="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
-                        autocomplete="off" enterkeyhint="search">
-                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
-                </div>
-
-                <div class="flex flex-col gap-2 relative z-10">
-                    <div class="relative w-full">
-                        <button id="btn-quran-menu" class="w-full p-2 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]" aria-haspopup="true" aria-expanded="false">
-                            <span class="font-semibold flex items-center pointer-events-none">
-                                <i class="fa-solid fa-layer-group mr-2"></i>Kur'an Kaynakları
-                            </span>
-                            <i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
-                        </button>
-                        <div id="menu-quran" class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0"></div>
-                    </div>
-                    
-                    <nav class="flex gap-2 items-stretch h-9">
-                        <a href="https://docs.google.com/spreadsheets/d/1VwpLqO34r9qBZU03h130lqtHJoHRebMtF-sS6ex2PHE/edit?gid=479177060" target="_blank" rel="noopener noreferrer"
-                            class="flex-1 flex justify-center items-center rounded-lg text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
-                            <i class="fa-solid fa-table mr-2 text-emerald-700"></i>
-                            Ders Tablosu
-                        </a>
-                        <button id="btn-open-quran"
-                            class="flex-1 flex justify-center items-center rounded-lg text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition duration-200 shadow-md text-xs font-bold text-center h-full hover:-translate-y-0.5 active:scale-95">
-                            <i class="fa-solid fa-book-quran mr-2 text-amber-700"></i>
-                            Kur'an Oku
-                        </button>
-                    </nav>
-                </div>
-            </div>
-        </header>
-
-        <main class="max-w-md mx-auto p-4 w-full flex-grow relative" id="main-content" role="main"></main>
-
-        <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe mt-auto">
-            <div class="max-w-md mx-auto px-4">
-                <div class="mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim & Öneri</p>
-                    <a href="mailto:biz2004571@gmail.com" class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-medium group">
-                        <i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
-                        biz2004571@gmail.com
-                    </a>
-                </div>
-                <p class="text-[10px] opacity-60">&copy; 2025 - 2032 Ders Arşivi</p>
-            </div>
-        </footer>
+          </div>
+          <p class="text-[10px] opacity-60">© 2025 - 2032 Ders Arşivi</p>
+        </div>
+      </footer>
     </div>
 
-    <!-- ========================================== -->
-    <!-- QURAN APP CONTAINER (React Mount)          -->
-    <!-- ========================================== -->
+    <!-- QURAN APP -->
     <div id="quran-root" class="hidden fixed inset-0 z-[200] bg-gray-50 dark:bg-gray-900 w-full h-full overflow-hidden flex flex-col"></div>
-
-    <!-- ========================================== -->
-    <!-- SCRIPTS                                    -->
-    <!-- ========================================== -->
 
     <!-- 1. SCHEDULE APP SCRIPT -->
     <script>
-        (function () {
+      (function () {
             'use strict';
-            
             if (window.DERS_PROGRAMI_APP_LOADED) return;
             window.DERS_PROGRAMI_APP_LOADED = true;
 
-            // Global toggle function for React to call
             window.toggleQuranView = (show) => {
                 const scheduleApp = document.getElementById('app-schedule');
                 const quranApp = document.getElementById('quran-root');
-                
                 if (show) {
                     scheduleApp.classList.add('hidden');
                     quranApp.classList.remove('hidden');
-                    // Ensure the React app theme matches
                     const isDark = document.documentElement.classList.contains('dark');
                     if(window.syncReactTheme) window.syncReactTheme(isDark);
                 } else {
@@ -256,16 +214,13 @@
                 CACHE_KEY: 'ders_programi_v8_xlsx',
                 CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
                 CLASSES: {
-                    hidden: 'hidden',
-                    rotate: 'rotate-icon',
-                    menuIn: ['scale-100', 'opacity-100'],
-                    menuOut: ['scale-95', 'opacity-0'],
+                    hidden: 'hidden', rotate: 'rotate-icon',
+                    menuIn: ['scale-100', 'opacity-100'], menuOut: ['scale-95', 'opacity-0'],
                     btnPrimary: ['bg-emerald-50', 'dark:bg-emerald-900/40', 'text-emerald-700', 'dark:text-emerald-400', 'hover:bg-emerald-100', 'dark:hover:bg-emerald-900/60'],
                     btnSecondary: ['bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400', 'hover:bg-amber-100', 'dark:hover:bg-amber-900/50']
                 },
                 MONTHS: { 'ocak': 0, 'subat': 1, 'mart': 2, 'nisan': 3, 'mayis': 4, 'haziran': 5, 'temmuz': 6, 'agustos': 7, 'eylul': 8, 'ekim': 9, 'kasim': 10, 'aralik': 11 },
-                SEARCH_DEBOUNCE_MS: 150,
-                JOIN_TOLERANCE_MIN: 90
+                SEARCH_DEBOUNCE_MS: 150, JOIN_TOLERANCE_MIN: 90
             });
 
             const EXTRA_RESOURCES = [
@@ -289,11 +244,7 @@
                 normalizeText(val) {
                     if (!val) return '';
                     const trMap = { 'İ': 'i', 'I': 'ı', 'ı': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
-                    return String(val)
-                        .replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c)
-                        .toLowerCase()
-                        .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, "");
+                    return String(val).replace(/[İIışŞğĞüÜöÖçÇ]/g, c => trMap[c] || c).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 },
                 parseTimestamp(dateStr, timeStr) {
                     try {
@@ -305,8 +256,7 @@
                         let monthIndex = -1;
                         for (const [key, val] of Object.entries(CONFIG.MONTHS)) {
                             if (normDate.includes(key) || normDate.includes(key.substring(0, 3))) {
-                                monthIndex = val;
-                                break;
+                                monthIndex = val; break;
                             }
                         }
                         if (monthIndex === -1) return 0;
@@ -317,7 +267,7 @@
                         if (currentMonth > 8 && monthIndex < 3) year += 1;
                         else if (currentMonth < 3 && monthIndex > 8) year -= 1;
                         return Date.UTC(year, monthIndex, day, hour - 3, minute);
-                    } catch (e) { console.warn(e); return 0; }
+                    } catch (e) { return 0; }
                 }
             };
 
@@ -400,8 +350,7 @@
                     if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
                     if (showWeekBadge) {
                         const badge = node.querySelector('[data-slot="week-badge"]');
-                        badge.textContent = week;
-                        badge.classList.remove('hidden');
+                        badge.textContent = week; badge.classList.remove('hidden');
                     }
                     const actionsContainer = node.querySelector('[data-slot="actions"]');
                     if (!link1 && !link2) {
@@ -417,8 +366,7 @@
                 }
                 #createButton(url, text, iconClass, type) {
                     const node = this.#clone('btn');
-                    const a = node.querySelector('a');
-                    a.href = url;
+                    const a = node.querySelector('a'); a.href = url;
                     const classes = type === 'primary' ? CONFIG.CLASSES.btnPrimary : CONFIG.CLASSES.btnSecondary;
                     a.classList.add(...classes);
                     node.querySelector('i').classList.add('fa-solid', iconClass);
@@ -441,7 +389,7 @@
                             const icon = header.querySelector('[data-slot="toggle-icon"]');
                             this.#setText(section, '[data-slot="week-title"]', week);
                             groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
-                            if (index === 0) { content.classList.remove(CONFIG.CLASSES.hidden); icon.classList.add(CONFIG.CLASSES.rotate); header.setAttribute('aria-expanded', 'true'); }
+                            if (index === 0) { content.classList.remove(CONFIG.CLASSES.hidden); icon.classList.add(CONFIG.CLASSES.rotate); }
                             fragment.appendChild(section);
                         });
                         this.#container.appendChild(fragment);
@@ -462,29 +410,23 @@
                         this.#container.onclick = null;
                         if (!list?.length) { this.#container.appendChild(this.#clone('empty')); return; }
                         const sortedList = [...list].sort((a, b) => b.timestamp - a.timestamp);
-                        const fragment = document.createDocumentFragment();
                         const wrapper = document.createElement('div');
                         wrapper.className = 'p-2 fade-in';
                         sortedList.forEach(item => wrapper.appendChild(this.#createCard(item, true)));
-                        fragment.appendChild(wrapper);
-                        this.#container.appendChild(fragment);
+                        this.#container.appendChild(wrapper);
                     });
                 }
                 renderMenu(items) {
                     const menu = document.getElementById('menu-quran');
                     if (!menu) return;
-                    const fragment = document.createDocumentFragment();
                     items.forEach(note => {
                         const node = this.#clone('menuItem');
-                        const a = node.querySelector('a');
-                        a.href = note.url;
+                        const a = node.querySelector('a'); a.href = note.url;
                         this.#setText(node, '[data-slot="text"]', note.name);
                         const isAudio = note.name.toLowerCase().includes("dersi") && !note.name.toLowerCase().includes("not");
                         node.querySelector('[data-slot="icon"]').classList.add(isAudio ? "fa-file-audio" : "fa-file-lines");
-                        fragment.appendChild(node);
+                        menu.appendChild(node);
                     });
-                    menu.innerHTML = '';
-                    menu.appendChild(fragment);
                 }
             }
 
@@ -509,7 +451,6 @@
                     this.html.classList.toggle('dark', isDark);
                     localStorage.setItem('theme', isDark ? 'dark' : 'light');
                     if (this.icon) this.icon.className = isDark ? 'fa-solid fa-sun text-white text-xs' : 'fa-solid fa-moon text-white text-xs';
-                    // Sync React if it exists
                     if(window.syncReactTheme) window.syncReactTheme(isDark);
                 }
             }
@@ -538,12 +479,7 @@
                 #bindSearch() {
                     const input = document.getElementById('input-search');
                     if (!input) return;
-                    const newInfo = input.cloneNode(true);
-                    input.parentNode.replaceChild(newInfo, input);
-                    const dismissKeyboard = () => { if (document.activeElement === newInfo) newInfo.blur(); };
-                    window.addEventListener('touchmove', dismissKeyboard, { passive: true });
-                    window.addEventListener('scroll', dismissKeyboard, { passive: true });
-                    newInfo.addEventListener('input', (e) => {
+                    input.addEventListener('input', (e) => {
                         clearTimeout(this.#searchTimer);
                         const query = e.target.value.trim();
                         this.#searchTimer = setTimeout(() => {
@@ -556,30 +492,24 @@
                     const btn = document.getElementById('btn-quran-menu');
                     const menu = document.getElementById('menu-quran');
                     if (!btn || !menu) return;
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
-                    const icon = newBtn.querySelector('.fa-chevron-down');
+                    const icon = btn.querySelector('.fa-chevron-down');
                     let isOpen = false;
-                    const toggle = (forceState) => {
-                        isOpen = forceState !== undefined ? forceState : !isOpen;
+                    const toggle = (force) => {
+                        isOpen = force !== undefined ? force : !isOpen;
                         if (isOpen) {
                             menu.classList.remove(CONFIG.CLASSES.hidden);
                             requestAnimationFrame(() => {
-                                menu.classList.remove(...CONFIG.CLASSES.menuOut);
-                                menu.classList.add(...CONFIG.CLASSES.menuIn);
+                                menu.classList.remove(...CONFIG.CLASSES.menuOut); menu.classList.add(...CONFIG.CLASSES.menuIn);
                                 icon.classList.add(CONFIG.CLASSES.rotate);
                             });
-                            newBtn.setAttribute('aria-expanded', 'true');
                         } else {
-                            menu.classList.remove(...CONFIG.CLASSES.menuIn);
-                            menu.classList.add(...CONFIG.CLASSES.menuOut);
+                            menu.classList.remove(...CONFIG.CLASSES.menuIn); menu.classList.add(...CONFIG.CLASSES.menuOut);
                             icon.classList.remove(CONFIG.CLASSES.rotate);
-                            newBtn.setAttribute('aria-expanded', 'false');
                             setTimeout(() => { if(!isOpen) menu.classList.add(CONFIG.CLASSES.hidden); }, 200);
                         }
                     };
-                    newBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
-                    document.addEventListener('click', (e) => { if (isOpen && !newBtn.contains(e.target) && !menu.contains(e.target)) toggle(false); });
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+                    document.addEventListener('click', (e) => { if (isOpen && !btn.contains(e.target) && !menu.contains(e.target)) toggle(false); });
                 }
             }
             document.addEventListener('DOMContentLoaded', () => new App().init());
@@ -588,55 +518,27 @@
 
     <!-- 2. QURAN APP SCRIPT (REACT) -->
     <script type="text/babel">
-        const { useState, useEffect, useRef, useContext, createContext, useMemo, useCallback } = React;
+      const { useState, useEffect, useRef, useContext, createContext, useMemo, useCallback } = React;
 
         const API_BASE = "https://api.alquran.cloud/v1";
         const EDITIONS = {
-            arabic: "quran-uthmani",
-            audio: "ar.alafasy",
-            transliteration: "tr.transliteration",
-            tr_diyanet: "tr.diyanet",
-            tr_yazir: "tr.yazir",
-            tr_ates: "tr.ates"
+            arabic: "quran-uthmani", audio: "ar.alafasy", transliteration: "tr.transliteration",
+            tr_diyanet: "tr.diyanet", tr_yazir: "tr.yazir", tr_ates: "tr.ates"
         };
         const SURAH_NAMES_TR = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şu'arâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saff", "Cum'a", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirah", "Tîn", "Alak", "Kadir", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
         const REVELATION_ORDER_MAP = { 1: 5, 2: 87, 3: 89, 4: 92, 5: 112, 6: 55, 7: 39, 8: 88, 9: 113, 10: 51, 11: 52, 12: 53, 13: 96, 14: 72, 15: 54, 16: 70, 17: 50, 18: 69, 19: 44, 20: 45, 21: 73, 22: 103, 23: 74, 24: 102, 25: 42, 26: 47, 27: 48, 28: 49, 29: 85, 30: 84, 31: 57, 32: 75, 33: 90, 34: 58, 35: 43, 36: 41, 37: 56, 38: 38, 39: 59, 40: 60, 41: 61, 42: 62, 43: 63, 44: 64, 45: 65, 46: 66, 47: 95, 48: 111, 49: 106, 50: 34, 51: 67, 52: 76, 53: 23, 54: 37, 55: 97, 56: 46, 57: 94, 58: 105, 59: 101, 60: 91, 61: 109, 62: 110, 63: 104, 64: 108, 65: 99, 66: 107, 67: 77, 68: 2, 69: 78, 70: 79, 71: 71, 72: 40, 73: 3, 74: 4, 75: 31, 76: 98, 77: 33, 78: 80, 79: 81, 80: 24, 81: 7, 82: 82, 83: 86, 84: 83, 85: 27, 86: 36, 87: 8, 88: 68, 89: 10, 90: 35, 91: 26, 92: 9, 93: 11, 94: 12, 95: 28, 96: 1, 97: 25, 98: 100, 99: 93, 100: 14, 101: 30, 102: 16, 103: 13, 104: 32, 105: 19, 106: 29, 107: 17, 108: 15, 109: 18, 110: 114, 111: 6, 112: 22, 113: 20, 114: 21 };
 
-        const getSurahNameTR = (number) => (number < 1 || number > 114) ? "" : SURAH_NAMES_TR[number - 1];
-        
-        const normalizeText = (text) => {
-            if (!text) return "";
-            return text.toLocaleLowerCase('tr')
-                .replace(/['’‘]/g, '') // Ignore apostrophes
-                .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
-        };
+        const getSurahNameTR = (num) => (num < 1 || num > 114) ? "" : SURAH_NAMES_TR[num - 1];
+        const normalizeText = (text) => text ? text.toLocaleLowerCase('tr').replace(/[’‘']/g, '').replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c') : "";
+        const sortMatches = (list, type) => [...list].sort((a, b) => type === 'mushaf' ? (a.surah.number - b.surah.number) || (a.numberInSurah - b.numberInSurah) : ((REVELATION_ORDER_MAP[a.surah.number] || 999) - (REVELATION_ORDER_MAP[b.surah.number] || 999)) || (a.numberInSurah - b.numberInSurah));
+        const formatTime = (time) => isNaN(time) ? "00:00" : `${Math.floor(time / 60)}:${Math.floor(time % 60).toString().padStart(2, '0')}`;
 
-        const sortMatches = (matches, type) => {
-            return [...matches].sort((a, b) => {
-                if (type === 'mushaf') return (a.surah.number - b.surah.number) || (a.numberInSurah - b.numberInSurah);
-                const orderA = REVELATION_ORDER_MAP[a.surah.number] || 999;
-                const orderB = REVELATION_ORDER_MAP[b.surah.number] || 999;
-                return (orderA - orderB) || (a.numberInSurah - b.numberInSurah);
-            });
-        };
-
-        const formatTime = (time) => {
-            if(isNaN(time)) return "00:00";
-            const minutes = Math.floor(time / 60);
-            const seconds = Math.floor(time % 60);
-            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        };
-
-        // --- CONTEXT API ---
         const QuranContext = createContext();
 
         const QuranProvider = ({ children }) => {
-            // Global Data
             const [surahs, setSurahs] = useState([]);
             const [ayahs, setAyahs] = useState([]);
             const [fullQuranIndex, setFullQuranIndex] = useState(null);
-            
-            // View State
             const [viewMode, setViewMode] = useState('reader');
             const [activeSurah, setActiveSurah] = useState(null);
             const [searchQuery, setSearchQuery] = useState('');
@@ -644,170 +546,49 @@
             const [rawMatches, setRawMatches] = useState([]);
             const [loading, setLoading] = useState(false);
             const [loadingText, setLoadingText] = useState("");
-            
-            // Player State
             const [activeAyah, setActiveAyah] = useState(null);
             const [isPlaying, setIsPlaying] = useState(false);
             const [currentTime, setCurrentTime] = useState(0);
             const [duration, setDuration] = useState(0);
             const audioRef = useRef(new Audio());
-            
-            // Playlist & Selection
             const [playlists, setPlaylists] = useState([]);
             const [selectedAyahs, setSelectedAyahs] = useState([]);
             const [activePlaylist, setActivePlaylist] = useState(null);
-            
-            // Preferences
             const [fontSize, setFontSize] = useState(18);
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
             const [sortType, setSortType] = useState('mushaf');
             const [bookmark, setBookmark] = useState(null);
 
-            // Initialize Audio
             useEffect(() => {
-                const audio = audioRef.current;
-                audio.preload = "auto";
-                audio.setAttribute('playsinline', 'true');
+                const a = audioRef.current; a.preload = "auto";
+                const updTime = () => setCurrentTime(a.currentTime);
+                const updDur = () => setDuration(a.duration);
+                const onEnd = () => { setIsPlaying(false); playNext(); };
+                a.addEventListener('timeupdate', updTime); a.addEventListener('loadedmetadata', updDur);
+                a.addEventListener('play', () => setIsPlaying(true)); a.addEventListener('pause', () => setIsPlaying(false));
+                a.addEventListener('ended', onEnd);
+                return () => { a.removeEventListener('timeupdate', updTime); a.removeEventListener('loadedmetadata', updDur); a.removeEventListener('ended', onEnd); };
+            }, [ayahs, detailedResults, activeAyah, activePlaylist, viewMode]);
 
-                const updateTime = () => setCurrentTime(audio.currentTime);
-                const updateDuration = () => setDuration(audio.duration);
-                const onPlay = () => setIsPlaying(true);
-                const onPause = () => setIsPlaying(false);
-                const onEnded = () => {
-                    setIsPlaying(false);
-                    playNext();
-                };
-
-                audio.addEventListener('timeupdate', updateTime);
-                audio.addEventListener('loadedmetadata', updateDuration);
-                audio.addEventListener('play', onPlay);
-                audio.addEventListener('pause', onPause);
-                audio.addEventListener('ended', onEnded);
-
-                return () => {
-                    audio.removeEventListener('timeupdate', updateTime);
-                    audio.removeEventListener('loadedmetadata', updateDuration);
-                    audio.removeEventListener('play', onPlay);
-                    audio.removeEventListener('pause', onPause);
-                    audio.removeEventListener('ended', onEnded);
-                };
-            }, [ayahs, detailedResults, activeAyah, activePlaylist, viewMode]); // Deps needed for playNext closure
-
-            // Load Initial Data & Settings
             useEffect(() => {
-                const savedPlaylists = localStorage.getItem('quran_playlists');
-                if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
-                
-                const savedBookmark = localStorage.getItem('quran_bookmark');
-                if (savedBookmark) setBookmark(JSON.parse(savedBookmark));
-
-                setLoading(true);
-                setLoadingText("Sure verileri yükleniyor...");
-                fetch(`${API_BASE}/surah`)
-                    .then(res => res.json())
-                    .then(data => {
-                        setSurahs(data.data);
-                        // Always select first surah (Fatiha) on load
-                        if (data.data && data.data.length > 0) {
-                            fetchSurah(data.data[0]);
-                        } else {
-                            setLoading(false);
-                        }
-                    })
-                    .catch(e => { console.error(e); setLoading(false); });
+                const p = localStorage.getItem('quran_playlists'); if (p) setPlaylists(JSON.parse(p));
+                const b = localStorage.getItem('quran_bookmark'); if (b) setBookmark(JSON.parse(b));
+                setLoading(true); setLoadingText("Sureler yükleniyor...");
+                fetch(`${API_BASE}/surah`).then(r => r.json()).then(d => { setSurahs(d.data); if (d.data?.length) fetchSurah(d.data[0]); }).catch(e => setLoading(false));
             }, []);
 
-            useEffect(() => {
-                localStorage.setItem('quran_playlists', JSON.stringify(playlists));
-            }, [playlists]);
+            useEffect(() => { localStorage.setItem('quran_playlists', JSON.stringify(playlists)); }, [playlists]);
+            useEffect(() => { if (activeAyah) { const b = { surah: activeAyah.surahName, number: activeAyah.number, numberInSurah: activeAyah.numberInSurah, surahNumber: activeAyah.surahNumber || activeSurah?.number }; setBookmark(b); localStorage.setItem('quran_bookmark', JSON.stringify(b)); } }, [activeAyah]);
 
-            // Save bookmark whenever active ayah changes
-            useEffect(() => {
-                if (activeAyah) {
-                    const newBookmark = { 
-                        surah: activeAyah.surahName, 
-                        number: activeAyah.number, 
-                        numberInSurah: activeAyah.numberInSurah,
-                        surahNumber: activeAyah.surahNumber || activeSurah?.number 
-                    };
-                    setBookmark(newBookmark);
-                    localStorage.setItem('quran_bookmark', JSON.stringify(newBookmark));
-                }
-            }, [activeAyah, activeSurah]);
-
-            const loadingRef = useRef(false);
-
-            // Hydrate partial items in active playlist
-            useEffect(() => {
-                if (activePlaylist && activePlaylist.items.some(i => i.isPartial)) {
-                    const partials = activePlaylist.items.filter(i => i.isPartial);
-                    const uniquePartials = [...new Map(partials.map(item => [item.number, item])).values()];
-                    
-                    if (uniquePartials.length === 0) return;
-
-                    const hydrate = async () => {
-                        if (loadingRef.current) return; 
-                        loadingRef.current = true;
-                        setLoadingText("Liste detayları güncelleniyor...");
-                        
-                        try {
-                            const chunkSizes = 5; 
-                            const newItemsMap = {};
-                            
-                            for (let i = 0; i < uniquePartials.length; i += chunkSizes) {
-                                const chunk = uniquePartials.slice(i, i + chunkSizes);
-                                const matches = chunk.map(p => ({ surah: { number: p.surahNumber }, numberInSurah: p.numberInSurah }));
-                                const details = await fetchDetailsForMatches(matches);
-                                details.forEach(d => { newItemsMap[d.number] = d; });
-                            }
-
-                            const updater = (list) => list.map(item => newItemsMap[item.number] || item);
-
-                            setPlaylists(prev => prev.map(p => {
-                                if (p.id === activePlaylist.id) {
-                                    return { ...p, items: updater(p.items) };
-                                }
-                                return p;
-                            }));
-                            
-                            setActivePlaylist(prev => ({ ...prev, items: updater(prev.items) }));
-                        } catch (e) {
-                            console.error("Hydration failed", e);
-                        } finally {
-                            setLoadingText("");
-                            loadingRef.current = false;
-                        }
-                    };
-                    
-                    hydrate();
-                }
-            }, [activePlaylist]);
-
-            // Audio Controls
             const playAyah = (ayah) => {
-                if(activeAyah?.number === ayah.number) {
-                    audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause();
-                } else {
-                    setActiveAyah(ayah);
-                    audioRef.current.src = ayah.audio || "";
-                    if(ayah.audio) {
-                        audioRef.current.load();
-                        audioRef.current.play().catch(console.error);
-                    }
-                }
-            };
-
-            const seek = (time) => {
-                audioRef.current.currentTime = time;
-                setCurrentTime(time);
+                if (activeAyah?.number === ayah.number) { audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause(); } 
+                else { setActiveAyah(ayah); audioRef.current.src = ayah.audio || ""; if(ayah.audio) { audioRef.current.load(); audioRef.current.play().catch(console.error); } }
             };
 
             const playNext = () => {
                 const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
-                if (idx !== -1 && idx < list.length - 1) {
-                    playAyah(list[idx + 1]);
-                }
+                if (idx !== -1 && idx < list.length - 1) playAyah(list[idx + 1]);
             };
 
             const playPrev = () => {
@@ -816,265 +597,123 @@
                 if (idx > 0) playAyah(list[idx - 1]);
             };
 
-            // Data Fetching
             const fetchSurah = async (surah) => {
-                setLoading(true); setLoadingText(`${getSurahNameTR(surah.number)} suresi yükleniyor...`);
-                setViewMode('reader'); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
-                
+                setLoading(true); setViewMode('reader'); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
                 try {
-                    const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
-                    const [editionsRes, metaRes] = await Promise.all([
-                        fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`),
-                        fetch(`${API_BASE}/surah/${surah.number}`)
-                    ]);
-                    
-                    const editionsData = await editionsRes.json();
-                    const metaData = await metaRes.json();
-
-                    if (metaData.code === 200) setActiveSurah(prev => ({ ...prev, ...metaData.data }));
-
-                    const combinedAyahs = editionsData.data[0].ayahs.map((ayah, index) => ({
-                        number: ayah.number, 
-                        numberInSurah: ayah.numberInSurah, 
-                        surahName: getSurahNameTR(surah.number),
-                        surahNumber: surah.number,
-                        text: ayah.text, 
-                        transliteration: editionsData.data[1].ayahs[index].text, 
-                        diyanet: editionsData.data[2].ayahs[index].text,
-                        yazir: editionsData.data[3].ayahs[index].text, 
-                        ates: editionsData.data[4].ayahs[index].text, 
-                        audio: editionsData.data[5].ayahs[index].audio
-                    }));
-                    setAyahs(combinedAyahs);
-                } catch (e) { console.error(e); } finally { setLoading(false); }
+                    const eds = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
+                    const [er, mr] = await Promise.all([fetch(`${API_BASE}/surah/${surah.number}/editions/${eds}`), fetch(`${API_BASE}/surah/${surah.number}`)]);
+                    const ed = await er.json(); const md = await mr.json();
+                    if (md.code === 200) setActiveSurah(p => ({ ...p, ...md.data }));
+                    setAyahs(ed.data[0].ayahs.map((a, i) => ({
+                        number: a.number, numberInSurah: a.numberInSurah, surahName: getSurahNameTR(surah.number), surahNumber: surah.number,
+                        text: a.text, transliteration: ed.data[1].ayahs[i].text, diyanet: ed.data[2].ayahs[i].text,
+                        yazir: ed.data[3].ayahs[i].text, ates: ed.data[4].ayahs[i].text, audio: ed.data[5].ayahs[i].audio
+                    })));
+                } catch (e) {} finally { setLoading(false); }
             };
 
-            const fetchDetailsForMatches = async (matchesToFetch) => {
-                const newResults = [];
-                const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
-                // Batch requests in parallel
-                const promises = matchesToFetch.map(async (match) => {
+            const fetchDetailsForMatches = async (matches) => {
+                const eds = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
+                const promises = matches.map(async (m) => {
                     try {
-                        const res = await fetch(`${API_BASE}/ayah/${match.surah.number}:${match.numberInSurah}/editions/${editionsStr}`);
-                        const data = await res.json();
-                        const d = data.data;
+                        const r = await fetch(`${API_BASE}/ayah/${m.surah.number}:${m.numberInSurah}/editions/${eds}`);
+                        const d = await r.json(); const x = d.data;
                         return {
-                            number: d[0].number, numberInSurah: d[0].numberInSurah, 
-                            surahName: getSurahNameTR(match.surah.number), surahNumber: match.surah.number,
-                            text: d[0].text, transliteration: d[1].text, diyanet: d[2].text, yazir: d[3].text, ates: d[4].text, audio: d[5].audio
+                            number: x[0].number, numberInSurah: x[0].numberInSurah, surahName: getSurahNameTR(m.surah.number), surahNumber: m.surah.number,
+                            text: x[0].text, transliteration: x[1].text, diyanet: x[2].text, yazir: x[3].text, ates: x[4].text, audio: x[5].audio
                         };
                     } catch(e) { return null; }
                 });
-                
-                const results = await Promise.all(promises);
-                return results.filter(r => r !== null);
+                return (await Promise.all(promises)).filter(r => r !== null);
             };
 
-            const handleSearch = async (queryRaw) => {
-                if (!queryRaw.trim()) return;
-                setSearching(true); setViewMode('search'); setRawMatches([]); setDetailedResults([]);
-                
+            const handleSearch = async (qRaw) => {
+                if (!qRaw.trim()) return; setSearching(true); setViewMode('search'); setRawMatches([]); setDetailedResults([]);
                 try {
-                    let quranData = fullQuranIndex;
-                    if (!quranData) {
-                        const cached = localStorage.getItem('quran_index_v1');
-                        if (cached) {
-                            quranData = JSON.parse(cached);
-                            setFullQuranIndex(quranData);
-                        } else {
-                            setLoadingText("İndeks oluşturuluyor...");
-                            const res = await fetch(`${API_BASE}/quran/${EDITIONS.tr_diyanet}`);
-                            const data = await res.json();
-                            quranData = [];
-                            data.data.surahs.forEach(surah => { surah.ayahs.forEach(ayah => { quranData.push({ surah: { number: surah.number }, number: ayah.number, numberInSurah: ayah.numberInSurah, text: ayah.text }); }); });
-                            setFullQuranIndex(quranData);
-                            try { localStorage.setItem('quran_index_v1', JSON.stringify(quranData)); } catch(e) { console.warn("Quota exceeded"); }
+                    let qData = fullQuranIndex;
+                    if (!qData) {
+                        const c = localStorage.getItem('quran_index_v1');
+                        if (c) { qData = JSON.parse(c); setFullQuranIndex(qData); } else {
+                            const r = await fetch(`${API_BASE}/quran/${EDITIONS.tr_diyanet}`); const d = await r.json();
+                            qData = []; d.data.surahs.forEach(s => s.ayahs.forEach(a => qData.push({ surah: { number: s.number }, number: a.number, numberInSurah: a.numberInSurah, text: a.text })));
+                            setFullQuranIndex(qData); try { localStorage.setItem('quran_index_v1', JSON.stringify(qData)); } catch(e) {}
                         }
                     }
-                    
-                    const normQuery = normalizeText(queryRaw);
-                    let targetSurahID = null;
-                    let searchTerm = normQuery;
-                    
-                    const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
-                    const foundSurah = surahMatches.find(s => normQuery.startsWith(s.norm + ' ')); // Only match if followed by space (scoped)
-                    
-                    if (foundSurah) {
-                        const remainder = normQuery.slice(foundSurah.norm.length).trim();
-                        if (remainder) {
-                            targetSurahID = foundSurah.id;
-                            searchTerm = remainder;
-                        }
-                    }
-
-                    let allMatches = quranData.filter(item => {
-                        if (targetSurahID && item.surah.number !== targetSurahID) return false;
-                        
-                        const normText = normalizeText(item.text);
-                        const textMatch = normText.includes(searchTerm);
-                        
-                        // If scoped search, we just need text match (targetSurahID already filtered)
-                        // If global search (!targetSurahID), we ONLY check text match. 
-                        // We do NOT check surah name match to avoid listing full surah when searching for "Yusuf".
-                        return textMatch;
-                    });
-                    
-                    allMatches = sortMatches(allMatches, sortType);
-                    setRawMatches(allMatches);
-                    
-                    // Initial load
-                    const initialBatch = allMatches.slice(0, 5);
-                    const details = await fetchDetailsForMatches(initialBatch);
-                    setDetailedResults(details);
-                } catch (e) { console.error(e); } finally { setSearching(false); setLoadingText(""); }
+                    const nQ = normalizeText(qRaw); let sID = null; let sT = nQ;
+                    const sm = SURAH_NAMES_TR.map((n, i) => ({ name: n, id: i + 1, norm: normalizeText(n) }));
+                    const fs = sm.find(s => nQ.startsWith(s.norm + ' '));
+                    if (fs) { const r = nQ.slice(fs.norm.length).trim(); if (r) { sID = fs.id; sT = r; } }
+                    let matches = qData.filter(i => (sID ? i.surah.number === sID : true) && normalizeText(i.text).includes(sT));
+                    matches = sortMatches(matches, sortType); setRawMatches(matches);
+                    const det = await fetchDetailsForMatches(matches.slice(0, 5)); setDetailedResults(det);
+                } catch (e) {} finally { setSearching(false); }
             };
 
-            // Re-sort search results when sortType changes
-            useEffect(() => {
-                if (viewMode === 'search' && rawMatches.length > 0) {
-                    const sorted = sortMatches(rawMatches, sortType);
-                    setRawMatches(sorted);
-                    setDetailedResults([]);
-                    
-                    (async () => {
-                        setLoadingText("Sıralama güncelleniyor...");
-                        const initialBatch = sorted.slice(0, 5);
-                        const details = await fetchDetailsForMatches(initialBatch);
-                        setDetailedResults(details);
-                        setLoadingText("");
-                    })();
-                }
-            }, [sortType]);
-
-            // Set searching state locally in Search component, but expose logic here
             const [searching, setSearching] = useState(false);
 
-            const value = {
-                surahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
-                searchQuery, setSearchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults,
-                activeAyah, isPlaying, playAyah, playNext, playPrev, seek, currentTime, duration, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
-                playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
-                fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
-                bookmark, fetchDetailsForMatches, loading, loadingText, searching
-            };
-
-            return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
+            return <QuranContext.Provider value={{
+                surahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah, searchQuery, setSearchQuery, handleSearch,
+                rawMatches, detailedResults, setDetailedResults, activeAyah, isPlaying, playAyah, playNext, playPrev,
+                seek: (t) => { audioRef.current.currentTime = t; setCurrentTime(t); }, currentTime, duration,
+                closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); }, playlists, setPlaylists,
+                selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist, fontSize, setFontSize,
+                darkMode, setDarkMode, sortType, setSortType, bookmark, fetchDetailsForMatches, loading, loadingText, searching
+            }}>{children}</QuranContext.Provider>;
         };
 
         const useQuran = () => useContext(QuranContext);
 
-        // --- COMPONENTS ---
-
         const InfiniteScrollTrigger = ({ onIntersect }) => {
-            const ref = useRef();
+            const r = useRef();
             useEffect(() => {
-                const observer = new IntersectionObserver(([entry]) => {
-                    if (entry.isIntersecting) onIntersect();
-                }, { threshold: 0.1 });
-                if (ref.current) observer.observe(ref.current);
-                return () => observer.disconnect();
+                const o = new IntersectionObserver(([e]) => { if (e.isIntersecting) onIntersect(); }, { threshold: 0.1 });
+                if (r.current) o.observe(r.current); return () => o.disconnect();
             }, [onIntersect]);
-            return <div ref={ref} className="h-10 w-full flex justify-center items-center"><i className="fa-solid fa-ellipsis fa-fade text-emerald-500"></i></div>;
+            return <div ref={r} className="h-10 w-full flex justify-center items-center"><i className="fa-solid fa-ellipsis fa-fade text-emerald-500"></i></div>;
         };
 
         const AyahCard = React.memo(({ ayahData }) => {
-            const { 
-                activeAyah, isPlaying, playAyah, 
-                fontSize, selectedAyahs, setSelectedAyahs, 
-                playlists, setPlaylists, viewMode, activePlaylist 
-            } = useQuran();
-
-            const isActive = activeAyah?.number === ayahData.number;
-            const isSelected = selectedAyahs.some(s => s.number === ayahData.number);
-
-            const toggleSelect = useCallback(() => {
-                setSelectedAyahs(prev => prev.some(item => item.number === ayahData.number) 
-                    ? prev.filter(item => item.number !== ayahData.number) 
-                    : [...prev, ayahData]);
-            }, [ayahData, setSelectedAyahs]);
-
-            const togglePlay = useCallback(() => playAyah(ayahData), [ayahData, playAyah]);
-            
+            const { activeAyah, isPlaying, playAyah, fontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists, viewMode, activePlaylist } = useQuran();
+            const active = activeAyah?.number === ayahData.number;
+            const sel = selectedAyahs.some(s => s.number === ayahData.number);
             const [showModal, setShowModal] = useState(false);
-            const [newPlaylist, setNewPlaylist] = useState("");
-
-            const handleAddToPlaylist = (playlistId) => {
-                setPlaylists(prev => prev.map(p => {
-                    if (p.id === playlistId && !p.items.some(i => i.number === ayahData.number)) {
-                        return { ...p, items: [...p.items, ayahData] };
-                    }
-                    return p;
-                }));
-                setShowModal(false);
-            };
-
-            const removeFromPlaylist = () => {
-                if (!activePlaylist) return;
-                const updated = { ...activePlaylist, items: activePlaylist.items.filter(i => i.number !== ayahData.number) };
-                setPlaylists(prev => prev.map(p => p.id === activePlaylist.id ? updated : p));
-            };
+            const [newP, setNewP] = useState("");
 
             return (
-                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
-                    <div className="bg-slate-50 dark:bg-gray-900/50 px-4 py-2 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center">
+                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${active ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700'} ${sel ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
+                    <div className="bg-slate-50 dark:bg-gray-900/50 px-4 py-2 border-b flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <button onClick={toggleSelect} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
-                                {isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
+                            <button onClick={() => setSelectedAyahs(p => sel ? p.filter(x => x.number !== ayahData.number) : [...p, ayahData])} className={`w-5 h-5 rounded border flex items-center justify-center ${sel ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:bg-gray-700'}`}>
+                                {sel && <i className="fa-solid fa-check text-[10px]"></i>}
                             </button>
                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - {ayahData.numberInSurah}</span>
                         </div>
                         <div className="flex gap-2 relative">
                             {viewMode === 'playlist_view' ? (
-                                <button onClick={removeFromPlaylist} className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
+                                <button onClick={() => setPlaylists(p => p.map(l => l.id === activePlaylist.id ? {...l, items: l.items.filter(x => x.number !== ayahData.number)} : l))} className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600"><i className="fa-solid fa-trash text-xs"></i></button>
                             ) : (
-                                <button onClick={() => setShowModal(true)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600"><i className="fa-solid fa-folder-plus text-xs"></i></button>
+                                <button onClick={() => setShowModal(true)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 dark:bg-gray-700 dark:text-slate-300"><i className="fa-solid fa-folder-plus text-xs"></i></button>
                             )}
-                            <button onClick={togglePlay} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive && isPlaying ? 'bg-amber-100 text-amber-700 animate-pulse' : 'bg-slate-200 text-slate-700 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-gray-700 dark:text-slate-300'}`}>
-                                {isActive && isPlaying ? <><i className="fa-solid fa-pause"></i> Duraklat</> : <><i className="fa-solid fa-play"></i> Dinle</>}
+                            <button onClick={() => playAyah(ayahData)} className={`px-3 py-1 rounded-full text-xs font-medium ${active && isPlaying ? 'bg-amber-100 text-amber-700 animate-pulse' : 'bg-slate-200 dark:bg-gray-700 dark:text-slate-300'}`}>
+                                {active && isPlaying ? <><i className="fa-solid fa-pause"></i> Duraklat</> : <><i className="fa-solid fa-play"></i> Dinle</>}
                             </button>
-
-                            {/* Mini Playlist Modal */}
                             {showModal && (
-                                <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-2 fade-in">
-                                    <div className="flex justify-between items-center mb-2 pb-2 border-b dark:border-gray-700">
-                                        <span className="text-xs font-bold">Listeye Ekle</span>
-                                        <button onClick={() => setShowModal(false)}><i className="fa-solid fa-xmark text-gray-400"></i></button>
-                                    </div>
-                                    <ul className="max-h-32 overflow-y-auto mb-2">
-                                        {playlists.map(p => (
-                                            <li key={p.id}><button onClick={() => handleAddToPlaylist(p.id)} className="w-full text-left text-xs p-1.5 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300 truncate">{p.name}</button></li>
-                                        ))}
-                                    </ul>
-                                    <div className="flex gap-1">
-                                        <input type="text" value={newPlaylist} onChange={(e)=>setNewPlaylist(e.target.value)} placeholder="Yeni Liste" className="w-full text-xs p-1 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                                        <button onClick={() => { if(newPlaylist) { const p = { id: Date.now(), name: newPlaylist, items: [ayahData] }; setPlaylists([...playlists, p]); setNewPlaylist(""); setShowModal(false); }}} className="bg-emerald-600 text-white px-2 rounded hover:bg-emerald-700"><i className="fa-solid fa-plus text-xs"></i></button>
-                                    </div>
+                                <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border p-2 fade-in">
+                                    <div className="flex justify-between items-center mb-2 pb-2 border-b dark:border-gray-700"><span className="text-xs font-bold">Listeye Ekle</span><button onClick={()=>setShowModal(false)}><i className="fa-solid fa-xmark text-gray-400"></i></button></div>
+                                    <ul className="max-h-32 overflow-y-auto mb-2">{playlists.map(p=>(<li key={p.id}><button onClick={()=>{setPlaylists(x=>x.map(l=>l.id===p.id?{...l,items:[...l.items,ayahData]}:l));setShowModal(false)}} className="w-full text-left text-xs p-1.5 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded truncate">{p.name}</button></li>))}</ul>
+                                    <div className="flex gap-1"><input type="text" value={newP} onChange={(e)=>setNewP(e.target.value)} placeholder="Yeni" className="w-full text-xs p-1 rounded border dark:bg-gray-700" /><button onClick={()=>{if(newP){setPlaylists([...playlists,{id:Date.now(),name:newP,items:[ayahData]}]);setNewP("");setShowModal(false);}}} className="bg-emerald-600 text-white px-2 rounded"><i className="fa-solid fa-plus text-xs"></i></button></div>
                                 </div>
                             )}
                         </div>
                     </div>
                     <div className="p-6">
-                        <div className="text-right mb-6 leading-loose" dir="rtl">
-                            <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{ayahData.text}</p>
-                        </div>
-                        <div className="mb-6 p-3 bg-slate-50 dark:bg-gray-900/50 rounded-lg border-l-4 border-slate-300 dark:border-gray-600">
-                            <h4 className="text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-bold">Türkçe Okunuş</h4>
-                            <p className="italic text-slate-600 dark:text-slate-400" style={{ fontSize: `${fontSize - 2}px` }}>{ayahData.transliteration}</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
-                                <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-1">Diyanet İşleri</h4>
-                                <p className="text-slate-800 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize}px` }}>{ayahData.diyanet}</p>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
-                                    <h4 className="text-xs font-bold text-slate-500 mb-2">Elmalılı Hamdi Yazır</h4>
-                                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yazir}</p>
-                                </div>
-                                <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
-                                    <h4 className="text-xs font-bold text-slate-500 mb-2">Süleyman Ateş</h4>
-                                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ates}</p>
-                                </div>
+                        <div className="text-right mb-6 leading-loose" dir="rtl"><p style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{ayahData.text}</p></div>
+                        <div className="mb-6 p-3 bg-slate-50 dark:bg-gray-900/50 rounded-lg border-l-4 border-slate-300"><h4 className="text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-bold">Okunuş</h4><p className="italic text-slate-600 dark:text-slate-400" style={{ fontSize: `${fontSize - 2}px` }}>{ayahData.transliteration}</p></div>
+                        <div className="grid gap-4">
+                            <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100"><h4 className="text-xs font-bold text-emerald-700 mb-2">Diyanet</h4><p style={{ fontSize: `${fontSize}px` }}>{ayahData.diyanet}</p></div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100"><h4 className="text-xs font-bold text-slate-500 mb-2">Elmalılı</h4><p style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yazir}</p></div>
+                                <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100"><h4 className="text-xs font-bold text-slate-500 mb-2">S. Ateş</h4><p style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ates}</p></div>
                             </div>
                         </div>
                     </div>
@@ -1085,34 +724,16 @@
         const PlayerBar = () => {
             const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, currentTime, duration, seek } = useQuran();
             if (!activeAyah) return null;
-
             return (
-                <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-900 border-t border-emerald-500/30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 z-50 flex flex-col gap-2 transition-transform duration-300">
-                    {/* Progress Bar */}
-                    <div className="w-full flex items-center gap-2 px-2">
-                        <span className="text-[10px] text-gray-500 font-mono w-8 text-right">{formatTime(currentTime)}</span>
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max={duration || 100} 
-                            value={currentTime} 
-                            onChange={(e) => seek(Number(e.target.value))}
-                            className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-emerald-600"
-                        />
-                        <span className="text-[10px] text-gray-500 font-mono w-8">{formatTime(duration)}</span>
-                    </div>
-                    
+                <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-900 border-t border-emerald-500/30 shadow-lg p-2 z-50 flex flex-col gap-2">
+                    <div className="w-full flex items-center gap-2 px-2"><span className="text-[10px] text-gray-500 w-8 text-right">{formatTime(currentTime)}</span><input type="range" min="0" max={duration || 100} value={currentTime} onChange={(e)=>seek(Number(e.target.value))} className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none accent-emerald-600" /><span className="text-[10px] text-gray-500 w-8">{formatTime(duration)}</span></div>
                     <div className="flex items-center justify-between px-2 pb-1">
-                        <div className="flex-1 min-w-0 pr-4">
-                            <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet</h3>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                            <button onClick={playPrev} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-backward-step text-xs"></i></button>
-                            <button onClick={() => playAyah(activeAyah)} className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg active:scale-95">
-                                {isPlaying ? <i className="fa-solid fa-pause"></i> : <i className="fa-solid fa-play ml-1"></i>}
-                            </button>
-                            <button onClick={playNext} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-forward-step text-xs"></i></button>
-                            <button onClick={closePlayer} className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center ml-2"><i className="fa-solid fa-xmark"></i></button>
+                        <div className="flex-1 truncate pr-4"><h3 className="text-xs font-bold truncate">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet</h3></div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={playPrev} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800"><i className="fa-solid fa-backward-step text-xs"></i></button>
+                            <button onClick={()=>playAyah(activeAyah)} className="w-10 h-10 rounded-full bg-emerald-600 text-white shadow-lg">{isPlaying ? <i className="fa-solid fa-pause"></i> : <i className="fa-solid fa-play ml-1"></i>}</button>
+                            <button onClick={playNext} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800"><i className="fa-solid fa-forward-step text-xs"></i></button>
+                            <button onClick={closePlayer} className="w-8 h-8 rounded-full bg-red-50 text-red-500 ml-2"><i className="fa-solid fa-xmark"></i></button>
                         </div>
                     </div>
                 </div>
@@ -1121,267 +742,73 @@
 
         const SurahList = React.memo(() => {
             const { surahs, activeSurah, fetchSurah, sortType, setSortType } = useQuran();
-            
-            const sortedSurahs = useMemo(() => {
-                return [...surahs].sort((a, b) => {
-                    if (sortType === 'mushaf') return a.number - b.number;
-                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
-                });
-            }, [surahs, sortType]);
-
+            const sorted = useMemo(() => [...surahs].sort((a,b) => sortType==='mushaf' ? a.number-b.number : (REVELATION_ORDER_MAP[a.number]||999)-(REVELATION_ORDER_MAP[b.number]||999)), [surahs, sortType]);
             return (
-                <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-gray-900 dark:border-gray-700 w-full md:w-64 flex-shrink-0 hidden md:block">
-                    <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10 flex justify-between items-center">
-                        <h2 className="font-bold text-slate-700 dark:text-slate-200"><i className="fa-solid fa-book-open text-emerald-600 mr-2"></i> Sureler</h2>
-                        <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} className="text-xs bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded hover:text-emerald-600 flex items-center gap-1">
-                            <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
-                            {sortType === 'mushaf' ? 'Sıra' : 'İniş'}
-                        </button>
+                <div className="h-full overflow-y-auto bg-slate-50 border-r dark:bg-gray-900 dark:border-gray-700 w-full md:w-64 hidden md:block">
+                    <div className="p-4 border-b bg-white dark:bg-gray-900 sticky top-0 z-10 flex justify-between items-center">
+                        <h2 className="font-bold text-slate-700 dark:text-slate-200">Sureler</h2>
+                        <button onClick={()=>setSortType(p=>p==='mushaf'?'revelation':'mushaf')} className="text-xs bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded"><i className={`fa-solid ${sortType==='mushaf'?'fa-arrow-down-1-9':'fa-clock-rotate-left'}`}></i></button>
                     </div>
-                    <ul>
-                        {sortedSurahs.map((surah) => (
-                            <li key={surah.number}>
-                                <button onClick={() => fetchSurah(surah)} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 border-b border-slate-100 dark:border-gray-800 flex justify-between items-center ${activeSurah?.number === surah.number ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 font-semibold' : 'text-slate-600 dark:text-slate-400'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <span className="bg-slate-200 dark:bg-gray-700 text-xs w-6 h-6 flex items-center justify-center rounded-full">{surah.number}</span>
-                                        <div className="flex flex-col">
-                                            <span>{getSurahNameTR(surah.number)} <span className="text-xs opacity-60">({surah.name})</span></span>
-                                            {sortType !== 'mushaf' && <span className="text-[10px] opacity-60">İniş: {REVELATION_ORDER_MAP[surah.number]}</span>}
-                                        </div>
-                                    </div>
-                                    {activeSurah?.number === surah.number && <i className="fa-solid fa-chevron-right text-xs"></i>}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+                    <ul>{sorted.map(s => (<li key={s.number}><button onClick={()=>fetchSurah(s)} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 border-b ${activeSurah?.number===s.number ? 'bg-emerald-100 dark:bg-emerald-900/30 font-semibold' : ''}`}><div className="flex items-center gap-3"><span className="text-xs w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 dark:bg-gray-700">{s.number}</span><span>{getSurahNameTR(s.number)}</span></div></button></li>))}</ul>
                 </div>
             );
         });
 
         const MainContent = () => {
-            const { 
-                viewMode, setViewMode, activeSurah, ayahs, 
-                searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
-                loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists, 
-                selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType
-            } = useQuran();
-            
-            const [displayLimit, setDisplayLimit] = useState(10);
+            const { viewMode, setViewMode, activeSurah, ayahs, searching, searchQuery, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches, loading, loadingText, playlists, activePlaylist, bookmark, surahs, sortType, setSortType, activeAyah } = useQuran();
+            const [limit, setLimit] = useState(10);
 
-            const sortedSurahsMobile = useMemo(() => {
-                return [...surahs].sort((a, b) => {
-                    if (sortType === 'mushaf') return a.number - b.number;
-                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
-                });
-            }, [surahs, sortType]);
-
-            // Infinite Scroll Logic
-            useEffect(() => { setDisplayLimit(10); }, [viewMode, activeSurah, searchQuery]);
-            
-            const handleLoadMore = useCallback(() => {
-                if (viewMode === 'reader' && displayLimit < ayahs.length) {
-                    setDisplayLimit(prev => Math.min(prev + 10, ayahs.length));
-                } else if (viewMode === 'search' && detailedResults.length < rawMatches.length) {
-                    const nextBatch = rawMatches.slice(detailedResults.length, detailedResults.length + 5);
-                    if(nextBatch.length > 0) {
-                        fetchDetailsForMatches(nextBatch).then(newDetails => {
-                            setDetailedResults(prev => [...prev, ...newDetails]);
+            // ==========================================
+            // OTOMATİK SCROLL ÖZELLİĞİ
+            // ==========================================
+            useEffect(() => {
+                if (activeAyah) {
+                    const element = document.getElementById(`ayah-${activeAyah.number}`);
+                    if (element) {
+                        element.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
                         });
                     }
                 }
-            }, [viewMode, displayLimit, ayahs.length, detailedResults.length, rawMatches, fetchDetailsForMatches]);
+            }, [activeAyah]);
 
-            // Determine all items in current context (for Select All)
-            const allItemsInContext = useMemo(() => {
-                if (viewMode === 'reader') return ayahs;
-                if (viewMode === 'search') return rawMatches;
-                if (viewMode === 'playlist_view' && activePlaylist) return activePlaylist.items;
+            useEffect(() => { setLimit(10); }, [viewMode, activeSurah, searchQuery]);
+            const handleMore = useCallback(() => {
+                if (viewMode==='reader' && limit<ayahs.length) setLimit(p=>Math.min(p+10, ayahs.length));
+                else if (viewMode==='search' && detailedResults.length<rawMatches.length) fetchDetailsForMatches(rawMatches.slice(detailedResults.length, detailedResults.length+5)).then(d=>setDetailedResults(p=>[...p,...d]));
+            }, [viewMode, limit, ayahs.length, detailedResults.length, rawMatches]);
+
+            const items = useMemo(() => {
+                if (viewMode==='reader') return ayahs.slice(0, limit);
+                if (viewMode==='search') return detailedResults;
+                if (viewMode==='playlist_view' && activePlaylist) return activePlaylist.items;
                 return [];
-            }, [viewMode, ayahs, rawMatches, activePlaylist]);
-
-            // Select All Toggle
-            const handleToggleSelectAll = () => {
-                const list = allItemsInContext;
-                if (list.length === 0) return;
-                
-                const isAllSelected = list.every(item => selectedAyahs.some(s => s.number === item.number));
-
-                if (isAllSelected) {
-                    setSelectedAyahs(prev => prev.filter(s => !list.some(l => l.number === s.number)));
-                } else {
-                    const newItems = list.map(item => {
-                        // If it's a raw match (search mode), prefer detailed version if available, otherwise partial
-                        if (viewMode === 'search') {
-                            const existingFull = detailedResults.find(d => d.number === item.number);
-                            if (existingFull) return existingFull;
-                            return {
-                                number: item.number,
-                                numberInSurah: item.numberInSurah,
-                                surahName: getSurahNameTR(item.surah.number),
-                                surahNumber: item.surah.number,
-                                text: "", 
-                                transliteration: "",
-                                diyanet: item.text, // rawMatches has turkish text
-                                yazir: "",
-                                ates: "",
-                                audio: "",
-                                isPartial: true
-                            };
-                        }
-                        return item;
-                    });
-
-                    setSelectedAyahs(prev => {
-                        const existingIds = new Set(prev.map(a => a.number));
-                        const toAdd = newItems.filter(a => !existingIds.has(a.number));
-                        return [...prev, ...toAdd];
-                    });
-                }
-            };
-
-            const itemsToRender = useMemo(() => {
-                if (viewMode === 'reader') return ayahs.slice(0, displayLimit);
-                if (viewMode === 'search') return detailedResults;
-                if (viewMode === 'playlist_view' && activePlaylist) return activePlaylist.items;
-                return [];
-            }, [viewMode, ayahs, displayLimit, detailedResults, activePlaylist]);
-
-            const showContinueReading = !loading && !searching && viewMode === 'reader' && bookmark && bookmark.number !== activeSurah?.number && bookmark.surahNumber !== activeSurah?.number;
+            }, [viewMode, ayahs, limit, detailedResults, activePlaylist]);
 
             return (
-                <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-gray-900/50 p-4 md:p-8 pt-16 md:pt-8 scroll-smooth" id="main-scroll">
+                <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-gray-900/50 p-4 md:p-8 pt-16 md:pt-8" id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {loading && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p>{loadingText}</p></div>}
-                        
-                        {/* Mobile Surah Select - Only show in reader mode */}
                         {!loading && !searching && viewMode === 'reader' && (
-                            <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm flex gap-2">
-                                <select 
-                                    onChange={(e) => { 
-                                        const surah = surahs.find(s => s.number === parseInt(e.target.value)); 
-                                        if(surah) fetchSurah(surah); 
-                                    }} 
-                                    className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm" 
-                                    value={activeSurah?.number || 1}
-                                >
-                                    {sortedSurahsMobile.map(s => (
-                                        <option key={s.number} value={s.number}>
-                                            {s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
-                                        </option>
-                                    ))}
+                            <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b p-2 flex gap-2">
+                                <select onChange={(e)=>fetchSurah(surahs.find(s=>s.number===parseInt(e.target.value)))} className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white" value={activeSurah?.number || 1}>
+                                    {surahs.map(s=>(<option key={s.number} value={s.number}>{s.number}. {getSurahNameTR(s.number)}</option>))}
                                 </select>
-                                
-                                <button 
-                                    onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')}
-                                    className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
-                                    title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
-                                >
-                                    <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
-                                </button>
                             </div>
                         )}
-
-                        {/* Bookmark Prompt */}
-                        {showContinueReading && surahs.length > 0 && (
-                            <div className="mb-6 bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex justify-between items-center shadow-sm border border-emerald-200 dark:border-emerald-800">
-                                <div>
-                                    <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Son Okunan</h4>
-                                    <p className="text-xs text-emerald-700 dark:text-emerald-400">{bookmark.surah} Suresi, {bookmark.numberInSurah || '?'} . Ayet</p>
-                                </div>
-                                <button onClick={() => { 
-                                    const s = surahs.find(x => x.number === bookmark.surahNumber); 
-                                    if(s) fetchSurah(s); 
-                                }} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Devam Et</button>
-                            </div>
-                        )}
-
-                        {/* Reader Mode Header */}
-                        {!loading && !searching && viewMode === 'reader' && (
-                            <div className="text-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-6 fade-in relative">
-                                {ayahs.length > 0 && (
-                                    <button onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'}`}>
-                                        <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
-                                        {allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
-                                    </button>
-                                )}
+                        {!loading && !searching && viewMode==='reader' && (
+                            <div className="text-center mb-8 border-b pb-6 fade-in">
                                 <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{getSurahNameTR(activeSurah?.number)}</h2>
-                                <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200">{activeSurah?.numberOfAyahs} Ayet</span>
-                                    <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200">{activeSurah?.revelationType === 'Meccan' ? 'Mekke' : 'Medine'}</span>
-                                    <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
-                                </div>
+                                <div className="flex justify-center gap-2 text-sm text-gray-500"><span>{activeSurah?.numberOfAyahs} Ayet</span><span>•</span><span>{activeSurah?.revelationType==='Meccan'?'Mekke':'Medine'}</span></div>
                             </div>
                         )}
-
-                        {/* List Content */}
-                        {!loading && !searching && (viewMode === 'reader' || viewMode === 'search' || viewMode === 'playlist_view') && (
-                            <>
-                                {/* SEARCH RESULTS MODE */}
-                                {!searching && viewMode === 'search' && (
-                                    <>
-                                        <div className="flex items-center justify-between mb-6">
-                                            <div className="flex flex-col gap-1">
-                                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">"{searchQuery}" Sonuçları ({rawMatches.length})</h2>
-                                                <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} className="text-xs text-left bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded w-fit hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors flex items-center gap-1">
-                                                    <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
-                                                    {sortType === 'mushaf' ? 'Sıraya göre sıralı' : 'İniş sırasına göre sıralı'}
-                                                </button>
-                                            </div>
-                                            <div className="flex gap-3">
-                                                {rawMatches.length > 0 && (
-                                                    <button 
-                                                        onClick={handleToggleSelectAll} 
-                                                        className={`text-sm font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${
-                                                            allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number))
-                                                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                                            : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'
-                                                        }`}
-                                                    >
-                                                        <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
-                                                        {allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
-                                                    </button>
-                                                )}
-                                                <button onClick={() => { setViewMode('reader'); setSearchQuery(''); }} className="text-sm text-emerald-600 hover:underline flex items-center">Listeye Dön</button>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-
-                                {viewMode === 'playlist_view' && activePlaylist && (
-                                    <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-6 mb-6 text-center border border-emerald-100 dark:border-emerald-800">
-                                        <h2 className="text-2xl font-bold mb-2">{activePlaylist.name}</h2>
-                                        <div className="flex justify-center gap-2">
-                                            <button onClick={() => setViewMode('playlists_list')} className="text-sm bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-sm">Geri Dön</button>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {itemsToRender.map((ayah, i) => (
-                                    <AyahCard key={`${ayah.number}-${i}`} ayahData={ayah} />
-                                ))}
-
-                                {(viewMode === 'reader' && displayLimit < ayahs.length) || (viewMode === 'search' && detailedResults.length < rawMatches.length) ? (
-                                    <InfiniteScrollTrigger onIntersect={handleLoadMore} />
-                                ) : null}
-                            </>
-                        )}
-
-                        {/* Playlist List Mode */}
+                        {items.map((a, i) => (<AyahCard key={`${a.number}-${i}`} ayahData={a} />))}
+                        {((viewMode==='reader' && limit<ayahs.length) || (viewMode==='search' && detailedResults.length<rawMatches.length)) && <InfiniteScrollTrigger onIntersect={handleMore} />}
                         {!loading && viewMode === 'playlists_list' && (
                             <div className="fade-in">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-bold flex items-center gap-2"><i className="fa-solid fa-layer-group text-emerald-600"></i> Listelerim</h2>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {playlists.map(p => (
-                                        <div key={p.id} onClick={() => { setActivePlaylist(p); setViewMode('playlist_view'); }} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:border-emerald-400 transition relative group">
-                                            <button onClick={(e) => { e.stopPropagation(); setPlaylists(prev => prev.filter(x => x.id !== p.id)); }} className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-trash"></i></button>
-                                            <h3 className="font-bold text-lg">{p.name}</h3>
-                                            <p className="text-sm text-gray-500">{p.items.length} Ayet</p>
-                                        </div>
-                                    ))}
-                                    {playlists.length === 0 && <p className="text-gray-500 italic">Henüz liste oluşturmadınız.</p>}
-                                </div>
+                                <h2 className="text-2xl font-bold mb-6">Listelerim</h2>
+                                <div className="grid md:grid-cols-2 gap-4">{playlists.map(p => (<div key={p.id} onClick={()=>{setActivePlaylist(p);setViewMode('playlist_view')}} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border cursor-pointer hover:border-emerald-400"><h3>{p.name}</h3><p className="text-sm text-gray-500">{p.items.length} Ayet</p></div>))}</div>
                             </div>
                         )}
                     </div>
@@ -1390,119 +817,38 @@
         };
 
         const AppContainer = () => {
-            const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, fontSize, setFontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists } = useQuran();
-            
-            // Sync Dark Mode with HTML
-            useEffect(() => {
-                if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); } 
-                else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
-                if(window.syncReactTheme) window.syncReactTheme(darkMode);
-            }, [darkMode]);
-
-            const goBack = () => {
-                window.toggleQuranView(false);
-            };
-
-            const [playlistModal, setPlaylistModal] = useState(false);
-            const [newListName, setNewListName] = useState("");
-
-            const handleBulkAdd = () => {
-                if(!newListName) return;
-                const newP = { id: Date.now(), name: newListName, items: [...selectedAyahs] };
-                setPlaylists([...playlists, newP]);
-                setNewListName("");
-                setSelectedAyahs([]);
-                setPlaylistModal(false);
-            };
-
+            const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, fontSize, setFontSize } = useQuran();
+            useEffect(() => { document.documentElement.classList.toggle('dark', darkMode); }, [darkMode]);
             return (
                 <div className="flex flex-col h-full font-sans relative">
                     <header className="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-20 sticky top-0">
                         <div className="max-w-md mx-auto relative pt-2">
-                             <button onClick={() => setDarkMode(!darkMode)} className="absolute right-0 top-1 bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500">
-                                {darkMode ? <i className="fa-solid fa-sun text-xs"></i> : <i className="fa-solid fa-moon text-xs"></i>}
-                            </button>
+                             <button onClick={() => setDarkMode(!darkMode)} className="absolute right-0 top-1 bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center border border-emerald-500">{darkMode ? <i className="fa-solid fa-sun text-xs"></i> : <i className="fa-solid fa-moon text-xs"></i>}</button>
                             <div className="mb-2 flex items-center gap-3 pr-10">
-                                <button onClick={goBack} className="bg-emerald-800 p-2 rounded-lg hover:bg-emerald-600 transition h-9 w-9 flex items-center justify-center"><i className="fa-solid fa-arrow-left text-sm"></i></button>
-                                <div>
-                                    <h1 className="text-xl font-bold mb-0.5 flex items-center leading-none"><i className="fa-solid fa-book-open mr-2 text-sm"></i> Kuran Rehberi</h1>
-                                    <p className="text-emerald-100 text-[11px] opacity-90 leading-none">Oku, Dinle, Araştır</p>
-                                </div>
+                                <button onClick={()=>window.toggleQuranView(false)} className="bg-emerald-800 p-2 rounded-lg h-9 w-9 flex items-center justify-center"><i className="fa-solid fa-arrow-left text-sm"></i></button>
+                                <div><h1 className="text-xl font-bold leading-none">Kuran Rehberi</h1></div>
                             </div>
                             <div className="flex gap-2 items-center mb-2">
-                                <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchQuery); }} className="relative group flex-1">
-                                    <input type="text" placeholder="Ara (Örn: namaz, bakara)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:bg-gray-800 dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm" />
-                                    <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 hover:text-emerald-500"><i className="fa-solid fa-search text-sm"></i></button>
+                                <form onSubmit={(e)=>{e.preventDefault(); handleSearch(searchQuery)}} className="relative flex-1">
+                                    <input type="text" placeholder="Ara..." value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:bg-gray-800 dark:text-white" />
+                                    <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400"><i className="fa-solid fa-search text-sm"></i></button>
                                 </form>
-                                <button onClick={() => setViewMode('playlists_list')} className="bg-emerald-800 text-white p-2 rounded-lg w-10 h-10 flex items-center justify-center shadow-sm hover:bg-emerald-600 transition border border-emerald-600/30"><i className="fa-solid fa-layer-group"></i></button>
+                                <button onClick={()=>setViewMode('playlists_list')} className="bg-emerald-800 p-2 rounded-lg w-10 h-10 flex items-center justify-center"><i className="fa-solid fa-layer-group"></i></button>
                             </div>
-                            <div className="flex justify-end">
-                                <div className="flex items-center bg-emerald-800 rounded-lg px-2 py-1 gap-2 border border-emerald-600/30">
-                                    <i className="fa-solid fa-font text-emerald-200 ml-1 text-[10px]"></i>
-                                    <button onClick={() => setFontSize(Math.max(14, fontSize - 2))} className="w-6 h-6 flex items-center justify-center bg-emerald-600 rounded-md text-xs hover:bg-emerald-500 font-bold">-</button>
-                                    <span className="text-xs font-mono w-4 text-center">{fontSize}</span>
-                                    <button onClick={() => setFontSize(Math.min(32, fontSize + 2))} className="w-6 h-6 flex items-center justify-center bg-emerald-600 rounded-md text-xs hover:bg-emerald-500 font-bold">+</button>
-                                </div>
+                            <div className="flex justify-end gap-2 items-center text-xs">
+                                <button onClick={()=>setFontSize(Math.max(14,fontSize-2))} className="bg-emerald-600 px-2 py-1 rounded">-</button>
+                                <span>{fontSize}px</span>
+                                <button onClick={()=>setFontSize(Math.min(32,fontSize+2))} className="bg-emerald-600 px-2 py-1 rounded">+</button>
                             </div>
                         </div>
                     </header>
-
-                    <div className="flex flex-1 overflow-hidden relative">
-                        <SurahList />
-                        <MainContent />
-                        <PlayerBar />
-                    </div>
-
-                    {/* Bulk Actions Floating Bar */}
-                    {selectedAyahs.length > 0 && (
-                        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 bg-emerald-800 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 animate-bounce-in">
-                            <span className="font-bold text-sm whitespace-nowrap">{selectedAyahs.length} Seçildi</span>
-                            <div className="h-4 w-px bg-white/30"></div>
-                            <button onClick={() => setPlaylistModal(true)} className="font-bold text-sm hover:text-emerald-200 flex items-center gap-2"><i className="fa-solid fa-folder-plus"></i> Listeye Ekle</button>
-                            <button onClick={() => setSelectedAyahs([])} className="w-6 h-6 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-xs ml-2"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                    )}
-                    
-                    {/* Bulk Add Modal */}
-                    {playlistModal && (
-                        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-                            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm">
-                                <h3 className="font-bold mb-4 dark:text-white">Seçilenleri Listeye Ekle</h3>
-                                <input type="text" placeholder="Yeni Liste Adı" value={newListName} onChange={(e) => setNewListName(e.target.value)} className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                                <div className="flex justify-end gap-2">
-                                    <button onClick={() => setPlaylistModal(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">İptal</button>
-                                    <button onClick={handleBulkAdd} className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Oluştur ve Ekle</button>
-                                </div>
-                                <div className="mt-4 pt-4 border-t dark:border-gray-700">
-                                    <p className="text-xs text-gray-500 mb-2">Veya mevcut listeye ekle:</p>
-                                    <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
-                                        {playlists.map(p => (
-                                            <button key={p.id} onClick={() => { 
-                                                const updated = { ...p, items: [...p.items, ...selectedAyahs.filter(s => !p.items.some(pi => pi.number === s.number))] };
-                                                setPlaylists(prev => prev.map(pr => pr.id === p.id ? updated : pr));
-                                                setSelectedAyahs([]);
-                                                setPlaylistModal(false);
-                                            }} className="text-left text-sm p-2 bg-gray-50 dark:bg-gray-700 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20">{p.name}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex flex-1 overflow-hidden relative"><SurahList /><MainContent /><PlayerBar /></div>
                 </div>
             );
         };
 
-        const QuranApp = () => {
-            return (
-                <QuranProvider>
-                    <AppContainer />
-                </QuranProvider>
-            );
-        };
-
         const root = ReactDOM.createRoot(document.getElementById('quran-root'));
-        root.render(<QuranApp />);
+        root.render(<QuranProvider><AppContainer /></QuranProvider>);
     </script>
-</body>
+  </body>
 </html>
