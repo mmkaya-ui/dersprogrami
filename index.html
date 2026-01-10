@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -697,9 +698,13 @@
 
                             // 2. Playback ve Odaklanma (Hafif gecikmeli render garantisi için)
                             setTimeout(() => {
-                                setActiveAyah(targetAyah); // Bu otomatik scroll tetikler
+                                // ÖNCE UI'ı güncelle (Scroll timer'ı bu başlatacak)
+                                setActiveAyah(targetAyah); 
+                                
                                 if (pendingJump.shouldPlay) {
-                                    playAyah(targetAyah);
+                                    // Sesi çal ama UI'a dokunma (Zaten yukarıda güncelledik)
+                                    // Bu sayede çift render ve timer iptali (scroll iptali) olmaz.
+                                    playAyah(targetAyah, { onlyAudio: true, forcePlay: true });
                                 }
                             }, 500);
 
@@ -861,10 +866,10 @@
             }, [activePlaylist]);
 
             // Audio Controls
-            const playAyah = (ayah) => {
+            const playAyah = (ayah, options = {}) => {
                 const audio = audioRef.current;
                 
-                if(activeAyah?.number === ayah.number) {
+                if(activeAyah?.number === ayah.number && !options.forcePlay) {
                     audio.paused ? audio.play() : audio.pause();
                 } else {
                     // Önce sesi hazırla
@@ -877,18 +882,20 @@
                         if (playPromise !== undefined) {
                             playPromise
                                 .then(() => {
-                                    // Ses güvenli şekilde başladıktan SONRA UI'ı güncelle
-                                    // Bu sayede ses thread'i öncelik kazanır ve kesilmez
-                                    setActiveAyah(ayah);
+                                    // onlyAudio true ise UI güncellemesini atla (Bookmark gibi dışarıdan yönetilen durumlar için)
+                                    if (!options.onlyAudio) {
+                                        setActiveAyah(ayah);
+                                    }
                                 })
                                 .catch(error => {
                                     console.error("Playback error:", error);
-                                    // Hata olsa bile UI'ı güncelle
-                                    setActiveAyah(ayah);
+                                    if (!options.onlyAudio) {
+                                        setActiveAyah(ayah);
+                                    }
                                 });
                         }
                     } else {
-                        setActiveAyah(ayah);
+                        if (!options.onlyAudio) setActiveAyah(ayah);
                     }
                 }
             };
