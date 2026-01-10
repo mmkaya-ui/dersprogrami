@@ -711,8 +711,6 @@
             // Player State
             const [activeAyah, setActiveAyah] = useState(null);
             const [isPlaying, setIsPlaying] = useState(false);
-            const [currentTime, setCurrentTime] = useState(0);
-            const [duration, setDuration] = useState(0);
             const audioRef = useRef(new Audio());
             
             // Playlist & Selection
@@ -735,8 +733,6 @@
                 audio.preload = "auto";
                 audio.setAttribute('playsinline', 'true');
 
-                const updateTime = () => setCurrentTime(audio.currentTime);
-                const updateDuration = () => setDuration(audio.duration);
                 const onPlay = () => setIsPlaying(true);
                 const onPause = () => setIsPlaying(false);
                 const onEnded = () => {
@@ -744,15 +740,11 @@
                     playNext();
                 };
 
-                audio.addEventListener('timeupdate', updateTime);
-                audio.addEventListener('loadedmetadata', updateDuration);
                 audio.addEventListener('play', onPlay);
                 audio.addEventListener('pause', onPause);
                 audio.addEventListener('ended', onEnded);
 
                 return () => {
-                    audio.removeEventListener('timeupdate', updateTime);
-                    audio.removeEventListener('loadedmetadata', updateDuration);
                     audio.removeEventListener('play', onPlay);
                     audio.removeEventListener('pause', onPause);
                     audio.removeEventListener('ended', onEnded);
@@ -1050,7 +1042,8 @@
             const value = {
                 surahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
                 searchQuery, setSearchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults,
-                activeAyah, isPlaying, playAyah, playNext, playPrev, seek, currentTime, duration, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
+                activeAyah, isPlaying, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
+                audioRef, // Expose ref for PlayerBar local handling
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
@@ -1182,7 +1175,39 @@
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, currentTime, duration, seek } = useQuran();
+            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef } = useQuran();
+            
+            // Local state for high-frequency updates
+            const [currentTime, setCurrentTime] = useState(0);
+            const [duration, setDuration] = useState(0);
+
+            useEffect(() => {
+                const audio = audioRef.current;
+                if (!audio) return;
+
+                const updateTime = () => setCurrentTime(audio.currentTime);
+                const updateDuration = () => setDuration(audio.duration || 0);
+
+                // Initial sync
+                setCurrentTime(audio.currentTime);
+                setDuration(audio.duration || 0);
+
+                audio.addEventListener('timeupdate', updateTime);
+                audio.addEventListener('loadedmetadata', updateDuration);
+
+                return () => {
+                    audio.removeEventListener('timeupdate', updateTime);
+                    audio.removeEventListener('loadedmetadata', updateDuration);
+                };
+            }, [audioRef, activeAyah]); // activeAyah değişince listener'ları tazele (gerekirse)
+
+            const seek = (time) => {
+                if(audioRef.current) {
+                    audioRef.current.currentTime = time;
+                    setCurrentTime(time);
+                }
+            };
+
             if (!activeAyah) return null;
 
             return (
