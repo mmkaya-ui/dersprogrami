@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -664,14 +663,17 @@
                 // Sıradaki 10 ayeti belirle (Daha sağlam buffer)
                 const nextAyahs = list.slice(currentIndex + 1, currentIndex + 11);
 
-                // Arka planda indir (Tarayıcı önbelleğine al)
-                nextAyahs.forEach(ayah => {
-                    if (ayah.audio) {
-                        // fetch ile tarayıcı cache'ine atıyoruz
-                        fetch(ayah.audio, { priority: 'low' }).catch(() => {}); 
-                        // Alternatif: new Audio().preload = 'auto' da kullanılabilir ama fetch daha hafif.
-                    }
-                });
+                // CPU/Network çakışmasını önlemek için indirmeyi 4 saniye ertele
+                // Ses başladıktan sonra (ilk saniyeler kritik) indirme başlasın.
+                const timer = setTimeout(() => {
+                    nextAyahs.forEach(ayah => {
+                        if (ayah.audio) {
+                            fetch(ayah.audio, { priority: 'low' }).catch(() => {}); 
+                        }
+                    });
+                }, 4000);
+
+                return () => clearTimeout(timer);
             }, [activeAyah, viewMode, ayahs, detailedResults, activePlaylist]);
 
             useEffect(() => {
