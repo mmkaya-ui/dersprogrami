@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -645,7 +646,8 @@
             const [loading, setLoading] = useState(false);
             const [loadingText, setLoadingText] = useState("");
             const autoPlayAfterLoad = useRef(false);
-            const autoScrollToAyah = useRef(null);
+            // YENİ: Bekleyen atlama isteği (Bookmark için)
+            const [pendingJump, setPendingJump] = useState(null); 
 
             useEffect(() => {
                 if (autoPlayAfterLoad.current && ayahs.length > 0) {
@@ -653,36 +655,33 @@
                     autoPlayAfterLoad.current = false;
                 }
                 
-                if (autoScrollToAyah.current && ayahs.length > 0) {
-                    let targetIndex = -1;
-                    const refVal = autoScrollToAyah.current;
-
-                    // Desteklenen formatlar: Obje {inSurah, global} veya sadece sayı
-                    if (typeof refVal === 'object' && refVal !== null) {
-                        targetIndex = ayahs.findIndex(a => (refVal.inSurah && a.numberInSurah === refVal.inSurah) || (refVal.global && a.number === refVal.global));
-                    } else {
-                        targetIndex = ayahs.findIndex(a => a.numberInSurah === refVal);
-                    }
-                    
-                    if (targetIndex !== -1) {
-                        const targetAyah = ayahs[targetIndex];
-                        if (targetIndex >= displayLimit) {
-                            setDisplayLimit(targetIndex + 10);
-                        }
+                // YENİ: Bekleyen atlama isteği varsa işle
+                if (pendingJump && ayahs.length > 0) {
+                    // Sadece doğru suredeysek işlem yap
+                    if (activeSurah && activeSurah.number === pendingJump.surahNumber) {
+                        const targetAyah = ayahs.find(a => a.numberInSurah === pendingJump.ayahNumber);
                         
-                        // Render için daha uzun süre tanı (500ms)
-                        setTimeout(() => {
-                            setActiveAyah(targetAyah);
-                            // Yedek scroll denemesi (useEffect kaçırırsa diye)
+                        if (targetAyah) {
+                            // 1. Görünürlük limitini artır
+                            const idx = ayahs.indexOf(targetAyah);
+                            if (idx >= displayLimit) {
+                                setDisplayLimit(idx + 10);
+                            }
+
+                            // 2. Playback ve Odaklanma (Hafif gecikmeli render garantisi için)
                             setTimeout(() => {
-                                const el = document.getElementById(`ayah-${targetAyah.number}`);
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 200);
-                        }, 500);
+                                setActiveAyah(targetAyah); // Bu otomatik scroll tetikler
+                                if (pendingJump.shouldPlay) {
+                                    playAyah(targetAyah);
+                                }
+                            }, 500);
+
+                            // İsteği temizle
+                            setPendingJump(null);
+                        }
                     }
-                    autoScrollToAyah.current = null;
                 }
-            }, [ayahs]);
+            }, [ayahs, pendingJump]);
             
             // Player State
             const [activeAyah, setActiveAyah] = useState(null);
@@ -1030,7 +1029,7 @@
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
-                displayLimit, setDisplayLimit
+                displayLimit, setDisplayLimit, pendingJump, setPendingJump
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1239,7 +1238,7 @@
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists, 
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
-                activeAyah, displayLimit, setDisplayLimit
+                activeAyah, displayLimit, setDisplayLimit, setPendingJump
             } = useQuran();
             
             const lastScrolledAyah = useRef(null);
@@ -1389,21 +1388,21 @@
                                 <button onClick={() => { 
                                     if(!bookmark) return;
                                     
-                                    // 1. Hedef sureyi bul
                                     const targetSurahNum = parseInt(bookmark.surahNumber || bookmark.surah_number);
-                                    if(!targetSurahNum) return;
+                                    const targetAyahNum = parseInt(bookmark.numberInSurah);
+
+                                    if(!targetSurahNum || !targetAyahNum) return;
 
                                     const s = surahs.find(x => x.number === targetSurahNum); 
-                                    
-                                    // 2. Hedef ayet bilgisini hazırla
                                     if(s) {
-                                        // Hem sure içi hem global noyu saklayalım
-                                        autoScrollToAyah.current = { 
-                                            inSurah: parseInt(bookmark.numberInSurah), 
-                                            global: parseInt(bookmark.number) 
-                                        };
-                                        
-                                        // 3. Sureyi yükle (Bu tetiklenince useEffect devreye girecek)
+                                        // 1. Hedefi belirle (State güncellemesi)
+                                        setPendingJump({
+                                            surahNumber: targetSurahNum,
+                                            ayahNumber: targetAyahNum,
+                                            shouldPlay: true
+                                        });
+
+                                        // 2. Sureyi yükle (Zaten yüklüyse bile fetchSurah state'i tazeler)
                                         fetchSurah(s); 
                                     }
                                 }} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Devam Et</button>
