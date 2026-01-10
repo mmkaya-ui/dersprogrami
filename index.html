@@ -862,14 +862,33 @@
 
             // Audio Controls
             const playAyah = (ayah) => {
+                const audio = audioRef.current;
+                
                 if(activeAyah?.number === ayah.number) {
-                    audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause();
+                    audio.paused ? audio.play() : audio.pause();
                 } else {
-                    setActiveAyah(ayah);
-                    audioRef.current.src = ayah.audio || "";
+                    // Önce sesi hazırla
+                    audio.src = ayah.audio || "";
                     if(ayah.audio) {
-                        audioRef.current.load();
-                        audioRef.current.play().catch(console.error);
+                        audio.load();
+                        // Sesi başlatmayı dene
+                        const playPromise = audio.play();
+                        
+                        if (playPromise !== undefined) {
+                            playPromise
+                                .then(() => {
+                                    // Ses güvenli şekilde başladıktan SONRA UI'ı güncelle
+                                    // Bu sayede ses thread'i öncelik kazanır ve kesilmez
+                                    setActiveAyah(ayah);
+                                })
+                                .catch(error => {
+                                    console.error("Playback error:", error);
+                                    // Hata olsa bile UI'ı güncelle
+                                    setActiveAyah(ayah);
+                                });
+                        }
+                    } else {
+                        setActiveAyah(ayah);
                     }
                 }
             };
@@ -1308,11 +1327,16 @@
                     }
 
                     if (activeAyah.number !== lastScrolledAyah.current) {
-                        const el = document.getElementById(`ayah-${activeAyah.number}`);
-                        if (el) {
-                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            lastScrolledAyah.current = activeAyah.number;
-                        }
+                        // Scroll işlemini ses oturduktan sonraya (600ms) ertele
+                        // Bu, sesin başındaki 'glitch'i engeller.
+                        const timer = setTimeout(() => {
+                            const el = document.getElementById(`ayah-${activeAyah.number}`);
+                            if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                lastScrolledAyah.current = activeAyah.number;
+                            }
+                        }, 600);
+                        return () => clearTimeout(timer);
                     }
                 }
             }, [activeAyah, displayLimit, ayahs, viewMode]);
