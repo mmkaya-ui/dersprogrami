@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 <head>
@@ -648,6 +647,31 @@
             const autoPlayAfterLoad = useRef(false);
             // YENİ: Bekleyen atlama isteği (Bookmark için)
             const [pendingJump, setPendingJump] = useState(null); 
+
+            // YENİ: Dinamik Önbellekleme (Prefetching)
+            // Çalan ayet değiştiğinde, sıradaki 5 ayetin ses dosyasını arka planda indirir.
+            useEffect(() => {
+                if (!activeAyah) return;
+
+                // Hangi listedeyiz?
+                const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
+                if (!list || list.length === 0) return;
+
+                const currentIndex = list.findIndex(a => a.number === activeAyah.number);
+                if (currentIndex === -1) return;
+
+                // Sıradaki 10 ayeti belirle (Daha sağlam buffer)
+                const nextAyahs = list.slice(currentIndex + 1, currentIndex + 11);
+
+                // Arka planda indir (Tarayıcı önbelleğine al)
+                nextAyahs.forEach(ayah => {
+                    if (ayah.audio) {
+                        // fetch ile tarayıcı cache'ine atıyoruz
+                        fetch(ayah.audio, { priority: 'low' }).catch(() => {}); 
+                        // Alternatif: new Audio().preload = 'auto' da kullanılabilir ama fetch daha hafif.
+                    }
+                });
+            }, [activeAyah, viewMode, ayahs, detailedResults, activePlaylist]);
 
             useEffect(() => {
                 if (autoPlayAfterLoad.current && ayahs.length > 0) {
