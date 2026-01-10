@@ -685,8 +685,12 @@
                 
                 // YENİ: Bekleyen atlama isteği varsa işle
                 if (pendingJump && ayahs.length > 0) {
-                    // Sadece doğru suredeysek işlem yap
-                    if (activeSurah && activeSurah.number === pendingJump.surahNumber) {
+                    // 1. Doğru sure seçili mi?
+                    // 2. Yüklenen ayetler GERÇEKTEN o sureye mi ait? (Eski veriyi kullanma)
+                    const isSurahMatch = activeSurah && activeSurah.number === pendingJump.surahNumber;
+                    const isDataLoaded = ayahs[0] && ayahs[0].surahNumber === pendingJump.surahNumber;
+
+                    if (isSurahMatch && isDataLoaded) {
                         const targetAyah = ayahs.find(a => a.numberInSurah === pendingJump.ayahNumber);
                         
                         if (targetAyah) {
