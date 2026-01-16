@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
 
@@ -35,7 +36,7 @@
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- XLSX Library Removed for Performance -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -177,7 +178,8 @@
                     <div class="flex flex-col items-end gap-1 shrink-0">
                         <time data-slot="time"
                             class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
-                        <a href="https://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn"
+                        <a href="https://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank"
+                            rel="noopener noreferrer"
                             class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
                             <i class="fa-solid fa-video text-red-500 mr-1"></i> Katıl
                         </a>
@@ -351,14 +353,9 @@
                     window.toggleQuranView(true);
                 });
 
-                /**
-                 * App Configuration
-                 * Centralized configuration for easy maintenance.
-                 */
                 const CONFIG = Object.freeze({
-                    CACHE_KEY: 'ders_programi_v9_csv', // Version bump for storage migration
-                    // Using CSV output for smaller payload and no dependency on heavy XLSX library
-                    CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=csv',
+                    CACHE_KEY: 'ders_programi_v8_xlsx',
+                    CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
                     CLASSES: {
                         hidden: 'hidden',
                         rotate: 'rotate-icon',
@@ -445,68 +442,12 @@
                             const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
                             const response = await fetch(CONFIG.CSV_URL + cacheBuster, { cache: 'no-store' });
                             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                            const csvText = await response.text();
-                            const rows = this.parseCSV(csvText);
+                            const buffer = await response.arrayBuffer();
+                            const workbook = XLSX.read(buffer, { type: 'array' });
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
                             return this.#processRows(rows);
-                        } catch (error) { console.error("Fetch Error:", error); return null; }
-                    }
-
-                    /**
-                     * Parses CSV string into a 2D array.
-                     * Handles quoted fields containing commas.
-                     * @param {string} str - Raw CSV string
-                     * @returns {string[][]} - Array of rows, each being an array of columns
-                     */
-                    parseCSV(str) {
-                        const arr = [];
-                        let quote = false;  // 'true' means we're inside a quoted field
-                        let col = 0, row = 0;
-
-                        // Create first row and first column
-                        arr[row] = [];
-                        arr[row][col] = "";
-
-                        for (let c = 0; c < str.length; c++) {
-                            const cc = str[c]; // Current character
-                            const nc = str[c + 1]; // Next character
-
-                            // Check for quotes
-                            if (cc === '"') {
-                                if (quote && nc === '"') {
-                                    // Escaped quote ("") -> add a single quote to the field
-                                    arr[row][col] += '"';
-                                    c++;
-                                } else {
-                                    // Toggle quote status
-                                    quote = !quote;
-                                }
-                            }
-                            // Comma: if not in quotes, it's a delimiter
-                            else if (cc === ',' && !quote) {
-                                col++;
-                                arr[row][col] = "";
-                            }
-                            // Newline: if not in quotes, it's a new row
-                            else if ((cc === '\r' || cc === '\n') && !quote) {
-                                // Handle CRLF (\r\n) slightly gracefully by skipping \n if we previously hit \r? 
-                                // Actually simplistic approach: new row on \n or \r (but if \r\n, we might get an empty row context, let's fix strictly)
-
-                                // If it's \r and next is \n, skip this one, handle at \n
-                                if (cc === '\r' && nc === '\n') {
-                                    // skip
-                                } else {
-                                    row++;
-                                    col = 0;
-                                    arr[row] = [];
-                                    arr[row][col] = "";
-                                }
-                            }
-                            // Normal character
-                            else {
-                                arr[row][col] += cc;
-                            }
-                        }
-                        return arr;
+                        } catch (error) { return null; }
                     }
                     #processRows(rows) {
                         const processed = rows.slice(1).map(cols => {
@@ -557,19 +498,7 @@
                         this.#setText(node, '[data-slot="time"]', time);
                         const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
                         const joinBtn = node.querySelector('[data-slot="join-btn"]');
-                        if (joinBtn) {
-                            // Bug Fix for Mobile App Store Redirection:
-                            // We do NOT use target="_blank" on mobile devices for the Meet link.
-                            // This allows the OS to intercept the intent and open the installed Meet app directly.
-                            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                            if (!isMobile) {
-                                joinBtn.setAttribute('target', '_blank');
-                                joinBtn.setAttribute('rel', 'noopener noreferrer');
-                            }
-
-                            // Hide button if class is over
-                            if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
-                        }
+                        if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
                         if (showWeekBadge) {
                             const badge = node.querySelector('[data-slot="week-badge"]');
                             badge.textContent = week;
@@ -1976,5 +1905,4 @@
         root.render(<QuranApp />);
     </script>
 </body>
-
 </html>
