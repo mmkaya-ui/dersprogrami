@@ -423,6 +423,35 @@
                             return Date.UTC(year, monthIndex, day, hour - 3, minute);
                         } catch (e) { console.warn(e); return 0; }
                     }
+                    /**
+                     * Generates a platform-specific Google Meet link.
+                     * @param {string} url - The original Google Meet URL
+                     * @returns {{url: string, target: string}} - URL and target attribute
+                     */
+                    getMeetLink(url) {
+                        const ua = navigator.userAgent || navigator.vendor || window.opera;
+                        const isAndroid = /android/i.test(ua);
+                        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+                        // Default behavior (Desktop)
+                        let finalUrl = url;
+                        let target = '_blank';
+
+                        if (isAndroid) {
+                            // Android: Use Intent URI to force app open
+                            // Falls back to browser if app not installed
+                            const cleanUrl = url.replace(/^https?:\/\//, '');
+                            const fallback = encodeURIComponent(url);
+                            finalUrl = `intent://${cleanUrl}#Intent;scheme=https;package=com.google.android.apps.meetings;S.browser_fallback_url=${fallback};end`;
+                            target = '_self'; // Must be _self to trigger intent
+                        } else if (isIOS) {
+                            // iOS: Use Universal Link (https), strictly NO target="_blank"
+                            finalUrl = url;
+                            target = '_self';
+                        }
+
+                        return { url: finalUrl, target };
+                    }
                 };
 
                 class DataManager {
