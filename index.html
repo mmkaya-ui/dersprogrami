@@ -707,7 +707,11 @@
             if (!text) return "";
             return text.toLocaleLowerCase('tr')
                 .replace(/['’‘]/g, '') // Ignore apostrophes
-                .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
+                .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
+                .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+                .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                // Safe guard for any remaining standard I/i issues if locale fails
+                .replace(/İ/g, 'i').replace(/I/g, 'i');
         };
 
         const sortMatches = (matches, type) => {
@@ -1172,30 +1176,46 @@
                         }
                     }
 
+                    // Flexible Hyphen Split
                     const rawInput = queryRaw.trim();
                     let targetSurahID = null;
                     let term = rawInput;
                     let isExact = false;
 
-                    // 1. Hyphen Detection (Surah - Term)
-                    // Use a permissive regex that splits on the first hyphen surrounded by optional spaces
-                    const hyphenIndex = rawInput.indexOf('-');
+                    // Match any dash-like character
+                    const hyphenRegex = /[\-\u2010\u2011\u2012\u2013\u2014\u2015]/;
+                    const hyphenIndex = rawInput.search(hyphenRegex);
+
                     if (hyphenIndex !== -1) {
                         const potentialSurahName = rawInput.slice(0, hyphenIndex).trim();
-                        const potentialTerm = rawInput.slice(hyphenIndex + 1).trim();
+                        const rightSide = rawInput.slice(hyphenIndex + 1).trim();
 
-                        if (potentialSurahName && potentialTerm) {
+                        if (potentialSurahName && rightSide) {
                             const sName = normalizeText(potentialSurahName);
-                            // Find surah by normalized name (exact, startswith, or includes)
-                            // We sort strictly to prefer exact matches or prefix matches first if needed,
-                            // but generic find is usually enough.
-                            const found = SURAH_NAMES_TR
-                                .map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }))
-                                .find(s => s.norm === sName || s.norm.startsWith(sName) || s.norm.includes(sName));
 
-                            if (found) {
-                                targetSurahID = found.id;
-                                term = potentialTerm;
+                            // BEST MATCH LOGIC
+                            // Score 3: Exact Match
+                            // Score 2: Starts With
+                            // Score 1: Includes
+                            let bestMatch = null;
+                            let bestScore = 0;
+
+                            SURAH_NAMES_TR.forEach((name, idx) => {
+                                const norm = normalizeText(name);
+                                let score = 0;
+                                if (norm === sName) score = 3;
+                                else if (norm.startsWith(sName)) score = 2;
+                                else if (norm.includes(sName)) score = 1;
+
+                                if (score > bestScore) {
+                                    bestScore = score;
+                                    bestMatch = { id: idx + 1, name };
+                                }
+                            });
+
+                            if (bestMatch) {
+                                targetSurahID = bestMatch.id;
+                                term = rightSide;
                             }
                         }
                     }
@@ -1207,41 +1227,52 @@
                     if (quoteMatch) {
                         isExact = true;
                         term = quoteMatch[1];
-                        // Note: For exact search, we preserve case/dots if the user put them in quotes?
-                        // The user said: "tam olarak tırnak içindeki haliyle".
-                        // So we do NOT normalize 'term' here.
                     } else {
                         // 3. Fallback: Implicit Scope (Legacy - Startswith Surah Name)
-                        // If we didn't find a hyphen-surah match, check if the string STARTS with a surah name
+                        // Only run this if we didn't already find a surah via hyphen
                         if (!targetSurahID) {
                             const normFull = normalizeText(term);
-                            const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
-                            // Only match if it matches a surah name followed by space (to avoid partial word matches)
-                            const foundLegacy = surahMatches.find(s => normFull.startsWith(s.norm + ' '));
+                            // Similar best match logic for startsWith ('SurahName Term')
+                            let bestLegacyMatch = null;
+                            let maxLen = 0; // Greedy match (longest surah name match wins)
 
-                            if (foundLegacy) {
-                                targetSurahID = foundLegacy.id;
-                                // Remove the surah name part
-                                term = normFull.slice(foundLegacy.norm.length).trim();
+                            SURAH_NAMES_TR.forEach((name, idx) => {
+                                const norm = normalizeText(name);
+                                // Check if query starts with this surah name + space
+                                if (normFull.startsWith(norm + ' ')) {
+                                    if (norm.length > maxLen) {
+                                        maxLen = norm.length;
+                                        bestLegacyMatch = { id: idx + 1, norm };
+                                    }
+                                }
+                            });
+
+                            if (bestLegacyMatch) {
+                                targetSurahID = bestLegacyMatch.id;
+                                term = normFull.slice(bestLegacyMatch.norm.length).trim();
                             } else {
                                 term = normFull;
                             }
                         } else {
-                            // If we already have a targetSurah (from hyphen), we just normalize the term
+                            // Hyphen found surah, just normalize the term
                             term = normalizeText(term);
                         }
                     }
+
+                    // Pre-normalize term for efficiency in loops
+                    const finalTerm = isExact ? term : term; // Exact keeps case? User said "tam olarak". Actually usually case-insensitive but specific. 
+                    // Let's assume Exact = Case Sensitive + Punctuation Sensitive if user quoted.
+                    // But if NOT exact, we do flexible check.
 
                     let allMatches = quranData.filter(item => {
                         if (targetSurahID && item.surah.number !== targetSurahID) return false;
 
                         if (isExact) {
-                            // Absolute exact match (case sensitive per user request "tam olarak haliyle")
-                            // OR does user imply "content in quote"? Usually exact search means literal.
-                            return item.text.includes(term);
+                            return item.text.includes(finalTerm);
                         } else {
                             // Flexible match
-                            return normalizeText(item.text).includes(term);
+                            // Normalize ayah text on the fly
+                            return normalizeText(item.text).includes(finalTerm);
                         }
                     });
 
