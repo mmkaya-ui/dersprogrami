@@ -1160,19 +1160,73 @@
 
                 try {
                     let quranData = fullQuranIndex;
+
+                    // Check for V2 index (Multilingual)
                     if (!quranData) {
-                        const cached = localStorage.getItem('quran_index_v1');
+                        const cached = localStorage.getItem('quran_index_v2');
                         if (cached) {
                             quranData = JSON.parse(cached);
                             setFullQuranIndex(quranData);
                         } else {
-                            setLoadingText("İndeks oluşturuluyor...");
-                            const res = await fetch(`${API_BASE}/quran/${EDITIONS.tr_diyanet}`);
-                            const data = await res.json();
-                            quranData = [];
-                            data.data.surahs.forEach(surah => { surah.ayahs.forEach(ayah => { quranData.push({ surah: { number: surah.number }, number: ayah.number, numberInSurah: ayah.numberInSurah, text: ayah.text }); }); });
-                            setFullQuranIndex(quranData);
-                            try { localStorage.setItem('quran_index_v1', JSON.stringify(quranData)); } catch (e) { console.warn("Quota exceeded"); }
+                            setLoadingText("Geniş kapsamlı indeks oluşturuluyor (Bu işlem bir kez yapılır)...");
+
+                            try {
+                                // Fetch all 3 translations in parallel
+                                const [diyanetRes, yazirRes, atesRes] = await Promise.all([
+                                    fetch(`${API_BASE}/quran/${EDITIONS.tr_diyanet}`),
+                                    fetch(`${API_BASE}/quran/${EDITIONS.tr_yazir}`),
+                                    fetch(`${API_BASE}/quran/${EDITIONS.tr_ates}`)
+                                ]);
+
+                                const [diyanetData, yazirData, atesData] = await Promise.all([
+                                    diyanetRes.json(),
+                                    yazirRes.json(),
+                                    atesRes.json()
+                                ]);
+
+                                quranData = [];
+
+                                // Merge them efficiently
+                                // We assume strict structural alignment from the API (Standard Uthmani structure)
+                                const diyanetSurahs = diyanetData.data.surahs;
+                                const yazirSurahs = yazirData.data.surahs;
+                                const atesSurahs = atesData.data.surahs;
+
+                                for (let i = 0; i < diyanetSurahs.length; i++) {
+                                    const sD = diyanetSurahs[i];
+                                    const sY = yazirSurahs[i]; // Matching Surah from Yazir
+                                    const sA = atesSurahs[i]; // Matching Surah from Ates
+
+                                    if (sD.ayahs.length !== sY.ayahs.length || sD.ayahs.length !== sA.ayahs.length) {
+                                        console.warn(`Mismatch in ayah counts for surah ${sD.number}`);
+                                    }
+
+                                    for (let j = 0; j < sD.ayahs.length; j++) {
+                                        quranData.push({
+                                            surah: { number: sD.number },
+                                            number: sD.ayahs[j].number,
+                                            numberInSurah: sD.ayahs[j].numberInSurah,
+                                            text: sD.ayahs[j].text, // Diyanet matches key 'text' for compatibility
+                                            yazir: sY.ayahs[j]?.text || "",
+                                            ates: sA.ayahs[j]?.text || ""
+                                        });
+                                    }
+                                }
+
+                                setFullQuranIndex(quranData);
+                                try {
+                                    // Remove old v1 index to free space
+                                    localStorage.removeItem('quran_index_v1');
+                                    localStorage.setItem('quran_index_v2', JSON.stringify(quranData));
+                                } catch (e) {
+                                    console.warn("Storage quota exceeded, index will not be cached.", e);
+                                }
+                            } catch (err) {
+                                console.error("Error building index:", err);
+                                setLoadingText("İndeksleme hatası!");
+                                setSearching(false);
+                                return;
+                            }
                         }
                     }
 
@@ -1192,11 +1246,7 @@
 
                         if (potentialSurahName && rightSide) {
                             const sName = normalizeText(potentialSurahName);
-
-                            // BEST MATCH LOGIC
-                            // Score 3: Exact Match
-                            // Score 2: Starts With
-                            // Score 1: Includes
+                            // Best Match Scoring
                             let bestMatch = null;
                             let bestScore = 0;
 
@@ -1220,7 +1270,7 @@
                         }
                     }
 
-                    // 2. Quote Detection (Exact Phrase)
+                    // Quote Detection
                     const quoteRegex = /"([^"]+)"/;
                     const quoteMatch = term.match(quoteRegex);
 
@@ -1228,17 +1278,14 @@
                         isExact = true;
                         term = quoteMatch[1];
                     } else {
-                        // 3. Fallback: Implicit Scope (Legacy - Startswith Surah Name)
-                        // Only run this if we didn't already find a surah via hyphen
+                        // Fallback: Startswith Surah check if no hyphen found
                         if (!targetSurahID) {
                             const normFull = normalizeText(term);
-                            // Similar best match logic for startsWith ('SurahName Term')
                             let bestLegacyMatch = null;
-                            let maxLen = 0; // Greedy match (longest surah name match wins)
+                            let maxLen = 0;
 
                             SURAH_NAMES_TR.forEach((name, idx) => {
                                 const norm = normalizeText(name);
-                                // Check if query starts with this surah name + space
                                 if (normFull.startsWith(norm + ' ')) {
                                     if (norm.length > maxLen) {
                                         maxLen = norm.length;
@@ -1254,7 +1301,6 @@
                                 term = normFull;
                             }
                         } else {
-                            // Hyphen found surah, just normalize the term
                             term = normalizeText(term);
                         }
                     }
@@ -1268,11 +1314,15 @@
                         if (targetSurahID && item.surah.number !== targetSurahID) return false;
 
                         if (isExact) {
-                            return item.text.includes(finalTerm);
+                            // Check all 3 sources for exact match
+                            return item.text.includes(finalTerm) ||
+                                item.yazir.includes(finalTerm) ||
+                                item.ates.includes(finalTerm);
                         } else {
-                            // Flexible match
-                            // Normalize ayah text on the fly
-                            return normalizeText(item.text).includes(finalTerm);
+                            // Flexible match across all 3
+                            return normalizeText(item.text).includes(finalTerm) ||
+                                normalizeText(item.yazir).includes(finalTerm) ||
+                                normalizeText(item.ates).includes(finalTerm);
                         }
                     });
 
