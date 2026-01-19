@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -1173,37 +1172,66 @@
                         }
                     }
 
-                    const normQuery = normalizeText(queryRaw);
+                    const rawInput = queryRaw.trim();
                     let targetSurahID = null;
-                    let searchTerm = normQuery;
+                    let term = rawInput;
+                    let isExact = false;
 
-                    const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
-                    const foundSurah = surahMatches.find(s => normQuery.startsWith(s.norm + ' ')); // Only match if followed by space (scoped)
+                    // 1. Hyphen Detection (Surah - Term)
+                    const hyphenMatch = rawInput.match(/^([a-zA-ZçÇğĞıIiİöÖşŞüÜ\s'’‘]+)\s*-\s*(.+)$/);
+                    if (hyphenMatch) {
+                        const sName = normalizeText(hyphenMatch[1].trim());
+                        const content = hyphenMatch[2].trim();
 
-                    if (foundSurah) {
-                        const remainder = normQuery.slice(foundSurah.norm.length).trim();
-                        if (remainder) {
-                            targetSurahID = foundSurah.id;
-                            searchTerm = remainder;
+                        // Find surah by normalized name (exact, startswith, or includes)
+                        const found = SURAH_NAMES_TR
+                            .map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }))
+                            .find(s => s.norm === sName || s.norm.startsWith(sName) || s.norm.includes(sName));
+
+                        if (found) {
+                            targetSurahID = found.id;
+                            term = content;
+                        }
+                    }
+
+                    // 2. Quote Detection (Exact Phrase)
+                    const quoteRegex = /"([^"]+)"/;
+                    const quoteMatch = term.match(quoteRegex);
+
+                    if (quoteMatch) {
+                        isExact = true;
+                        term = quoteMatch[1];
+                    } else {
+                        // 3. Fallback: Implicit Scope (Legacy)
+                        if (!targetSurahID) {
+                            const normFull = normalizeText(term);
+                            const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
+                            const foundLegacy = surahMatches.find(s => normFull.startsWith(s.norm + ' '));
+
+                            if (foundLegacy) {
+                                targetSurahID = foundLegacy.id;
+                                term = normFull.slice(foundLegacy.norm.length).trim();
+                            } else {
+                                term = normFull;
+                            }
+                        } else {
+                            term = normalizeText(term);
                         }
                     }
 
                     let allMatches = quranData.filter(item => {
                         if (targetSurahID && item.surah.number !== targetSurahID) return false;
 
-                        const normText = normalizeText(item.text);
-                        const textMatch = normText.includes(searchTerm);
-
-                        // If scoped search, we just need text match (targetSurahID already filtered)
-                        // If global search (!targetSurahID), we ONLY check text match. 
-                        // We do NOT check surah name match to avoid listing full surah when searching for "Yusuf".
-                        return textMatch;
+                        if (isExact) {
+                            return item.text.includes(term);
+                        } else {
+                            return normalizeText(item.text).includes(term);
+                        }
                     });
 
                     allMatches = sortMatches(allMatches, sortType);
                     setRawMatches(allMatches);
 
-                    // Initial load
                     const initialBatch = allMatches.slice(0, 5);
                     const details = await fetchDetailsForMatches(initialBatch);
                     setDetailedResults(details);
