@@ -1178,19 +1178,25 @@
                     let isExact = false;
 
                     // 1. Hyphen Detection (Surah - Term)
-                    const hyphenMatch = rawInput.match(/^([a-zA-ZçÇğĞıIiİöÖşŞüÜ\s'’‘]+)\s*-\s*(.+)$/);
-                    if (hyphenMatch) {
-                        const sName = normalizeText(hyphenMatch[1].trim());
-                        const content = hyphenMatch[2].trim();
+                    // Use a permissive regex that splits on the first hyphen surrounded by optional spaces
+                    const hyphenIndex = rawInput.indexOf('-');
+                    if (hyphenIndex !== -1) {
+                        const potentialSurahName = rawInput.slice(0, hyphenIndex).trim();
+                        const potentialTerm = rawInput.slice(hyphenIndex + 1).trim();
 
-                        // Find surah by normalized name (exact, startswith, or includes)
-                        const found = SURAH_NAMES_TR
-                            .map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }))
-                            .find(s => s.norm === sName || s.norm.startsWith(sName) || s.norm.includes(sName));
+                        if (potentialSurahName && potentialTerm) {
+                            const sName = normalizeText(potentialSurahName);
+                            // Find surah by normalized name (exact, startswith, or includes)
+                            // We sort strictly to prefer exact matches or prefix matches first if needed,
+                            // but generic find is usually enough.
+                            const found = SURAH_NAMES_TR
+                                .map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }))
+                                .find(s => s.norm === sName || s.norm.startsWith(sName) || s.norm.includes(sName));
 
-                        if (found) {
-                            targetSurahID = found.id;
-                            term = content;
+                            if (found) {
+                                targetSurahID = found.id;
+                                term = potentialTerm;
+                            }
                         }
                     }
 
@@ -1201,20 +1207,27 @@
                     if (quoteMatch) {
                         isExact = true;
                         term = quoteMatch[1];
+                        // Note: For exact search, we preserve case/dots if the user put them in quotes?
+                        // The user said: "tam olarak tırnak içindeki haliyle".
+                        // So we do NOT normalize 'term' here.
                     } else {
-                        // 3. Fallback: Implicit Scope (Legacy)
+                        // 3. Fallback: Implicit Scope (Legacy - Startswith Surah Name)
+                        // If we didn't find a hyphen-surah match, check if the string STARTS with a surah name
                         if (!targetSurahID) {
                             const normFull = normalizeText(term);
                             const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
+                            // Only match if it matches a surah name followed by space (to avoid partial word matches)
                             const foundLegacy = surahMatches.find(s => normFull.startsWith(s.norm + ' '));
 
                             if (foundLegacy) {
                                 targetSurahID = foundLegacy.id;
+                                // Remove the surah name part
                                 term = normFull.slice(foundLegacy.norm.length).trim();
                             } else {
                                 term = normFull;
                             }
                         } else {
+                            // If we already have a targetSurah (from hyphen), we just normalize the term
                             term = normalizeText(term);
                         }
                     }
@@ -1223,8 +1236,11 @@
                         if (targetSurahID && item.surah.number !== targetSurahID) return false;
 
                         if (isExact) {
+                            // Absolute exact match (case sensitive per user request "tam olarak haliyle")
+                            // OR does user imply "content in quote"? Usually exact search means literal.
                             return item.text.includes(term);
                         } else {
+                            // Flexible match
                             return normalizeText(item.text).includes(term);
                         }
                     });
