@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="tr" class="antialiased">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -552,8 +551,26 @@
 
                             weeks.forEach((week, index) => {
                                 const items = groupedData[week];
-                                // Determine year from the max timestamp in the week to handle crossover weeks properly
-                                const weekYear = Math.max(...items.map(i => new Date(i.timestamp).getUTCFullYear()));
+
+                                // Majority Rule Year Determination
+                                const yearCounts = {};
+                                items.forEach(item => {
+                                    const y = new Date(item.timestamp).getUTCFullYear();
+                                    yearCounts[y] = (yearCounts[y] || 0) + 1;
+                                });
+
+                                let weekYear = parseInt(Object.keys(yearCounts)[0]); // Default
+                                let maxCount = 0;
+
+                                for (const [year, count] of Object.entries(yearCounts)) {
+                                    if (count > maxCount) {
+                                        maxCount = count;
+                                        weekYear = parseInt(year);
+                                    } else if (count === maxCount) {
+                                        // Tie-breaker: If equal, prefer the later year
+                                        weekYear = Math.max(weekYear, parseInt(year));
+                                    }
+                                }
 
                                 if (weekYear !== lastYear) {
                                     const yearHeader = this.#clone('yearHeader');
@@ -2058,5 +2075,4 @@
         root.render(<QuranApp />);
     </script>
 </body>
-
 </html>
