@@ -139,6 +139,17 @@
     <!-- ========================================== -->
     <div id="app-schedule" class="flex flex-col min-h-screen">
         <!-- Templates -->
+        <template id="tpl-year-header">
+            <div class="flex items-center justify-center my-6 group fade-in select-none">
+                <div class="h-px bg-gray-200 dark:bg-gray-700 flex-1 group-hover:bg-emerald-500/30 transition-colors">
+                </div>
+                <span
+                    class="mx-4 text-2xl font-bold text-emerald-200/50 dark:text-gray-800 group-hover:text-emerald-500/50 dark:group-hover:text-emerald-900/50 transition-colors font-mono tracking-tighter"
+                    data-slot="year"></span>
+                <div class="h-px bg-gray-200 dark:bg-gray-700 flex-1 group-hover:bg-emerald-500/30 transition-colors">
+                </div>
+            </div>
+        </template>
         <template id="tpl-week-section">
             <section
                 class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
@@ -482,7 +493,8 @@
                             card: document.getElementById('tpl-card'),
                             btn: document.getElementById('tpl-button'),
                             empty: document.getElementById('tpl-empty'),
-                            menuItem: document.getElementById('tpl-menu-item')
+                            menuItem: document.getElementById('tpl-menu-item'),
+                            yearHeader: document.getElementById('tpl-year-header')
                         };
                     }
                     #clone(id) { return this.#templates[id].content.cloneNode(true); }
@@ -532,14 +544,28 @@
                             const weeks = Object.keys(groupedData).reverse();
                             if (weeks.length === 0) { this.#container.appendChild(this.#clone('empty')); return; }
                             const fragment = document.createDocumentFragment();
+
+                            let lastYear = null;
+
                             weeks.forEach((week, index) => {
+                                const items = groupedData[week];
+                                // Determine year from the max timestamp in the week to handle crossover weeks properly
+                                const weekYear = Math.max(...items.map(i => new Date(i.timestamp).getUTCFullYear()));
+
+                                if (weekYear !== lastYear) {
+                                    const yearHeader = this.#clone('yearHeader');
+                                    this.#setText(yearHeader, '[data-slot="year"]', weekYear);
+                                    fragment.appendChild(yearHeader);
+                                    lastYear = weekYear;
+                                }
+
                                 const section = this.#clone('week');
                                 const sectionEl = section.querySelector('section');
                                 const header = sectionEl.querySelector('.week-header');
                                 const content = sectionEl.querySelector('.week-content');
                                 const icon = header.querySelector('[data-slot="toggle-icon"]');
                                 this.#setText(section, '[data-slot="week-title"]', week);
-                                groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
+                                items.forEach(item => content.appendChild(this.#createCard(item)));
                                 if (index === 0) { content.classList.remove(CONFIG.CLASSES.hidden); icon.classList.add(CONFIG.CLASSES.rotate); header.setAttribute('aria-expanded', 'true'); }
                                 fragment.appendChild(section);
                             });
