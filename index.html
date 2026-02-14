@@ -525,7 +525,7 @@
                             actionsContainer.appendChild(span);
                         } else {
                             if (link1) actionsContainer.appendChild(this.#createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary'));
-                            if (link2) actionsContainer.appendChild(this.#createButton(link2, 'Tilavet', 'fa-book-quran', 'secondary'));
+                            if (link2) actionsContainer.appendChild(this.#createButton(link2, 'Tilavet/Ses', 'fa-book-quran', 'secondary'));
                         }
                         return node;
                     }
@@ -1095,6 +1095,13 @@
                             .catch(error => {
                                 console.error("Playback error:", error);
                                 setIsPlaying(false);
+
+                                // Handle background playback restrictions gracefully
+                                if (error.name === 'NotAllowedError') {
+                                    // Browser blocked autoplay (e.g. background tab). 
+                                    // Keep activeAyah so user can tap play manually.
+                                    console.warn("Autoplay blocked. User interaction required.");
+                                }
                             });
                     }
                 } else {
@@ -1632,17 +1639,17 @@
                    if (!fullIndex) throw new Error("Index not ready");
                 }
 
-                const term = queryRaw.trim();
-                if (!term) return { matches: [] };
+                const rawInput = queryRaw.trim();
+                if (!rawInput) return { matches: [] };
 
                 // --- NAVIGATION LOGIC (Replicated in Worker) ---
-                const verseMatch = term.match(/^(\\D+?)\\s+(\\d+)$/);
-                const surahMatch = term.match(/^(\\D+)$/);
+                const verseMatch = rawInput.match(/^(\\D+?)\\s+(\\d+)$/);
+                const surahMatch = rawInput.match(/^(\\D+)$/);
 
                 let targetSurahID = null;
                 let targetVerseNum = null;
                 
-                // Helper to find surah ID
+                // Helper to find surah ID (with best-match scoring)
                 const findSurahID = (q) => {
                     const normQ = normalizeText(q);
                     let bestID = null, bestScore = 0;
@@ -1651,6 +1658,7 @@
                         let score = 0;
                         if (norm === normQ) score = 3;
                         else if (norm.startsWith(normQ)) score = 2;
+                        else if (norm.includes(normQ)) score = 1;
                         if (score > bestScore) { bestScore = score; bestID = idx + 1; }
                     });
                     return bestID;
@@ -1670,14 +1678,37 @@
                     };
                 }
 
+                // --- HYPHEN-BASED SURAH FILTERING ---
+                // e.g. "bakara-namaz" → search "namaz" only in Surah Bakara
+                let term = rawInput;
+                let filterSurahID = null;
+                const hyphenRegex = /[\-\u2010\u2011\u2012\u2013\u2014\u2015]/;
+                const hyphenIndex = rawInput.search(hyphenRegex);
+
+                if (hyphenIndex !== -1) {
+                    const potentialSurahName = rawInput.slice(0, hyphenIndex).trim();
+                    const rightSide = rawInput.slice(hyphenIndex + 1).trim();
+
+                    if (potentialSurahName && rightSide) {
+                        const foundID = findSurahID(potentialSurahName);
+                        if (foundID) {
+                            filterSurahID = foundID;
+                            term = rightSide;
+                        }
+                    }
+                }
+
                 // --- TEXT SEARCH ---
                 let searchMatches = [];
-                // Check if Exact
+                // Check if Exact (quoted)
                 const quoteMatch = term.match(/"([^"]+)"/);
                 const isExact = !!quoteMatch;
                 const finalTerm = isExact ? quoteMatch[1] : normalizeText(term);
 
                 searchMatches = fullIndex.filter(item => {
+                    // Apply surah filter if hyphen syntax was used
+                    if (filterSurahID && item.surah.number !== filterSurahID) return false;
+
                     if (isExact) {
                         return item.text.includes(finalTerm) || item.yazir.includes(finalTerm) || item.ates.includes(finalTerm);
                     } else {
