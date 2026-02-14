@@ -35,7 +35,7 @@
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- XLSX Library Removed for Performance -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -140,6 +140,19 @@
     <!-- ========================================== -->
     <div id="app-schedule" class="flex flex-col min-h-screen">
         <!-- Templates -->
+        <template id="tpl-year-header">
+            <div class="flex items-center justify-center my-1 group fade-in select-none">
+                <div
+                    class="h-px bg-emerald-200/50 dark:bg-emerald-900/30 flex-1 group-hover:bg-emerald-500/30 transition-colors">
+                </div>
+                <span
+                    class="mx-3 text-sm font-bold text-emerald-800/60 dark:text-emerald-400/60 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors font-mono tracking-widest uppercase"
+                    data-slot="year"></span>
+                <div
+                    class="h-px bg-emerald-200/50 dark:bg-emerald-900/30 flex-1 group-hover:bg-emerald-500/30 transition-colors">
+                </div>
+            </div>
+        </template>
         <template id="tpl-week-section">
             <section
                 class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
@@ -177,7 +190,8 @@
                     <div class="flex flex-col items-end gap-1 shrink-0">
                         <time data-slot="time"
                             class="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded mb-1"></time>
-                        <a href="https://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn"
+                        <a href="https://meet.google.com/nmf-ysfs-ohe" data-slot="join-btn" target="_blank"
+                            rel="noopener noreferrer"
                             class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-100 dark:border-emerald-900/30 whitespace-nowrap transition-colors">
                             <i class="fa-solid fa-video text-red-500 mr-1"></i> Katıl
                         </a>
@@ -351,14 +365,9 @@
                     window.toggleQuranView(true);
                 });
 
-                /**
-                 * App Configuration
-                 * Centralized configuration for easy maintenance.
-                 */
                 const CONFIG = Object.freeze({
-                    CACHE_KEY: 'ders_programi_v9_csv', // Version bump for storage migration
-                    // Using CSV output for smaller payload and no dependency on heavy XLSX library
-                    CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=csv',
+                    CACHE_KEY: 'ders_programi_v8_xlsx',
+                    CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
                     CLASSES: {
                         hidden: 'hidden',
                         rotate: 'rotate-icon',
@@ -423,35 +432,6 @@
                             return Date.UTC(year, monthIndex, day, hour - 3, minute);
                         } catch (e) { console.warn(e); return 0; }
                     }
-                    /**
-                     * Generates a platform-specific Google Meet link.
-                     * @param {string} url - The original Google Meet URL
-                     * @returns {{url: string, target: string}} - URL and target attribute
-                     */
-                    getMeetLink(url) {
-                        const ua = navigator.userAgent || navigator.vendor || window.opera;
-                        const isAndroid = /android/i.test(ua);
-                        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-
-                        // Default behavior (Desktop)
-                        let finalUrl = url;
-                        let target = '_blank';
-
-                        if (isAndroid) {
-                            // Android: Use Intent URI to force app open
-                            // Falls back to browser if app not installed
-                            const cleanUrl = url.replace(/^https?:\/\//, '');
-                            const fallback = encodeURIComponent(url);
-                            finalUrl = `intent://${cleanUrl}#Intent;scheme=https;package=com.google.android.apps.meetings;S.browser_fallback_url=${fallback};end`;
-                            target = '_self'; // Must be _self to trigger intent
-                        } else if (isIOS) {
-                            // iOS: Use Universal Link (https), strictly NO target="_blank"
-                            finalUrl = url;
-                            target = '_self';
-                        }
-
-                        return { url: finalUrl, target };
-                    }
                 };
 
                 class DataManager {
@@ -474,68 +454,12 @@
                             const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
                             const response = await fetch(CONFIG.CSV_URL + cacheBuster, { cache: 'no-store' });
                             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                            const csvText = await response.text();
-                            const rows = this.parseCSV(csvText);
+                            const buffer = await response.arrayBuffer();
+                            const workbook = XLSX.read(buffer, { type: 'array' });
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
                             return this.#processRows(rows);
-                        } catch (error) { console.error("Fetch Error:", error); return null; }
-                    }
-
-                    /**
-                     * Parses CSV string into a 2D array.
-                     * Handles quoted fields containing commas.
-                     * @param {string} str - Raw CSV string
-                     * @returns {string[][]} - Array of rows, each being an array of columns
-                     */
-                    parseCSV(str) {
-                        const arr = [];
-                        let quote = false;  // 'true' means we're inside a quoted field
-                        let col = 0, row = 0;
-
-                        // Create first row and first column
-                        arr[row] = [];
-                        arr[row][col] = "";
-
-                        for (let c = 0; c < str.length; c++) {
-                            const cc = str[c]; // Current character
-                            const nc = str[c + 1]; // Next character
-
-                            // Check for quotes
-                            if (cc === '"') {
-                                if (quote && nc === '"') {
-                                    // Escaped quote ("") -> add a single quote to the field
-                                    arr[row][col] += '"';
-                                    c++;
-                                } else {
-                                    // Toggle quote status
-                                    quote = !quote;
-                                }
-                            }
-                            // Comma: if not in quotes, it's a delimiter
-                            else if (cc === ',' && !quote) {
-                                col++;
-                                arr[row][col] = "";
-                            }
-                            // Newline: if not in quotes, it's a new row
-                            else if ((cc === '\r' || cc === '\n') && !quote) {
-                                // Handle CRLF (\r\n) slightly gracefully by skipping \n if we previously hit \r? 
-                                // Actually simplistic approach: new row on \n or \r (but if \r\n, we might get an empty row context, let's fix strictly)
-
-                                // If it's \r and next is \n, skip this one, handle at \n
-                                if (cc === '\r' && nc === '\n') {
-                                    // skip
-                                } else {
-                                    row++;
-                                    col = 0;
-                                    arr[row] = [];
-                                    arr[row][col] = "";
-                                }
-                            }
-                            // Normal character
-                            else {
-                                arr[row][col] += cc;
-                            }
-                        }
-                        return arr;
+                        } catch (error) { return null; }
                     }
                     #processRows(rows) {
                         const processed = rows.slice(1).map(cols => {
@@ -572,7 +496,8 @@
                             card: document.getElementById('tpl-card'),
                             btn: document.getElementById('tpl-button'),
                             empty: document.getElementById('tpl-empty'),
-                            menuItem: document.getElementById('tpl-menu-item')
+                            menuItem: document.getElementById('tpl-menu-item'),
+                            yearHeader: document.getElementById('tpl-year-header')
                         };
                     }
                     #clone(id) { return this.#templates[id].content.cloneNode(true); }
@@ -586,19 +511,7 @@
                         this.#setText(node, '[data-slot="time"]', time);
                         const toleranceMs = CONFIG.JOIN_TOLERANCE_MIN * 60 * 1000;
                         const joinBtn = node.querySelector('[data-slot="join-btn"]');
-                        if (joinBtn) {
-                            // Bug Fix for Mobile App Store Redirection:
-                            // We do NOT use target="_blank" on mobile devices for the Meet link.
-                            // This allows the OS to intercept the intent and open the installed Meet app directly.
-                            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                            if (!isMobile) {
-                                joinBtn.setAttribute('target', '_blank');
-                                joinBtn.setAttribute('rel', 'noopener noreferrer');
-                            }
-
-                            // Hide button if class is over
-                            if (timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
-                        }
+                        if (joinBtn && timestamp > 0 && Date.now() > (timestamp + toleranceMs)) joinBtn.remove();
                         if (showWeekBadge) {
                             const badge = node.querySelector('[data-slot="week-badge"]');
                             badge.textContent = week;
@@ -634,14 +547,46 @@
                             const weeks = Object.keys(groupedData).reverse();
                             if (weeks.length === 0) { this.#container.appendChild(this.#clone('empty')); return; }
                             const fragment = document.createDocumentFragment();
+
+                            let lastYear = null;
+
                             weeks.forEach((week, index) => {
+                                const items = groupedData[week];
+
+                                // Majority Rule Year Determination
+                                const yearCounts = {};
+                                items.forEach(item => {
+                                    const y = new Date(item.timestamp).getUTCFullYear();
+                                    yearCounts[y] = (yearCounts[y] || 0) + 1;
+                                });
+
+                                let weekYear = parseInt(Object.keys(yearCounts)[0]); // Default
+                                let maxCount = 0;
+
+                                for (const [year, count] of Object.entries(yearCounts)) {
+                                    if (count > maxCount) {
+                                        maxCount = count;
+                                        weekYear = parseInt(year);
+                                    } else if (count === maxCount) {
+                                        // Tie-breaker: If equal, prefer the later year
+                                        weekYear = Math.max(weekYear, parseInt(year));
+                                    }
+                                }
+
+                                if (weekYear !== lastYear) {
+                                    const yearHeader = this.#clone('yearHeader');
+                                    this.#setText(yearHeader, '[data-slot="year"]', weekYear);
+                                    fragment.appendChild(yearHeader);
+                                    lastYear = weekYear;
+                                }
+
                                 const section = this.#clone('week');
                                 const sectionEl = section.querySelector('section');
                                 const header = sectionEl.querySelector('.week-header');
                                 const content = sectionEl.querySelector('.week-content');
                                 const icon = header.querySelector('[data-slot="toggle-icon"]');
                                 this.#setText(section, '[data-slot="week-title"]', week);
-                                groupedData[week].forEach(item => content.appendChild(this.#createCard(item)));
+                                items.forEach(item => content.appendChild(this.#createCard(item)));
                                 if (index === 0) { content.classList.remove(CONFIG.CLASSES.hidden); icon.classList.add(CONFIG.CLASSES.rotate); header.setAttribute('aria-expanded', 'true'); }
                                 fragment.appendChild(section);
                             });
@@ -809,7 +754,11 @@
             if (!text) return "";
             return text.toLocaleLowerCase('tr')
                 .replace(/['’‘]/g, '') // Ignore apostrophes
-                .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
+                .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
+                .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+                .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                // Safe guard for any remaining standard I/i issues if locale fails
+                .replace(/İ/g, 'i').replace(/I/g, 'i');
         };
 
         const sortMatches = (matches, type) => {
@@ -835,7 +784,7 @@
             // Global Data
             const [surahs, setSurahs] = useState([]);
             const [ayahs, setAyahs] = useState([]);
-            const [fullQuranIndex, setFullQuranIndex] = useState(null);
+
 
             // View State
             const [viewMode, setViewMode] = useState('reader');
@@ -1007,8 +956,7 @@
                 if (savedBookmarkRaw) {
                     const b = JSON.parse(savedBookmarkRaw);
                     setBookmark(b);
-
-                    // Auto-fix for legacy bookmarks missing numberInSurah
+                    // Legacy fix for bookmarks
                     if (b.number && !b.numberInSurah) {
                         fetch(`${API_BASE}/ayah/${b.number}`)
                             .then(res => res.json())
@@ -1037,6 +985,18 @@
                         }
                     })
                     .catch(e => { console.error(e); setLoading(false); });
+
+                // BACKGROUND INDEXING (God Mode)
+                // Initialize Worker Index in Background
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(() => {
+                        workerClient.init(SURAH_NAMES_TR).catch(console.error);
+                    });
+                } else {
+                    setTimeout(() => {
+                        workerClient.init(SURAH_NAMES_TR).catch(console.error);
+                    }, 3000);
+                }
             }, []);
 
             useEffect(() => {
@@ -1106,11 +1066,9 @@
             }, [activePlaylist]);
 
             // Audio Controls
-            // Audio Controls
             const playAyah = (ayah, options = {}) => {
                 const audio = audioRef.current;
 
-                // Eğer zaten bu ayet çalıyorsa ve forcePlay denmediyse toggle yap
                 if (activeAyah?.number === ayah.number && !options.forcePlay) {
                     if (audio.paused) {
                         audio.play().then(() => setIsPlaying(true)).catch(console.error);
@@ -1121,43 +1079,25 @@
                     return;
                 }
 
-                // Yeni ayete geçiş
-                // 1. Önce UI State'ini güncelle (Kullanıcı anında tepki görsün)
-                // Bu, "sonraki ayet görünmüyor" sorununu çözer.
                 if (!options.onlyAudio) {
                     setActiveAyah(ayah);
-                    setIsPlaying(true); // Optimistik güncelleme
+                    setIsPlaying(true);
                 }
 
-                // 2. Ses kaynağını ayarla
                 audio.src = ayah.audio || "";
                 if (ayah.audio) {
                     audio.load();
-
-                    // 3. Oynatmayı dene
                     const playPromise = audio.play();
 
                     if (playPromise !== undefined) {
                         playPromise
-                            .then(() => {
-                                // Başarılı
-                                setIsPlaying(true);
-                            })
+                            .then(() => { setIsPlaying(true); })
                             .catch(error => {
                                 console.error("Playback error:", error);
                                 setIsPlaying(false);
-
-                                // Hata durumunda (örn: NotAllowedError - arka plan kısıtlaması)
-                                // Kullanıcı tekrar basabilsin diye state'i koru ama playing'i false yap.
-                                // Otomatik geçişte olduysa, bir sonraki sefere şans ver veya retry mekanizması ekle.
-                                // Auto-retry için basit bir hack:
-                                if (error.name === 'NotAllowedError' && !options.userInitiated) {
-                                    // Arka planda engellendi. Yapacak çok bir şey yok ama UI'da play butonu görünür kaldı.
-                                }
                             });
                     }
                 } else {
-                    // Ses yoksa dur
                     setIsPlaying(false);
                 }
             };
@@ -1196,10 +1136,8 @@
                 if (idx > 0) playAyah(list[idx - 1]);
             };
 
-            // Data Fetching
             const fetchSurah = async (surah) => {
                 setLoading(true); setLoadingText(`${getSurahNameTR(surah.number)} suresi yükleniyor...`);
-                // Use navigate to push history state
                 navigate('reader', { surahNumber: surah.number });
                 setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
 
@@ -1234,7 +1172,6 @@
             const fetchDetailsForMatches = async (matchesToFetch) => {
                 const newResults = [];
                 const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
-                // Batch requests in parallel
                 const promises = matchesToFetch.map(async (match) => {
                     try {
                         const res = await fetch(`${API_BASE}/ayah/${match.surah.number}:${match.numberInSurah}/editions/${editionsStr}`);
@@ -1253,62 +1190,58 @@
             };
 
             const handleSearch = async (queryRaw) => {
-                if (!queryRaw.trim()) return;
+                const term = queryRaw.trim();
+                if (!term) return;
+
                 setSearching(true); setViewMode('search'); setRawMatches([]); setDetailedResults([]);
 
                 try {
-                    let quranData = fullQuranIndex;
-                    if (!quranData) {
-                        const cached = localStorage.getItem('quran_index_v1');
-                        if (cached) {
-                            quranData = JSON.parse(cached);
-                            setFullQuranIndex(quranData);
-                        } else {
-                            setLoadingText("İndeks oluşturuluyor...");
-                            const res = await fetch(`${API_BASE}/quran/${EDITIONS.tr_diyanet}`);
-                            const data = await res.json();
-                            quranData = [];
-                            data.data.surahs.forEach(surah => { surah.ayahs.forEach(ayah => { quranData.push({ surah: { number: surah.number }, number: ayah.number, numberInSurah: ayah.numberInSurah, text: ayah.text }); }); });
-                            setFullQuranIndex(quranData);
-                            try { localStorage.setItem('quran_index_v1', JSON.stringify(quranData)); } catch (e) { console.warn("Quota exceeded"); }
+                    // Offload everything to Worker
+                    const result = await workerClient.search(term, sortType);
+
+                    if (result.nav) {
+                        // Worker detected navigation intent
+                        const targetSurahID = result.nav.surah;
+                        const targetVerseNum = result.nav.verse;
+
+                        // Verify verse count
+                        const sInfo = surahs.find(s => s.number === targetSurahID);
+                        if (sInfo) {
+                            if (targetVerseNum && targetVerseNum > sInfo.numberOfAyahs) {
+                                alert(`${getSurahNameTR(targetSurahID)} suresi ${sInfo.numberOfAyahs} ayettir. (${targetVerseNum}. ayet yok)`);
+                                setSearching(false);
+                                return;
+                            }
                         }
-                    }
 
-                    const normQuery = normalizeText(queryRaw);
-                    let targetSurahID = null;
-                    let searchTerm = normQuery;
-
-                    const surahMatches = SURAH_NAMES_TR.map((name, idx) => ({ name, id: idx + 1, norm: normalizeText(name) }));
-                    const foundSurah = surahMatches.find(s => normQuery.startsWith(s.norm + ' ')); // Only match if followed by space (scoped)
-
-                    if (foundSurah) {
-                        const remainder = normQuery.slice(foundSurah.norm.length).trim();
-                        if (remainder) {
-                            targetSurahID = foundSurah.id;
-                            searchTerm = remainder;
+                        // Perform Jump
+                        const s = surahs.find(x => x.number === targetSurahID);
+                        if (s) {
+                            setPendingJump({
+                                surahNumber: targetSurahID,
+                                ayahNumber: targetVerseNum,
+                                shouldPlay: false
+                            });
+                            fetchSurah(s);
+                            setSearching(false);
+                            return;
                         }
+                    } else if (result.matches) {
+                        // Standard Search Results
+                        setRawMatches(result.matches);
+
+                        // Initial Sort (Worker returns Mushaf order usually)
+                        // fetch details for first batch
+                        const initialBatch = result.matches.slice(0, 5);
+                        const details = await fetchDetailsForMatches(initialBatch);
+                        setDetailedResults(details);
                     }
-
-                    let allMatches = quranData.filter(item => {
-                        if (targetSurahID && item.surah.number !== targetSurahID) return false;
-
-                        const normText = normalizeText(item.text);
-                        const textMatch = normText.includes(searchTerm);
-
-                        // If scoped search, we just need text match (targetSurahID already filtered)
-                        // If global search (!targetSurahID), we ONLY check text match. 
-                        // We do NOT check surah name match to avoid listing full surah when searching for "Yusuf".
-                        return textMatch;
-                    });
-
-                    allMatches = sortMatches(allMatches, sortType);
-                    setRawMatches(allMatches);
-
-                    // Initial load
-                    const initialBatch = allMatches.slice(0, 5);
-                    const details = await fetchDetailsForMatches(initialBatch);
-                    setDetailedResults(details);
-                } catch (e) { console.error(e); } finally { setSearching(false); setLoadingText(""); }
+                } catch (e) {
+                    console.error("Search error:", e);
+                    // alert("Arama sırasında hata oluştu: " + e.message);
+                } finally {
+                    setSearching(false); setLoadingText("");
+                }
             };
 
             // Re-sort search results when sortType changes
@@ -1336,7 +1269,6 @@
                 const state = { quran: true, view, ...extraState };
                 history.pushState(state, '', '#quran');
                 setViewMode(view);
-                // Handle specific state updates based on view if needed, but components usually handle data fetching
             };
 
             // Global Navigation Handler (for PopState)
@@ -1571,6 +1503,243 @@
                 </div>
             );
         };
+
+
+        // --- WEB WORKER CODE (God Mode Performance) ---
+        const workerCode = `
+            // Independent DB Manager for Worker
+            class WorkerDB {
+                constructor() {
+                    this.dbName = 'KuranAppDB';
+                    this.dbVersion = 1;
+                    this.storeName = 'quran_index';
+                    this.db = null;
+                }
+
+                async init() {
+                    return new Promise((resolve, reject) => {
+                        const request = indexedDB.open(this.dbName, this.dbVersion);
+                        request.onerror = (e) => reject(e.target.error);
+                        request.onsuccess = (e) => {
+                            this.db = e.target.result;
+                            resolve(this.db);
+                        };
+                        request.onupgradeneeded = (e) => {
+                            const db = e.target.result;
+                            if (!db.objectStoreNames.contains(this.storeName)) {
+                                db.createObjectStore(this.storeName, { keyPath: 'id' });
+                            }
+                        };
+                    });
+                }
+
+                async saveIndex(data) {
+                    if (!this.db) await this.init();
+                    return new Promise((resolve, reject) => {
+                        const tx = this.db.transaction([this.storeName], 'readwrite');
+                        const store = tx.objectStore(this.storeName);
+                        store.put({ id: 'full_index_v3', data: data, timestamp: Date.now() });
+                        tx.oncomplete = () => resolve();
+                        tx.onerror = (e) => reject(e.target.error);
+                    });
+                }
+
+                async getIndex() {
+                    if (!this.db) await this.init();
+                    return new Promise((resolve, reject) => {
+                        const tx = this.db.transaction([this.storeName], 'readonly');
+                        const store = tx.objectStore(this.storeName);
+                        const req = store.get('full_index_v3');
+                        req.onsuccess = (e) => resolve(e.target.result ? e.target.result.data : null);
+                        req.onerror = (e) => reject(e.target.error);
+                    });
+                }
+            }
+
+            const db = new WorkerDB();
+            let fullIndex = null;
+            let surahNames = []; // Will be passed from main thread
+
+            // Helper: Normalize Text
+            function normalizeText(text) {
+                return text.toLowerCase()
+                    .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
+                    .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c")
+                    .replace(/â/g, "a").replace(/î/g, "i").replace(/û/g, "u");
+            }
+
+            self.onmessage = async (e) => {
+                const { type, payload, id } = e.data;
+
+                try {
+                    switch (type) {
+                        case 'INIT':
+                            surahNames = payload.surahNames;
+                            await initIndex(payload.apiBase, payload.editions);
+                            self.postMessage({ type: 'INIT_COMPLETE', id });
+                            break;
+                        
+                        case 'SEARCH':
+                            const results = await handleSearch(payload.query, payload.sortType);
+                            self.postMessage({ type: 'SEARCH_RESULTS', id, payload: results });
+                            break;
+                    }
+                } catch (err) {
+                    self.postMessage({ type: 'ERROR', id, error: err.message });
+                }
+            };
+
+            async function initIndex(apiBase, editions) {
+                // 1. Try DB
+                fullIndex = await db.getIndex();
+                if (fullIndex) return;
+
+                // 2. Build Index (Fetch 3 translations)
+                const urls = [
+                    \`\${apiBase}/quran/\${editions.diyanet}\`,
+                    \`\${apiBase}/quran/\${editions.yazir}\`,
+                    \`\${apiBase}/quran/\${editions.ates}\`
+                ];
+
+                const responses = await Promise.all(urls.map(u => fetch(u).then(r => r.json())));
+                const [diyanet, yazir, ates] = responses.map(r => r.data.surahs);
+
+                fullIndex = [];
+                for (let i = 0; i < diyanet.length; i++) {
+                    const sD = diyanet[i];
+                    const sY = yazir[i];
+                    const sA = ates[i];
+
+                    for (let j = 0; j < sD.ayahs.length; j++) {
+                        fullIndex.push({
+                            surah: { number: sD.number },
+                            number: sD.ayahs[j].number,
+                            numberInSurah: sD.ayahs[j].numberInSurah,
+                            text: sD.ayahs[j].text,
+                            yazir: sY?.ayahs[j]?.text || "",
+                            ates: sA?.ayahs[j]?.text || ""
+                        });
+                    }
+                }
+
+                await db.saveIndex(fullIndex);
+            }
+
+            async function handleSearch(queryRaw, sortType) {
+                if (!fullIndex) {
+                   // Try loading one last time
+                   fullIndex = await db.getIndex();
+                   if (!fullIndex) throw new Error("Index not ready");
+                }
+
+                const term = queryRaw.trim();
+                if (!term) return { matches: [] };
+
+                // --- NAVIGATION LOGIC (Replicated in Worker) ---
+                const verseMatch = term.match(/^(\\D+?)\\s+(\\d+)$/);
+                const surahMatch = term.match(/^(\\D+)$/);
+
+                let targetSurahID = null;
+                let targetVerseNum = null;
+                
+                // Helper to find surah ID
+                const findSurahID = (q) => {
+                    const normQ = normalizeText(q);
+                    let bestID = null, bestScore = 0;
+                    surahNames.forEach((name, idx) => {
+                        const norm = normalizeText(name);
+                        let score = 0;
+                        if (norm === normQ) score = 3;
+                        else if (norm.startsWith(normQ)) score = 2;
+                        if (score > bestScore) { bestScore = score; bestID = idx + 1; }
+                    });
+                    return bestID;
+                };
+
+                if (verseMatch) {
+                    targetSurahID = findSurahID(verseMatch[1]);
+                    targetVerseNum = parseInt(verseMatch[2]);
+                } else if (surahMatch) {
+                    targetSurahID = findSurahID(surahMatch[1]);
+                    if (targetSurahID) targetVerseNum = 1;
+                }
+
+                if (targetSurahID) {
+                    return { 
+                        nav: { surah: targetSurahID, verse: targetVerseNum } 
+                    };
+                }
+
+                // --- TEXT SEARCH ---
+                let searchMatches = [];
+                // Check if Exact
+                const quoteMatch = term.match(/"([^"]+)"/);
+                const isExact = !!quoteMatch;
+                const finalTerm = isExact ? quoteMatch[1] : normalizeText(term);
+
+                searchMatches = fullIndex.filter(item => {
+                    if (isExact) {
+                        return item.text.includes(finalTerm) || item.yazir.includes(finalTerm) || item.ates.includes(finalTerm);
+                    } else {
+                        return normalizeText(item.text).includes(finalTerm) || 
+                               normalizeText(item.yazir).includes(finalTerm) || 
+                               normalizeText(item.ates).includes(finalTerm);
+                    }
+                });
+
+                // Sorting (Simplistic for Worker)
+                // We return all matches, main thread slices them
+                // But specifically for SortType, we might need logic. 
+                // Let's just return Relevation Order if needed? 
+                // For now, return default order (Mushaf) which is how they are stored.
+                // If user wants Revelation order, main thread can resort or request it.
+                
+                return { matches: searchMatches };
+            }
+        `;
+
+        class SearchWorkerClient {
+            constructor() {
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                this.worker = new Worker(URL.createObjectURL(blob));
+                this.callbacks = new Map();
+                this.msgId = 0;
+
+                this.worker.onmessage = (e) => {
+                    const { id, type, payload, error } = e.data;
+                    if (this.callbacks.has(id)) {
+                        const { resolve, reject } = this.callbacks.get(id);
+                        if (error) reject(new Error(error));
+                        else resolve(payload);
+                        this.callbacks.delete(id);
+                    }
+                };
+            }
+
+            request(type, payload) {
+                return new Promise((resolve, reject) => {
+                    const id = ++this.msgId;
+                    this.callbacks.set(id, { resolve, reject });
+                    this.worker.postMessage({ type, payload, id });
+                });
+            }
+
+            init(surahNames) {
+                const apiBase = API_BASE;
+                const editions = {
+                    diyanet: EDITIONS.tr_diyanet,
+                    yazir: EDITIONS.tr_yazir,
+                    ates: EDITIONS.tr_ates
+                };
+                return this.request('INIT', { surahNames, apiBase, editions });
+            }
+
+            search(query, sortType) {
+                return this.request('SEARCH', { query, sortType });
+            }
+        }
+
+        const workerClient = new SearchWorkerClient();
 
         const SurahList = React.memo(() => {
             const { surahs, activeSurah, fetchSurah, sortType, setSortType } = useQuran();
