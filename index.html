@@ -655,6 +655,13 @@
                         this.html.classList.toggle('dark', isDark);
                         localStorage.setItem('theme', isDark ? 'dark' : 'light');
                         if (this.icon) this.icon.className = isDark ? 'fa-solid fa-sun text-white text-xs' : 'fa-solid fa-moon text-white text-xs';
+
+                        // Update Status Bar Color
+                        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+                        if (metaThemeColor) {
+                            metaThemeColor.setAttribute('content', isDark ? '#064e3b' : '#047857');
+                        }
+
                         // Sync React if it exists
                         if (window.syncReactTheme) window.syncReactTheme(isDark);
                     }
