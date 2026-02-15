@@ -62,7 +62,7 @@
         }
 
         .dark {
-            --scroll-thumb: #475569;
+            --scroll-thumb: #333333;
         }
 
         html {
@@ -79,7 +79,7 @@
         }
 
         .dark body {
-            background-color: #111827;
+            background-color: #000000;
         }
 
         ::-webkit-scrollbar {
@@ -155,7 +155,7 @@
         </template>
         <template id="tpl-week-section">
             <section
-                class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
+                class="mb-4 bg-white dark:bg-black dark:border dark:border-neutral-800 rounded-xl shadow-sm overflow-hidden transition-colors duration-300 fade-in group will-change-transform">
                 <div class="week-header p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-gray-700 cursor-pointer select-none active:bg-emerald-100 dark:active:bg-gray-600 transition-colors"
                     role="button" aria-expanded="false">
                     <h2 class="font-bold text-emerald-800 dark:text-emerald-400 flex items-center">
@@ -164,14 +164,14 @@
                     </h2>
                     <i class="fa-solid fa-chevron-down text-gray-400 smooth-transition" data-slot="toggle-icon"></i>
                 </div>
-                <div class="week-content p-2 bg-gray-50 dark:bg-gray-900 hidden transition-colors duration-300"
+                <div class="week-content p-2 bg-gray-50 dark:bg-black hidden transition-colors duration-300"
                     data-slot="content-area"></div>
             </section>
         </template>
 
         <template id="tpl-card">
             <article
-                class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md will-change-transform">
+                class="bg-white dark:bg-black dark:border dark:border-neutral-800 p-4 rounded-lg shadow-sm mb-3 border-l-4 border-emerald-500 ml-1 mr-1 mt-1 transition-colors duration-300 hover:shadow-md will-change-transform">
                 <div class="flex justify-between items-start mb-3">
                     <div class="pr-2">
                         <div
@@ -228,7 +228,7 @@
 
         <!-- Header -->
         <header
-            class="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg transition-colors duration-300">
+            class="bg-emerald-700 dark:bg-black border-b border-transparent dark:border-emerald-900/50 text-white px-4 pb-2 shadow-lg transition-colors duration-300">
             <div class="max-w-md mx-auto relative pt-2">
                 <button id="btn-theme-toggle"
                     class="absolute right-0 top-1 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
@@ -244,7 +244,7 @@
 
                 <div class="relative mb-2 group">
                     <input type="text" id="input-search" placeholder="Ders, hoca veya konu ara..."
-                        class="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md"
+                        class="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-black border-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 group-hover:shadow-md dark:border dark:border-neutral-800"
                         autocomplete="off" enterkeyhint="search">
                     <i
                         class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 dark:text-gray-500 text-sm pointer-events-none"></i>
@@ -261,7 +261,7 @@
                             <i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
                         </button>
                         <div id="menu-quran"
-                            class="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0">
+                            class="absolute w-full mt-1 bg-white dark:bg-black rounded-lg shadow-xl overflow-hidden hidden border border-gray-200 dark:border-neutral-800 max-h-60 overflow-y-auto z-20 transition-all origin-top transform scale-95 opacity-0">
                         </div>
                     </div>
 
@@ -285,7 +285,7 @@
         <main class="max-w-md mx-auto p-4 w-full flex-grow relative" id="main-content" role="main"></main>
 
         <footer
-            class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe mt-auto">
+            class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-black border-t border-gray-200 dark:border-neutral-800 pb-safe mt-auto">
             <div class="max-w-md mx-auto px-4">
                 <div class="mb-4">
                     <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">İletişim & Öneri</p>
@@ -304,7 +304,7 @@
     <!-- QURAN APP CONTAINER (React Mount)          -->
     <!-- ========================================== -->
     <div id="quran-root"
-        class="hidden fixed inset-0 z-[200] bg-gray-50 dark:bg-gray-900 w-full h-full overflow-hidden flex flex-col">
+        class="hidden fixed inset-0 z-[200] bg-gray-50 dark:bg-black w-full h-full overflow-hidden flex flex-col">
     </div>
 
     <!-- ========================================== -->
@@ -1375,8 +1375,8 @@
             };
 
             return (
-                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
-                    <div className="bg-slate-50 dark:bg-gray-900/50 px-4 py-2 border-b border-slate-100 dark:border-gray-700 flex justify-between items-center">
+                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-black border-slate-200 dark:border-neutral-800'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
+                    <div className="bg-slate-50 dark:bg-black dark:border-b dark:border-neutral-800 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <button onClick={toggleSelect} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
                                 {isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
@@ -1395,8 +1395,8 @@
 
                             {/* Mini Playlist Modal */}
                             {showModal && (
-                                <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-2 fade-in">
-                                    <div className="flex justify-between items-center mb-2 pb-2 border-b dark:border-gray-700">
+                                <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-black rounded-lg shadow-xl border border-gray-200 dark:border-neutral-800 p-2 fade-in">
+                                    <div className="flex justify-between items-center mb-2 pb-2 border-b dark:border-neutral-800">
                                         <span className="text-xs font-bold">Listeye Ekle</span>
                                         <button onClick={() => setShowModal(false)}><i className="fa-solid fa-xmark text-gray-400"></i></button>
                                     </div>
@@ -1479,7 +1479,7 @@
             if (!activeAyah) return null;
 
             return (
-                <div className="fixed bottom-2 left-2 right-2 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-gray-900 border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-3 z-50 flex flex-col gap-2 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+4px)]">
+                <div className="fixed bottom-2 left-2 right-2 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-black border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-3 z-50 flex flex-col gap-2 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+4px)]">
                     {/* Progress Bar */}
                     <div className="w-full flex items-center gap-2 px-2">
                         <span className="text-[10px] text-gray-500 font-mono w-8 text-right">{formatTime(currentTime)}</span>
@@ -1783,8 +1783,8 @@
             }, [surahs, sortType]);
 
             return (
-                <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-gray-900 dark:border-gray-700 w-full md:w-64 flex-shrink-0 hidden md:block">
-                    <div className="p-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10 flex justify-between items-center">
+                <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
+                    <div className="p-4 border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-black sticky top-0 z-10 flex justify-between items-center">
                         <h2 className="font-bold text-slate-700 dark:text-slate-200"><i className="fa-solid fa-book-open text-emerald-600 mr-2"></i> Sureler</h2>
                         <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} className="text-xs bg-slate-100 dark:bg-gray-800 px-2 py-1 rounded hover:text-emerald-600 flex items-center gap-1">
                             <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
@@ -1933,19 +1933,19 @@
             const showContinueReading = !loading && !searching && viewMode === 'reader' && bookmark && bookmark.number !== activeSurah?.number && bookmark.surahNumber !== activeSurah?.number;
 
             return (
-                <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-gray-900/50 p-4 md:p-8 pt-16 md:pt-8 scroll-smooth" id="main-scroll">
+                <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 pt-16 md:pt-8 scroll-smooth" id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {loading && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p>{loadingText}</p></div>}
 
                         {/* Mobile Surah Select - Only show in reader mode */}
                         {!loading && !searching && viewMode === 'reader' && (
-                            <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-2 shadow-sm flex gap-2">
+                            <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-black border-b dark:border-neutral-800 p-2 shadow-sm flex gap-2">
                                 <select
                                     onChange={(e) => {
                                         const surah = surahs.find(s => s.number === parseInt(e.target.value));
                                         if (surah) fetchSurah(surah);
                                     }}
-                                    className="flex-1 p-2 rounded border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-emerald-500 text-sm"
+                                    className="flex-1 p-2 rounded border border-gray-200 dark:border-neutral-800 dark:bg-black dark:text-white focus:ring-emerald-500 text-sm"
                                     value={activeSurah?.number || 1}
                                 >
                                     {sortedSurahsMobile.map(s => (
@@ -1957,7 +1957,7 @@
 
                                 <button
                                     onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')}
-                                    className="px-3 py-2 bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
+                                    className="px-3 py-2 bg-slate-100 dark:bg-black text-slate-600 dark:text-slate-300 rounded border border-gray-200 dark:border-neutral-800 hover:bg-emerald-50 hover:text-emerald-600 transition-colors flex items-center justify-center min-w-[40px]"
                                     title={sortType === 'mushaf' ? "İniş sırasına göre sırala" : "Mushaf sırasına göre sırala"}
                                 >
                                     <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
@@ -2000,16 +2000,16 @@
                         {!loading && !searching && viewMode === 'reader' && (
                             <div className="text-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-6 fade-in relative">
                                 {ayahs.length > 0 && (
-                                    <button onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'}`}>
+                                    <button onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-black dark:text-emerald-400 dark:border-neutral-800'}`}>
                                         <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
                                         {allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
                                     </button>
                                 )}
                                 <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{getSurahNameTR(activeSurah?.number)}</h2>
                                 <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200">{activeSurah?.numberOfAyahs} Ayet</span>
-                                    <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200">{activeSurah?.revelationType === 'Meccan' ? 'Mekke' : 'Medine'}</span>
-                                    <span className="bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm border border-gray-200">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
+                                    <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">{activeSurah?.numberOfAyahs} Ayet</span>
+                                    <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">{activeSurah?.revelationType === 'Meccan' ? 'Mekke' : 'Medine'}</span>
+                                    <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
                                 </div>
                             </div>
                         )}
@@ -2034,7 +2034,7 @@
                                                         onClick={handleToggleSelectAll}
                                                         className={`text-sm font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number))
                                                             ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                                            : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 dark:border-gray-600'
+                                                            : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-black dark:text-emerald-400 dark:border-neutral-800'
                                                             }`}
                                                     >
                                                         <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
@@ -2051,7 +2051,7 @@
                                     <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-6 mb-6 text-center border border-emerald-100 dark:border-emerald-800">
                                         <h2 className="text-2xl font-bold mb-2">{activePlaylist.name}</h2>
                                         <div className="flex justify-center gap-2">
-                                            <button onClick={() => setViewMode('playlists_list')} className="text-sm bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-sm">Geri Dön</button>
+                                            <button onClick={() => setViewMode('playlists_list')} className="text-sm bg-white dark:bg-black px-4 py-2 rounded-full shadow-sm dark:border dark:border-neutral-800">Geri Dön</button>
                                         </div>
                                     </div>
                                 )}
@@ -2074,7 +2074,7 @@
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {playlists.map(p => (
-                                        <div key={p.id} onClick={() => { setActivePlaylist(p); setViewMode('playlist_view'); }} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:border-emerald-400 transition relative group">
+                                        <div key={p.id} onClick={() => { setActivePlaylist(p); setViewMode('playlist_view'); }} className="bg-white dark:bg-black p-4 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 cursor-pointer hover:border-emerald-400 transition relative group">
                                             <button onClick={(e) => { e.stopPropagation(); setPlaylists(prev => prev.filter(x => x.id !== p.id)); }} className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-trash"></i></button>
                                             <h3 className="font-bold text-lg">{p.name}</h3>
                                             <p className="text-sm text-gray-500">{p.items.length} Ayet</p>
@@ -2117,7 +2117,7 @@
 
             return (
                 <div className="flex flex-col h-full font-sans relative">
-                    <header className="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-20 sticky top-0">
+                    <header className="bg-emerald-700 dark:bg-black text-white px-4 pb-2 shadow-lg z-20 sticky top-0 border-b border-transparent dark:border-emerald-900/50">
                         <div className="max-w-md mx-auto relative pt-2">
                             <button onClick={() => setDarkMode(!darkMode)} className="absolute right-0 top-1 bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500">
                                 {darkMode ? <i className="fa-solid fa-sun text-xs"></i> : <i className="fa-solid fa-moon text-xs"></i>}
@@ -2131,7 +2131,7 @@
                             </div>
                             <div className="flex gap-2 items-center mb-2">
                                 <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchQuery); }} className="relative group flex-1">
-                                    <input type="text" placeholder="Ara (Örn: namaz, bakara)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:bg-gray-800 dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm" />
+                                    <input type="text" placeholder="Ara (Örn: namaz, bakara)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-9 rounded-lg text-sm text-gray-800 dark:bg-black dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm dark:border dark:border-neutral-700" />
                                     <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 hover:text-emerald-500"><i className="fa-solid fa-search text-sm"></i></button>
                                 </form>
                                 <button onClick={() => setViewMode('playlists_list')} className="bg-emerald-800 text-white p-2 rounded-lg w-10 h-10 flex items-center justify-center shadow-sm hover:bg-emerald-600 transition border border-emerald-600/30"><i className="fa-solid fa-layer-group"></i></button>
@@ -2166,9 +2166,9 @@
                     {/* Bulk Add Modal */}
                     {playlistModal && (
                         <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-                            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-sm">
+                            <div className="bg-white dark:bg-black dark:border dark:border-neutral-800 p-6 rounded-xl w-full max-w-sm">
                                 <h3 className="font-bold mb-4 dark:text-white">Seçilenleri Listeye Ekle</h3>
-                                <input type="text" placeholder="Yeni Liste Adı" value={newListName} onChange={(e) => setNewListName(e.target.value)} className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                <input type="text" placeholder="Yeni Liste Adı" value={newListName} onChange={(e) => setNewListName(e.target.value)} className="w-full p-2 border rounded mb-4 dark:bg-gray-900 dark:border-gray-700 dark:text-white" />
                                 <div className="flex justify-end gap-2">
                                     <button onClick={() => setPlaylistModal(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">İptal</button>
                                     <button onClick={handleBulkAdd} className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Oluştur ve Ekle</button>
