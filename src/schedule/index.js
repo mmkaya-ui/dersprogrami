@@ -182,7 +182,7 @@ function initScheduleApp() {
                     }
                 }
                 if (monthIndex === -1) return 0;
-                const [hour, minute] = normTime.split(':').map(n => parseInt(n, 10) || 0);
+                const [hour, minute] = normTime.replace('.', ':').split(':').map(n => parseInt(n, 10) || 0);
                 const now = new Date();
                 let year = now.getFullYear();
                 const currentMonth = now.getMonth();
