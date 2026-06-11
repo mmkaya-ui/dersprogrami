@@ -1662,13 +1662,15 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 if (diyanetTafsir || loadingDiyanet) return;
                 setLoadingDiyanet(true);
                 try {
-                    const response = await fetch(`/data/tafsir/elmalili/${ayahData.surahNumber}.md`);
-                    if (!response.ok) throw new Error("Tefsir metni bulunamadı.");
-                    const mdText = await response.text();
-                    setDiyanetTafsir(mdText);
+                    const response = await fetch(`/api/tafsir?surah=${ayahData.surahNumber}&ayah=${ayahData.numberInSurah}`);
+                    if (!response.ok) throw new Error("Tefsir metni bulunamadı veya ağ hatası.");
+                    const resJson = await response.json();
+                    if (!resJson.success) throw new Error(resJson.error || "Tefsir verisi alınamadı.");
+                    
+                    setDiyanetTafsir(resJson.data);
                 } catch (err) {
-                    console.error("Elmalili fetch error:", err);
-                    setDiyanetTafsir("Tefsir metni şu an için yüklenemedi. Lütfen daha sonra tekrar deneyiniz.");
+                    console.error("Diyanet proxy fetch error:", err);
+                    setDiyanetTafsir("<p class='text-red-500'>Tefsir metni şu an için yüklenemedi. Lütfen daha sonra tekrar deneyiniz.</p>");
                 } finally {
                     setLoadingDiyanet(false);
                 }
