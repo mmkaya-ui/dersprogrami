@@ -353,7 +353,7 @@ function initScheduleApp() {
             node.querySelector('span').textContent = text;
             return node;
         }
-        showLoading() { this._container.innerHTML = `<div class="text-center mt-10 text-emerald-600 dark:text-emerald-400 fade-in"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i><p>Ders programı yükleniyor...</p></div>`; }
+        showLoading() { this._container.innerHTML = `<div class="sk-container"><div class="sk-icon"></div><p>Ders programı yükleniyor...</p></div>`; }
         showError() { this._container.innerHTML = `<div class="text-center mt-10 text-red-500 fade-in"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i><p>Veri yüklenemedi. Bağlantınızı kontrol edin.</p><button onclick="location.reload()" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm font-bold">Tekrar Dene</button></div>`; }
         renderSchedule(groupedData) {
             requestAnimationFrame(() => {
