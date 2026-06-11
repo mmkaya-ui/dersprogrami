@@ -155,6 +155,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const lastClickTimeRef = useRef(0); // Debounce
             const audioRef = useRef(new Audio());
             const [playbackRate, setPlaybackRate] = useState(() => { const s = parseFloat(safeStorage.getItem('quran_playbackRate')); return (s >= 0.5 && s <= 2) ? s : 1; });
+            const [autoScrollEnabled, setAutoScrollEnabled] = useState(() => {
+                const saved = safeStorage.getItem('quran_autoscroll');
+                return saved !== null ? saved === 'true' : true;
+            });
             const [repeatMode, setRepeatMode] = useState(() => { const s = safeStorage.getItem('quran_repeatMode'); return ['none','one','all'].includes(s) ? s : 'none'; });
             const autoPlayAfterLoad = useRef(false);
             // Note: Cross-surah auto-scroll prevention is now handled directly in MainContent
@@ -275,9 +279,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
                 if (viewMode === 'reader') {
                     const prev = prevViewModeRef.current;
-                    // Sadece search <-> reader arasindan geliyorsak restore et.
-                    // null means initial mount — treat same as non-search (no restore).
-                    const shouldRestore = prev === 'search' && scrollPositionRef.current > 0;
+                    // Restore scroll position if returning from search, notes, or playlists
+                    const shouldRestore = prev !== null && prev !== 'reader' && scrollPositionRef.current > 0;
                     if (shouldRestore) {
                         setTimeout(() => {
                             mainScroll.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
@@ -706,6 +709,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             useEffect(() => {
                 safeStorage.setItem('quran_playbackRate', String(playbackRate));
             }, [playbackRate]);
+
+            useEffect(() => {
+                safeStorage.setItem('quran_autoscroll', String(autoScrollEnabled));
+            }, [autoScrollEnabled]);
 
             useEffect(() => {
                 safeStorage.setItem('quran_repeatMode', repeatMode);
@@ -1185,7 +1192,64 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 setSearching(true); setViewMode('search'); setRawMatches([]); setDetailedResults([]); setCurrentSearchTerm(queryRaw);
                 
                 try {
-                    // 1. Build/Load Index (Multi-Translation) — uses IndexedDB (bigCache)
+                    // 1. Check for Navigation (e.g. "Bakara 43") BEFORE loading index
+                    const navRegex = /^(.+?)[\s\:\-]+(\d+)$/;
+                    const matchNav = queryRaw.match(navRegex);
+
+                    const findSurahID = (q) => {
+                        const nQ = normalizeText(q);
+                        if (!nQ) return null;
+                        if (/^\d+$/.test(nQ)) {
+                            const n = parseInt(nQ);
+                            if (n >= 1 && n <= 114) return n;
+                        }
+                        let bestID = null, bestScore = 0;
+                        SURAH_NAMES_TR.forEach((name, idx) => {
+                            const norm = normalizeText(name);
+                            let score = 0;
+                            if (norm === nQ) score = 3;
+                            else if (norm.startsWith(nQ)) score = 2;
+                            else if (norm.includes(nQ)) score = 1;
+                            if (score > bestScore) { bestScore = score; bestID = idx + 1; }
+                        });
+                        return bestID;
+                    };
+
+                    let targetSurahID = null, targetVerseNum = null;
+                    if (matchNav) {
+                        const candidate = findSurahID(matchNav[1]);
+                        // Only treat as navigation if the text part is actually a surah name
+                        if (candidate) {
+                            targetSurahID = candidate;
+                            targetVerseNum = parseInt(matchNav[2]);
+                        }
+                    }
+                    if (!targetSurahID) {
+                        // Check if it's just a surah name
+                        const possibleID = findSurahID(queryRaw);
+                        if (possibleID) {
+                            targetSurahID = possibleID;
+                            targetVerseNum = 1;
+                        }
+                    }
+
+                    if (targetSurahID) {
+                        const sInfo = surahs.find(s => s.number === targetSurahID);
+                        if (sInfo && targetVerseNum && targetVerseNum > sInfo.numberOfAyahs) {
+                            showToast(`${getSurahNameTR(targetSurahID)} suresi ${sInfo.numberOfAyahs} ayettir.`);
+                            setSearching(false); setViewMode('reader'); return;
+                        }
+                        const s = surahs.find(x => x.number === targetSurahID);
+                        if (s) {
+                            if (targetVerseNum && targetVerseNum > 1) {
+                                jumpTargetRef.current = { ayahNumber: targetVerseNum, shouldPlay: false };
+                            }
+                            fetchSurah(s);
+                            setSearching(false); return;
+                        }
+                    }
+
+                    // 2. Build/Load Index (Multi-Translation) — uses IndexedDB (bigCache)
                     let quranData = fullQuranIndex.current;
                     if (!quranData) {
                         const CACHE_KEY = 'quran_index_v2';
@@ -1264,63 +1328,6 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 showToast("Arama hazırlanamadı: " + err.message);
                                 setSearching(false); setLoadingText(''); setViewMode('reader'); return;
                             }
-                        }
-                    }
-
-                    // 2. Check for Navigation (e.g. "Bakara 43")
-                    const navRegex = /^(.+?)[\s\:\-]+(\d+)$/;
-                    const matchNav = queryRaw.match(navRegex);
-
-                    const findSurahID = (q) => {
-                        const nQ = normalizeText(q);
-                        if (!nQ) return null;
-                        if (/^\d+$/.test(nQ)) {
-                            const n = parseInt(nQ);
-                            if (n >= 1 && n <= 114) return n;
-                        }
-                        let bestID = null, bestScore = 0;
-                        SURAH_NAMES_TR.forEach((name, idx) => {
-                            const norm = normalizeText(name);
-                            let score = 0;
-                            if (norm === nQ) score = 3;
-                            else if (norm.startsWith(nQ)) score = 2;
-                            else if (norm.includes(nQ)) score = 1;
-                            if (score > bestScore) { bestScore = score; bestID = idx + 1; }
-                        });
-                        return bestID;
-                    };
-
-                    let targetSurahID = null, targetVerseNum = null;
-                    if (matchNav) {
-                        const candidate = findSurahID(matchNav[1]);
-                        // Only treat as navigation if the text part is actually a surah name
-                        if (candidate) {
-                            targetSurahID = candidate;
-                            targetVerseNum = parseInt(matchNav[2]);
-                        }
-                    }
-                    if (!targetSurahID) {
-                        // Check if it's just a surah name
-                        const possibleID = findSurahID(queryRaw);
-                        if (possibleID) {
-                            targetSurahID = possibleID;
-                            targetVerseNum = 1;
-                        }
-                    }
-
-                    if (targetSurahID) {
-                        const sInfo = surahs.find(s => s.number === targetSurahID);
-                        if (sInfo && targetVerseNum && targetVerseNum > sInfo.numberOfAyahs) {
-                            showToast(`${getSurahNameTR(targetSurahID)} suresi ${sInfo.numberOfAyahs} ayettir.`);
-                            setSearching(false); setViewMode('reader'); return;
-                        }
-                        const s = surahs.find(x => x.number === targetSurahID);
-                        if (s) {
-                            if (targetVerseNum && targetVerseNum > 1) {
-                                jumpTargetRef.current = { ayahNumber: targetVerseNum, shouldPlay: false };
-                            }
-                            fetchSurah(s);
-                            setSearching(false); return;
                         }
                     }
 
@@ -1482,7 +1489,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
-                playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
+                playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled,
                 toastMessage, showToast, scrollPositionRef, playlistPlaybackRef, playbackPlaylistRef
             };
 
@@ -1643,10 +1650,29 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 if (diyanetTafsir || loadingDiyanet) return;
                 setLoadingDiyanet(true);
                 try {
-                    // CORS Proxy kullanarak Diyanet sitesinden tefsiri çekiyoruz (allorigins hata verdiği için codetabs kullanıyoruz)
-                    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(diyanetUrl)}`;
-                    const response = await fetch(proxyUrl);
-                    const htmlText = await response.text();
+                    const proxies = [
+                        `https://api.allorigins.win/get?url=${encodeURIComponent(diyanetUrl)}`,
+                        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(diyanetUrl)}`,
+                        `https://corsproxy.io/?url=${encodeURIComponent(diyanetUrl)}`
+                    ];
+                    
+                    let htmlText = null;
+                    for (const proxyUrl of proxies) {
+                        try {
+                            const response = await fetch(proxyUrl);
+                            if (response.ok) {
+                                if (proxyUrl.includes('allorigins')) {
+                                    const data = await response.json();
+                                    htmlText = data.contents;
+                                } else {
+                                    htmlText = await response.text();
+                                }
+                                if (htmlText && htmlText.includes('tefsir-text')) break;
+                            }
+                        } catch (e) { console.warn("Proxy failed:", proxyUrl); }
+                    }
+                    
+                    if (!htmlText) throw new Error("Tüm CORS proxy'leri başarısız oldu.");
                     
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(htmlText, 'text/html');
@@ -1939,7 +1965,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode, fetchSurah, surahs, activeSurah, jumpTargetRef, setViewMode, activePlaylist, setActivePlaylist, viewMode, playlistPlaybackRef, playbackPlaylistRef, ayahs, setDisplayLimit, skipDisplayResetRef } = useQuran();
+            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled, fetchSurah, surahs, activeSurah, jumpTargetRef, setViewMode, activePlaylist, setActivePlaylist, viewMode, playlistPlaybackRef, playbackPlaylistRef, ayahs, setDisplayLimit, skipDisplayResetRef } = useQuran();
 
             // Local state for high-frequency updates
             const [currentTime, setCurrentTime] = useState(0);
@@ -2102,8 +2128,11 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 <button onClick={playNext} aria-label="Sonraki ayet" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors active:scale-95"><i className="fa-solid fa-forward-step text-xs"></i></button>
                             </div>
 
-                            {/* Right: Repeat Mode */}
+                            {/* Right: Repeat Mode & Auto Scroll */}
                             <div className="flex-1 flex justify-end items-center gap-2">
+                                <button onClick={() => setAutoScrollEnabled(p => !p)} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${autoScrollEnabled ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600 hover:bg-gray-200 dark:hover:bg-gray-700'}`} title={autoScrollEnabled ? "Otomatik Takip Açık" : "Otomatik Takip Kapalı"} aria-label="Otomatik Takibi Aç/Kapat" aria-pressed={autoScrollEnabled}>
+                                    <i className="fa-solid fa-crosshairs text-xs"></i>
+                                </button>
                                 <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600 hover:bg-gray-200 dark:hover:bg-gray-700'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"} aria-label={repeatMode === 'none' ? 'Tekrar kapalı, tekrar modunu değiştir' : repeatMode === 'one' ? 'Tek ayet tekrar modu, değiştir' : 'Tüm liste tekrar modu, değiştir'} aria-pressed={repeatMode !== 'none'}>
                                     <i className="fa-solid fa-repeat text-xs"></i>
                                     {repeatMode === 'one' && <span className="absolute text-[8px] font-bold bottom-1 right-1.5 bg-white dark:bg-black rounded-full w-3 h-3 flex items-center justify-center leading-none border border-emerald-100 dark:border-neutral-800">1</span>}
@@ -2674,6 +2703,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     }
 
                     if (activeAyah.number !== lastScrolledAyah.current) {
+                        if (!autoScrollEnabled) {
+                            lastScrolledAyah.current = activeAyah.number;
+                            return;
+                        }
                         // Retry-based scroll — handles lazy loading and render delays
                         let attempts = 0;
                         const maxAttempts = 10; // 10 x 100ms = 1s total
