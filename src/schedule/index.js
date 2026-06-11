@@ -490,13 +490,33 @@ function initScheduleApp() {
             this._bindSearch();
             const cachedData = this._dataManager.loadFromCache();
             let isCachedDisplayed = false;
-            if (cachedData && Object.keys(cachedData).length > 0) { this._renderer.renderSchedule(cachedData); isCachedDisplayed = true; }
-            else { this._renderer.showLoading(); }
-            const freshData = await this._dataManager.fetchFreshData();
-            if (freshData) {
-                const hasChanges = JSON.stringify(cachedData || {}) !== JSON.stringify(freshData);
-                if (hasChanges || !isCachedDisplayed) { this._dataManager.saveToCache(freshData); this._renderer.renderSchedule(freshData); }
-            } else if (!isCachedDisplayed) { this._renderer.showError(); }
+            
+            if (cachedData && Object.keys(cachedData).length > 0) { 
+                this._renderer.renderSchedule(cachedData); 
+                isCachedDisplayed = true; 
+                
+                // Defer background fetch to keep main thread completely free for initial paint
+                setTimeout(async () => {
+                    const freshData = await this._dataManager.fetchFreshData();
+                    if (freshData) {
+                        const hasChanges = JSON.stringify(cachedData || {}) !== JSON.stringify(freshData);
+                        if (hasChanges) { 
+                            this._dataManager.saveToCache(freshData); 
+                            this._renderer.renderSchedule(freshData); 
+                        }
+                    }
+                }, 2000);
+            }
+            else { 
+                this._renderer.showLoading(); 
+                const freshData = await this._dataManager.fetchFreshData();
+                if (freshData) {
+                    this._dataManager.saveToCache(freshData); 
+                    this._renderer.renderSchedule(freshData); 
+                } else { 
+                    this._renderer.showError(); 
+                }
+            }
         }
         _bindSearch() {
             const input = document.getElementById('input-search');
