@@ -133,8 +133,8 @@ function initScheduleApp() {
     });
 
     const CONFIG = Object.freeze({
-        CACHE_KEY: 'ders_programi_v9_xlsx',
-        CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
+        CACHE_KEY: 'ders_programi_v10_csv',
+        CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=csv',
         CLASSES: {
             hidden: 'hidden',
             rotate: 'rotate-icon',
