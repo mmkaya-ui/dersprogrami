@@ -200,6 +200,47 @@ function initScheduleApp() {
                 if (candidate - now.getTime() > 60 * 24 * 60 * 60 * 1000) year -= 1;
                 return Date.UTC(year, monthIndex, day, hour - 3, minute);
             } catch (e) { console.warn(e); return 0; }
+        },
+        parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (inQuotes) {
+                    if (char === '"') {
+                        if (text[i + 1] === '"') {
+                            currentCell += '"';
+                            i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        currentCell += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        currentRow.push(currentCell);
+                        currentCell = '';
+                    } else if (char === '\n' || char === '\r') {
+                        if (char === '\r' && text[i + 1] === '\n') i++;
+                        currentRow.push(currentCell);
+                        rows.push(currentRow);
+                        currentRow = [];
+                        currentCell = '';
+                    } else {
+                        currentCell += char;
+                    }
+                }
+            }
+            if (currentCell !== '' || currentRow.length > 0) {
+                currentRow.push(currentCell);
+                rows.push(currentRow);
+            }
+            return rows;
         }
     };
 
@@ -227,11 +268,8 @@ function initScheduleApp() {
                 const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
                 const response = await fetch(CONFIG.CSV_URL + cacheBuster, { cache: 'no-store' });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const buffer = await response.arrayBuffer();
-                const XLSX = await import('xlsx');
-                const workbook = XLSX.read(buffer, { type: 'array' });
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+                const text = await response.text();
+                const rows = Utils.parseCSV(text);
                 return this._processRows(rows);
             } catch (error) { console.error('[DataManager] fetchFreshData failed:', error); return null; }
         }
