@@ -197,14 +197,6 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 scrollPositionsRef.current.reader = 0;
             }, [activeSurah]);
 
-            // ═══════════════════════════════════════════════════
-            // SECTION 3 — PLAYLIST & SELECTION
-            // ═══════════════════════════════════════════════════
-            const [playlists, setPlaylists] = useState([]);
-            const [selectedAyahs, setSelectedAyahs] = useState([]);
-            const [activePlaylistId, setActivePlaylistId] = useState(null);
-            const activePlaylist = useMemo(() => playlists.find(p => p.id === activePlaylistId) || null, [playlists, activePlaylistId]);
-            const setActivePlaylist = useCallback((p) => setActivePlaylistId(p ? p.id : null), []);
 
             // ═══════════════════════════════════════════════════
             // SECTION 4 — PREFERENCES & UI
