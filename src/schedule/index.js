@@ -137,7 +137,7 @@ function initScheduleApp() {
         },
         MONTHS: { 'ocak': 0, 'subat': 1, 'mart': 2, 'nisan': 3, 'mayis': 4, 'haziran': 5, 'temmuz': 6, 'agustos': 7, 'eylul': 8, 'ekim': 9, 'kasim': 10, 'aralik': 11 },
         SEARCH_DEBOUNCE_MS: 150,
-        JOIN_TOLERANCE_MIN: 90
+        JOIN_TOLERANCE_MIN: 60
     });
 
     const EXTRA_RESOURCES = [
