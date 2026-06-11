@@ -6,7 +6,7 @@
   "description": "Kuran okuma, dinleme, arama ve ders programı uygulaması",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/inline-css.cjs",
     "preview": "vite preview",
     "deploy:check": "vite build && vite preview"
   },
