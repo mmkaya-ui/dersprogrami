@@ -273,6 +273,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             // playlist_view veya my_notes'tan donunce reader'i en basa al (farkli icerik).
             // Initial value mirrors the actual initial viewMode state so first transition is correct.
             const prevViewModeRef = useRef(null);
+            const viewModeRef = useRef(viewMode);
+            viewModeRef.current = viewMode;
+
             useEffect(() => {
                 const mainScroll = document.getElementById('main-scroll');
                 if (!mainScroll) return;
@@ -292,7 +295,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     }
 
                     const handleScroll = () => {
-                        scrollPositionRef.current = mainScroll.scrollTop;
+                        if (viewModeRef.current === 'reader') {
+                            scrollPositionRef.current = mainScroll.scrollTop;
+                        }
                     };
                     mainScroll.addEventListener('scroll', handleScroll, { passive: true });
                     prevViewModeRef.current = 'reader';
