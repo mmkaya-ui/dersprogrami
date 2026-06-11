@@ -22,11 +22,10 @@ export default async function handler(req, res) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Extract the tefsir text content
     const tefsirHtml = $('.tefsir-text').html();
 
     if (!tefsirHtml) {
-      throw new Error('Tefsir text not found on the page.');
+      throw new Error('Tefsir text not found. HTML snippet: ' + html.substring(0, 500));
     }
 
     // Set caching headers so Vercel edge caches this for 1 hour
