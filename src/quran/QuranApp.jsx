@@ -1653,27 +1653,20 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         .finally(() => setLoadingFootnotes(false));
                 }
             }, [showTafsir, ayahData.surahNumber, ayahData.numberInSurah]);
-
-            const globalID = getGlobalAyahID(ayahData.surahNumber, ayahData.numberInSurah);
-            const normalizedSurahName = (ayahData.surahName || getSurahNameTR(ayahData.surahNumber) || '').toLowerCase()
-                .replace(/â/g,'a').replace(/î/g,'i').replace(/û/g,'u').replace(/ö/g,'o').replace(/ü/g,'u')
-                .replace(/ş/g,'s').replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ı/g,'i')
-                .replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-            const diyanetUrl = `https://kuran.diyanet.gov.tr/tefsir/${normalizedSurahName}-suresi/${globalID}/${ayahData.numberInSurah}-ayet-tefsiri`;
-
             const fetchDiyanetTafsir = async () => {
                 if (diyanetTafsir || loadingDiyanet) return;
                 setLoadingDiyanet(true);
                 try {
-                    const response = await fetch(`/api/tafsir?slug=${normalizedSurahName}&globalId=${globalID}&ayah=${ayahData.numberInSurah}`);
-                    if (!response.ok) throw new Error("Tefsir metni bulunamadı veya ağ hatası.");
+                    const response = await fetch(`/data/tafsir/diyanet/${ayahData.surahNumber}.json`);
+                    if (!response.ok) throw new Error("Tefsir dosyası bulunamadı.");
                     const resJson = await response.json();
-                    if (!resJson.success) throw new Error(resJson.error || "Tefsir verisi alınamadı.");
+                    const ayahHtml = resJson[ayahData.numberInSurah];
+                    if (!ayahHtml) throw new Error("Bu ayetin tefsiri veritabanında yok.");
                     
-                    setDiyanetTafsir(resJson.data);
+                    setDiyanetTafsir(ayahHtml);
                 } catch (err) {
-                    console.error("Diyanet proxy fetch error:", err);
-                    setDiyanetTafsir("<p class='text-red-500'>Tefsir metni şu an için yüklenemedi. Lütfen daha sonra tekrar deneyiniz.</p>");
+                    console.error("Diyanet local fetch error:", err);
+                    setDiyanetTafsir("<p class='text-red-500'>Tefsir metni şu an için yüklenemedi. Veritabanı güncelleniyor olabilir.</p>");
                 } finally {
                     setLoadingDiyanet(false);
                 }
