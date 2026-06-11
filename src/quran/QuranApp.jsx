@@ -168,7 +168,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const lastTransitionTimeRef = useRef(0);
             const playAyahRef = useRef(null);
             const nextSurahCacheRef = useRef(null);
-            const scrollPositionRef = useRef(0); // Store scroll position when switching views
+            const scrollPositionsRef = useRef({ reader: 0, search: 0, my_notes: 0, playlists_list: 0, playlist_view: 0 });
             // Tracks whether the current playback chain was started from playlist_view.
             // Set to true only when the user taps play inside playlist_view;
             // cleared when the user manually taps play in reader/search view.
@@ -178,7 +178,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
             // Reset scroll memory when surah changes
             useEffect(() => {
-                scrollPositionRef.current = 0;
+                scrollPositionsRef.current.reader = 0;
             }, [activeSurah]);
 
             // ═══════════════════════════════════════════════════
@@ -280,31 +280,26 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 const mainScroll = document.getElementById('main-scroll');
                 if (!mainScroll) return;
 
-                if (viewMode === 'reader') {
-                    const prev = prevViewModeRef.current;
-                    // Restore scroll position if returning from search, notes, or playlists
-                    const shouldRestore = prev !== null && prev !== 'reader' && scrollPositionRef.current > 0;
-                    if (shouldRestore) {
-                        setTimeout(() => {
-                            mainScroll.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
-                        }, 50);
-                    } else {
-                        // playlist/notes'tan geliyorsak veya ilk yuklemede basa don
-                        mainScroll.scrollTo({ top: 0, behavior: 'auto' });
-                        scrollPositionRef.current = 0;
-                    }
+                const currentView = viewMode;
+                const savedScroll = scrollPositionsRef.current[currentView] || 0;
 
-                    const handleScroll = () => {
-                        if (viewModeRef.current === 'reader') {
-                            scrollPositionRef.current = mainScroll.scrollTop;
-                        }
-                    };
-                    mainScroll.addEventListener('scroll', handleScroll, { passive: true });
-                    prevViewModeRef.current = 'reader';
-                    return () => mainScroll.removeEventListener('scroll', handleScroll);
+                if (savedScroll > 0) {
+                    setTimeout(() => {
+                        mainScroll.scrollTo({ top: savedScroll, behavior: 'auto' });
+                    }, 50);
                 } else {
-                    prevViewModeRef.current = viewMode;
+                    mainScroll.scrollTo({ top: 0, behavior: 'auto' });
                 }
+
+                const handleScroll = () => {
+                    const activeView = viewModeRef.current;
+                    scrollPositionsRef.current[activeView] = mainScroll.scrollTop;
+                };
+
+                mainScroll.addEventListener('scroll', handleScroll, { passive: true });
+                prevViewModeRef.current = currentView;
+                
+                return () => mainScroll.removeEventListener('scroll', handleScroll);
             }, [viewMode]);
 
             useEffect(() => {
@@ -1495,7 +1490,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled,
-                toastMessage, showToast, scrollPositionRef, playlistPlaybackRef, playbackPlaylistRef
+                toastMessage, showToast, scrollPositionsRef, playlistPlaybackRef, playbackPlaylistRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -2632,13 +2627,13 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 searching, searchQuery, handleSearch, currentSearchTerm, rawMatches, setRawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
-                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionRef,
+                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionsRef,
                 playlistPlaybackRef, playbackPlaylistRef, autoScrollEnabled
             } = useQuran();
 
             // Initialize lastScrolledAyah to activeAyah.number if returning to a saved scroll position,
             // to bypass the initial smooth auto-scroll and jump instantly.
-            const lastScrolledAyah = useRef(scrollPositionRef.current > 0 ? activeAyah?.number : null);
+            const lastScrolledAyah = useRef(scrollPositionsRef.current.reader > 0 ? activeAyah?.number : null);
 
             // Smart Scroll Detection - Hide/Show Mobile Surah Select on scroll
             const [showMobileSelect, setShowMobileSelect] = useState(true);
@@ -3294,22 +3289,30 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                     )}
                                 </form>
                             </div>
-                            {/* Navigation Tabs */}
                             <div className="flex gap-1 mt-2 mb-1">
                                 <button
-                                    onClick={() => navigate('reader')}
+                                    onClick={() => {
+                                        if (viewMode === 'reader') document.getElementById('main-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+                                        else navigate('reader');
+                                    }}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'reader' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
                                     <i className="fa-solid fa-book-open text-[10px]"></i> Kur'an
                                 </button>
                                 <button
-                                    onClick={() => navigate('my_notes')}
+                                    onClick={() => {
+                                        if (viewMode === 'my_notes') document.getElementById('main-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+                                        else navigate('my_notes');
+                                    }}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'my_notes' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
                                     <i className="fa-solid fa-comment text-[10px]"></i> Notlarım
                                 </button>
                                 <button
-                                    onClick={() => navigate('playlists_list')}
+                                    onClick={() => {
+                                        if (viewMode === 'playlists_list') document.getElementById('main-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+                                        else navigate('playlists_list');
+                                    }}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'playlists_list' || viewMode === 'playlist_view' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
                                     <i className="fa-solid fa-layer-group text-[10px]"></i> Listelerim
