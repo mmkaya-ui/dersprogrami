@@ -2,7 +2,6 @@
  * Schedule App — vanilla JS (extracted from inline <script>)
  * Mounts inside #app-schedule using HTML <template> elements.
  */
-import * as XLSX from 'xlsx';
 
 if (window.DERS_PROGRAMI_APP_LOADED) {
     // Idempotent: skip re-init in case of HMR or duplicate import
@@ -40,6 +39,15 @@ function initScheduleApp() {
             quranApp.classList.remove('hidden');
             const isDark = document.documentElement.classList.contains('dark');
             if (window.syncReactTheme) window.syncReactTheme(isDark);
+
+            // Lazy Load Quran App on first open
+            if (!window.__quranAppLoaded) {
+                window.__quranAppLoaded = true;
+                import('../quran/QuranApp.jsx').catch(err => {
+                    console.error("Quran App yuklenemedi", err);
+                    window.__quranAppLoaded = false;
+                });
+            }
 
             if (!fromHistory && !window.location.hash.startsWith('#quran')) {
                 history.pushState({ quran: true, view: 'reader' }, '', '#quran');
@@ -220,6 +228,7 @@ function initScheduleApp() {
                 const response = await fetch(CONFIG.CSV_URL + cacheBuster, { cache: 'no-store' });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const buffer = await response.arrayBuffer();
+                const XLSX = await import('xlsx');
                 const workbook = XLSX.read(buffer, { type: 'array' });
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
