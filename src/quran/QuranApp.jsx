@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef, useContext, createContext, useMemo, useCallback } from "react";
 import ReactDOM from "react-dom/client";
 import DOMPurify from "dompurify";
+import ReactMarkdown from "react-markdown";
 import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalStorage } from "../lib/storage.js";
 
         // Debounce hook for dynamic search
@@ -1669,46 +1670,13 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 if (diyanetTafsir || loadingDiyanet) return;
                 setLoadingDiyanet(true);
                 try {
-                    const proxies = [
-                        `https://api.allorigins.win/get?url=${encodeURIComponent(diyanetUrl)}`,
-                        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(diyanetUrl)}`,
-                        `https://corsproxy.io/?url=${encodeURIComponent(diyanetUrl)}`
-                    ];
-                    
-                    let htmlText = null;
-                    for (const proxyUrl of proxies) {
-                        try {
-                            const response = await fetch(proxyUrl);
-                            if (response.ok) {
-                                if (proxyUrl.includes('allorigins')) {
-                                    const data = await response.json();
-                                    htmlText = data.contents;
-                                } else {
-                                    htmlText = await response.text();
-                                }
-                                if (htmlText && htmlText.includes('tefsir-text')) break;
-                            }
-                        } catch (e) { console.warn("Proxy failed:", proxyUrl); }
-                    }
-                    
-                    if (!htmlText) throw new Error("Tüm CORS proxy'leri başarısız oldu.");
-                    
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlText, 'text/html');
-                    const tefsirDiv = doc.querySelector('.tefsir-text');
-                    
-                    if (tefsirDiv) {
-                        const cleanText = DOMPurify.sanitize(tefsirDiv.innerHTML, {
-                            ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'br', 'ul', 'ol', 'li', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'],
-                            ALLOWED_ATTR: ['href', 'target', 'rel']
-                        });
-                        setDiyanetTafsir(cleanText);
-                    } else {
-                        setDiyanetTafsir("<div class='p-4 bg-orange-50 border border-orange-200 rounded-lg'><p class='text-sm text-orange-700 font-medium'>Diyanet İşleri Başkanlığı'nın web sitesi, güvenlik ayarları (Cloudflare vb.) sebebiyle doğrudan tefsir çekilmesini engellemektedir.</p><p class='text-sm text-orange-600 mt-2'>Tefsiri okumak için lütfen sağ üstteki <strong>Orijinal Kaynak</strong> butonuna tıklayınız.</p></div>");
-                    }
+                    const response = await fetch(`/data/tafsir/elmalili/${ayahData.surahNumber}.md`);
+                    if (!response.ok) throw new Error("Tefsir metni bulunamadı.");
+                    const mdText = await response.text();
+                    setDiyanetTafsir(mdText);
                 } catch (err) {
-                    console.error("Diyanet fetch error:", err);
-                    setDiyanetTafsir("<div class='p-4 bg-orange-50 border border-orange-200 rounded-lg'><p class='text-sm text-orange-700 font-medium'>Diyanet İşleri Başkanlığı'nın web sitesi, güvenlik ayarları (Cloudflare vb.) sebebiyle doğrudan tefsir çekilmesini engellemektedir.</p><p class='text-sm text-orange-600 mt-2'>Tefsiri okumak için lütfen sağ üstteki <strong>Orijinal Kaynak</strong> butonuna tıklayınız.</p></div>");
+                    console.error("Elmalili fetch error:", err);
+                    setDiyanetTafsir("Tefsir metni şu an için yüklenemedi. Lütfen daha sonra tekrar deneyiniz.");
                 } finally {
                     setLoadingDiyanet(false);
                 }
@@ -1956,12 +1924,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                     </div>
                                 )}
 
-                                <div className="mt-4 pt-4 border-t dark:border-neutral-800">
-                                    <h4 className="text-xs font-bold text-emerald-600 mb-3 flex items-center justify-between">
-                                        <span>Diyanet İşleri (Kur'an Yolu) Tefsiri</span>
-                                        <a href={diyanetUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-600/70 hover:text-emerald-600 dark:text-emerald-500/70 dark:hover:text-emerald-400 transition-colors flex items-center gap-1" title="Diyanet sitesinde aç">
-                                            Orijinal Kaynak <i className="fa-solid fa-arrow-up-right-from-square"></i>
-                                        </a>
+                                <div className="p-5 border-t border-neutral-200/50 dark:border-neutral-700/50 bg-slate-50 dark:bg-[#151515]">
+                                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
+                                        <i className="fa-solid fa-book-open-reader text-emerald-600 dark:text-emerald-500"></i>
+                                        <span>Elmalılı Hamdi Yazır Tefsiri (Tüm Sure)</span>
                                     </h4>
                                     
                                     {loadingDiyanet ? (
