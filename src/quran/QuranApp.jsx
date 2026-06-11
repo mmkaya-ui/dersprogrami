@@ -144,6 +144,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const jumpTargetRef = useRef(null); // { ayahNumber, shouldPlay }
             const skipDisplayResetRef = useRef(false);
             const [displayLimit, setDisplayLimit] = useState(10);
+            const [playlistLimit, setPlaylistLimit] = useState(10);
             const fullQuranIndex = useRef(null);
 
             // ═══════════════════════════════════════════════════
@@ -758,46 +759,46 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         setLoadingText("Liste detayları güncelleniyor...");
 
                         const chunkSizes = 5;
-                        const newItemsMap = {};
 
                         for (let i = 0; i < uniquePartials.length; i += chunkSizes) {
                             const chunk = uniquePartials.slice(i, i + chunkSizes);
                             const matches = chunk.map(p => ({ surah: { number: p.surahNumber }, numberInSurah: p.numberInSurah }));
                             try {
                                 const details = await fetchDetailsForMatches(matches);
-                                details.forEach(d => { newItemsMap[d.number] = d; });
+                                const chunkMap = {};
+                                details.forEach(d => { chunkMap[d.number] = d; });
+                                
+                                setPlaylists(prev => prev.map(p => {
+                                    if (p.id === activePlaylist.id) {
+                                        return {
+                                            ...p,
+                                            items: p.items.map(item => chunkMap[item.number] || item)
+                                        };
+                                    }
+                                    return p;
+                                }));
                             } catch (chunkErr) {
                                 console.warn("[Hydration] Failed to fetch chunk", chunkErr);
+                                setPlaylists(prev => prev.map(p => {
+                                    if (p.id === activePlaylist.id) {
+                                        return {
+                                            ...p,
+                                            items: p.items.map(item => {
+                                                if (chunk.some(c => c.number === item.number)) {
+                                                    const { isPartial, ...rest } = item;
+                                                    return rest;
+                                                }
+                                                return item;
+                                            })
+                                        };
+                                    }
+                                    return p;
+                                }));
                             }
                         }
 
-                        try {
-                            const updater = (list) => list.map(item => {
-                                if (newItemsMap[item.number]) {
-                                    return newItemsMap[item.number];
-                                }
-                                // If this item was in the uniquePartials chunk we tried to fetch but it failed,
-                                // strip the isPartial flag to prevent an infinite hydration fetch loop.
-                                if (uniquePartials.some(up => up.number === item.number)) {
-                                    const { isPartial, ...rest } = item;
-                                    return rest;
-                                }
-                                return item;
-                            });
-
-                            setPlaylists(prev => prev.map(p => {
-                                if (p.id === activePlaylist.id) {
-                                    return { ...p, items: updater(p.items) };
-                                }
-                                return p;
-                            }));
-                            // activePlaylist is derived from playlists via useMemo — no separate sync needed
-                        } catch (e) {
-                            console.error("Hydration failed", e);
-                        } finally {
-                            setLoadingText("");
-                            loadingRef.current = false;
-                        }
+                        setLoadingText("");
+                        loadingRef.current = false;
                     };
 
                     hydrate();
@@ -1502,7 +1503,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
-                displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
+                displayLimit, setDisplayLimit, playlistLimit, setPlaylistLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled,
                 toastMessage, showToast, scrollPositionsRef, playlistPlaybackRef, playbackPlaylistRef
             };
@@ -2609,7 +2610,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 searching, searchQuery, handleSearch, currentSearchTerm, rawMatches, setRawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
-                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionsRef,
+                activeAyah, isPlaying, displayLimit, setDisplayLimit, playlistLimit, setPlaylistLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionsRef,
                 playlistPlaybackRef, playbackPlaylistRef, autoScrollEnabled
             } = useQuran();
 
@@ -2712,9 +2713,14 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
             // Infinite Scroll Logic — skip reset when a jump just set displayLimit
             useEffect(() => {
+                if (viewMode === 'playlist_view' || viewMode === 'playlists_list') return; // Liste ekranındayken okuma hafızasını (displayLimit) sıfırlama
                 if (skipDisplayResetRef?.current) { skipDisplayResetRef.current = false; return; }
                 setDisplayLimit(10);
-            }, [activeSurah, searchQuery]);
+            }, [activeSurah, searchQuery, viewMode]);
+
+            useEffect(() => {
+                if (activePlaylist) setPlaylistLimit(10);
+            }, [activePlaylist?.id]);
 
             const handleLoadMore = useCallback(() => {
                 if (viewMode === 'reader' && displayLimit < ayahs.length) {
@@ -2729,8 +2735,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                             setDetailedResults(prev => [...prev, ...ordered]);
                         });
                     }
+                } else if (viewMode === 'playlist_view' && activePlaylist && playlistLimit < activePlaylist.items.length) {
+                    setPlaylistLimit(prev => Math.min(prev + 10, activePlaylist.items.length));
                 }
-            }, [viewMode, displayLimit, ayahs.length, detailedResults.length, rawMatches, fetchDetailsForMatches]);
+            }, [viewMode, displayLimit, playlistLimit, ayahs.length, detailedResults.length, rawMatches, fetchDetailsForMatches, activePlaylist]);
 
             // Determine all items in current context (for Select All)
             const allItemsInContext = useMemo(() => {
@@ -2783,9 +2791,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const itemsToRender = useMemo(() => {
                 if (viewMode === 'reader') return ayahs.slice(0, displayLimit);
                 if (viewMode === 'search') return detailedResults;
-                if (viewMode === 'playlist_view' && activePlaylist) return activePlaylist.items;
+                if (viewMode === 'playlist_view' && activePlaylist) return activePlaylist.items.slice(0, playlistLimit);
                 return [];
-            }, [viewMode, ayahs, displayLimit, detailedResults, activePlaylist]);
+            }, [viewMode, ayahs, displayLimit, detailedResults, activePlaylist, playlistLimit]);
 
             // Farklı suredeyken VEYA aynı suredeyken PlayerBar kapalıysa (aktif ayet yok/oynamıyor) göster
             const bookmarkInCurrentSurah = bookmark && bookmark.surahNumber === activeSurah?.number;
@@ -2939,7 +2947,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                     <AyahCard key={ayah.number} ayahData={ayah} />
                                 ))}
 
-                                {(viewMode === 'reader' && displayLimit < ayahs.length) || (viewMode === 'search' && detailedResults.length < rawMatches.length) ? (
+                                {(viewMode === 'reader' && displayLimit < ayahs.length) || (viewMode === 'search' && detailedResults.length < rawMatches.length) || (viewMode === 'playlist_view' && activePlaylist && playlistLimit < activePlaylist.items.length) ? (
                                     <InfiniteScrollTrigger onIntersect={handleLoadMore} />
                                 ) : null}
                             </>
