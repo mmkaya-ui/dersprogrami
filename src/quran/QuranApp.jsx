@@ -3310,8 +3310,17 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 </button>
                                 <button
                                     onClick={() => {
-                                        if (viewMode === 'playlists_list') document.getElementById('main-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
-                                        else navigate('playlists_list');
+                                        if (viewMode === 'playlists_list') {
+                                            document.getElementById('main-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+                                        } else if (viewMode === 'playlist_view') {
+                                            navigate('playlists_list');
+                                        } else {
+                                            if (activePlaylist) {
+                                                navigate('playlist_view');
+                                            } else {
+                                                navigate('playlists_list');
+                                            }
+                                        }
                                     }}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'playlists_list' || viewMode === 'playlist_view' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
