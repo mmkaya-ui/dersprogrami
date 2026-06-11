@@ -1662,7 +1662,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 if (diyanetTafsir || loadingDiyanet) return;
                 setLoadingDiyanet(true);
                 try {
-                    const response = await fetch(`/api/tafsir?surah=${ayahData.surahNumber}&ayah=${ayahData.numberInSurah}`);
+                    const response = await fetch(`/api/tafsir?slug=${normalizedSurahName}&globalId=${globalID}&ayah=${ayahData.numberInSurah}`);
                     if (!response.ok) throw new Error("Tefsir metni bulunamadı veya ağ hatası.");
                     const resJson = await response.json();
                     if (!resJson.success) throw new Error(resJson.error || "Tefsir verisi alınamadı.");
@@ -1921,7 +1921,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 <div className="p-5 border-t border-neutral-200/50 dark:border-neutral-700/50 bg-slate-50 dark:bg-[#151515]">
                                     <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
                                         <i className="fa-solid fa-book-open-reader text-emerald-600 dark:text-emerald-500"></i>
-                                        <span>Elmalılı Hamdi Yazır Tefsiri (Tüm Sure)</span>
+                                        <span>Diyanet Kur'an Yolu Tefsiri</span>
                                     </h4>
                                     
                                     {loadingDiyanet ? (

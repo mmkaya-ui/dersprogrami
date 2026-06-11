@@ -1,14 +1,14 @@
 import * as cheerio from 'cheerio';
 
 export default async function handler(req, res) {
-  const { surah, ayah } = req.query;
+  const { slug, globalId, ayah } = req.query;
 
-  if (!surah || !ayah) {
-    return res.status(400).json({ error: 'Missing surah or ayah parameters' });
+  if (!slug || !globalId || !ayah) {
+    return res.status(400).json({ error: 'Missing slug, globalId, or ayah parameters' });
   }
 
   try {
-    const url = `https://kuran.diyanet.gov.tr/tefsir/suresi/${surah}/${ayah}-ayet-tefsiri`;
+    const url = `https://kuran.diyanet.gov.tr/tefsir/${slug}-suresi/${globalId}/${ayah}-ayet-tefsiri`;
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
