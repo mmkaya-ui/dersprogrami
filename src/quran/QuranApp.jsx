@@ -810,8 +810,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     // Check if already cached
                     const cachedResponse = await cache.match(audioUrl);
                     if (!cachedResponse) {
-                        const res = await fetch(audioUrl);
-                        if (res.status === 200) {
+                        const res = await fetch(audioUrl, { mode: 'no-cors' });
+                        if (res.ok || res.type === 'opaque') {
                             await cache.put(audioUrl, res);
                         }
                     }
@@ -1690,11 +1690,11 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         });
                         setDiyanetTafsir(cleanText);
                     } else {
-                        setDiyanetTafsir("<p class='text-sm text-red-500'>Tefsir metni bu sayfadan çekilemedi. Lütfen Diyanet'in sitesinden kontrol edin.</p>");
+                        setDiyanetTafsir("<div class='p-4 bg-orange-50 border border-orange-200 rounded-lg'><p class='text-sm text-orange-700 font-medium'>Diyanet İşleri Başkanlığı'nın web sitesi, güvenlik ayarları (Cloudflare vb.) sebebiyle doğrudan tefsir çekilmesini engellemektedir.</p><p class='text-sm text-orange-600 mt-2'>Tefsiri okumak için lütfen sağ üstteki <strong>Orijinal Kaynak</strong> butonuna tıklayınız.</p></div>");
                     }
                 } catch (err) {
                     console.error("Diyanet fetch error:", err);
-                    setDiyanetTafsir("<p class='text-sm text-red-500'>Tefsir yüklenirken bir hata oluştu (CORS/Proxy).</p>");
+                    setDiyanetTafsir("<div class='p-4 bg-orange-50 border border-orange-200 rounded-lg'><p class='text-sm text-orange-700 font-medium'>Diyanet İşleri Başkanlığı'nın web sitesi, güvenlik ayarları (Cloudflare vb.) sebebiyle doğrudan tefsir çekilmesini engellemektedir.</p><p class='text-sm text-orange-600 mt-2'>Tefsiri okumak için lütfen sağ üstteki <strong>Orijinal Kaynak</strong> butonuna tıklayınız.</p></div>");
                 } finally {
                     setLoadingDiyanet(false);
                 }
@@ -2633,7 +2633,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
                 activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionRef,
-                playlistPlaybackRef, playbackPlaylistRef
+                playlistPlaybackRef, playbackPlaylistRef, autoScrollEnabled
             } = useQuran();
 
             // Initialize lastScrolledAyah to activeAyah.number if returning to a saved scroll position,
