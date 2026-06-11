@@ -1253,6 +1253,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 jumpTargetRef.current = { ayahNumber: targetVerseNum, shouldPlay: false };
                             }
                             fetchSurah(s);
+                            setViewMode('reader');
+                            setSearchQuery(''); // Arama kutusunu temizle ki ana ekranda temiz kalsın
                             setSearching(false); return;
                         }
                     }
