@@ -862,9 +862,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
                 const audio = audioRef.current;
                 const currentAyahId = audio.__activeAyah?.number;
-                // Check both audio element property AND React state to handle initial load cases
-                const isSameAyah = (currentAyahId && Number(currentAyahId) === Number(ayah.number)) ||
-                                   (activeAyah && Number(activeAyah.number) === Number(ayah.number));
+                // Only rely on audio.__activeAyah to determine if the audio src is actually loaded for this ayah
+                const isSameAyah = currentAyahId && Number(currentAyahId) === Number(ayah.number);
 
                 if (isSameAyah && !options.forcePlay) {
                     if (audio.paused) {
