@@ -2094,9 +2094,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                             {/* Left: Playback speed */}
                             <div className="flex-1 flex justify-start">
                                 <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shrink-0 h-8 border border-gray-200 dark:border-neutral-800 shadow-inner">
-                                    <button onClick={() => setPlaybackRate(prev => Math.round(Math.max(0.5, prev - 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat" aria-label="Oynatma hızını azalt">-</button>
+                                    <button onClick={() => setPlaybackRate(prev => Math.round(Math.max(0.5, prev - 0.1) * 10) / 10)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat" aria-label="Oynatma hızını azalt">-</button>
                                     <span className="w-7 md:w-8 text-center text-[10px] font-bold text-emerald-600 select-none" aria-label={`Oynatma hızı: ${playbackRate}x`}>{playbackRate}x</span>
-                                    <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır" aria-label="Oynatma hızını artır">+</button>
+                                    <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.1) * 10) / 10)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır" aria-label="Oynatma hızını artır">+</button>
                                 </div>
                             </div>
 
