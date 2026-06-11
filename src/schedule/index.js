@@ -334,19 +334,20 @@ function initScheduleApp() {
             const actionsContainer = node.querySelector('[data-slot="actions"]');
             if (!link1 && !link2) {
                 const span = document.createElement('span');
-                span.className = 'text-xs text-gray-400 italic';
+                span.className = 'text-xs text-gray-500 dark:text-gray-400 italic';
                 span.textContent = 'Kayıt bulunmuyor';
                 actionsContainer.appendChild(span);
             } else {
-                if (link1) actionsContainer.appendChild(this._createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary'));
-                if (link2) actionsContainer.appendChild(this._createButton(link2, 'Tilavet/Ses', 'fa-book-quran', 'secondary'));
+                if (link1) actionsContainer.appendChild(this._createButton(link1, 'Ders Notu', 'fa-file-lines', 'primary', `Ders Notu: ${item.subject}`));
+                if (link2) actionsContainer.appendChild(this._createButton(link2, 'Tilavet/Ses', 'fa-book-quran', 'secondary', `Tilavet/Ses: ${item.subject}`));
             }
             return node;
         }
-        _createButton(url, text, iconClass, type) {
+        _createButton(url, text, iconClass, type, ariaLabel) {
             const node = this._clone('btn');
             const a = node.querySelector('a');
             a.href = url;
+            if (ariaLabel) a.setAttribute('aria-label', ariaLabel);
             const classes = type === 'primary' ? CONFIG.CLASSES.btnPrimary : CONFIG.CLASSES.btnSecondary;
             a.classList.add(...classes);
             node.querySelector('i').classList.add('fa-solid', iconClass);
