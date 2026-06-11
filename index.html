@@ -52,7 +52,7 @@
                     class="h-px bg-emerald-200/50 dark:bg-emerald-900/30 flex-1 group-hover:bg-emerald-500/30 transition-colors">
                 </div>
                 <span
-                    class="mx-3 text-sm font-bold text-emerald-800/60 dark:text-emerald-400/60 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors font-mono tracking-widest uppercase"
+                    class="mx-3 text-sm font-bold text-emerald-700 dark:text-emerald-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors font-mono tracking-widest uppercase"
                     data-slot="year"></span>
                 <div
                     class="h-px bg-emerald-200/50 dark:bg-emerald-900/30 flex-1 group-hover:bg-emerald-500/30 transition-colors">
@@ -136,7 +136,7 @@
         <header
             class="bg-emerald-700 dark:bg-emerald-900 border-b border-transparent dark:border-emerald-800 text-white px-4 pb-2 shadow-lg transition-colors duration-300">
             <div class="max-w-md mx-auto relative pt-2">
-                <button id="btn-theme-toggle"
+                <button id="btn-theme-toggle" aria-label="Temayı Değiştir"
                     class="absolute right-0 top-1.5 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                     <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
                 </button>
@@ -158,10 +158,10 @@
 
                 <div class="flex flex-col gap-2 relative z-10">
                     <div class="relative w-full">
-                        <button id="btn-quran-menu"
+                        <button id="btn-quran-menu" aria-label="Kur'an Kaynakları"
                             class="w-full p-2 flex justify-between items-center rounded-lg text-white bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-500 dark:hover:bg-emerald-700 transition duration-200 shadow-md text-sm border border-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 active:scale-[0.99]"
                             aria-haspopup="true" aria-expanded="false">
-                            <span class="font-semibold flex items-center pointer-events-none">
+                            <span class="font-bold flex items-center pointer-events-none text-white">
                                 <i class="fa-solid fa-layer-group mr-2"></i>Kur'an Kaynakları
                             </span>
                             <i class="fa-solid fa-chevron-down smooth-transition pointer-events-none"></i>
@@ -196,17 +196,17 @@
         </main>
 
         <footer
-            class="text-center text-gray-500 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-black border-t border-gray-200 dark:border-neutral-800 pb-safe mt-auto">
+            class="text-center text-gray-600 dark:text-gray-400 text-sm py-8 bg-gray-50 dark:bg-black border-t border-gray-200 dark:border-neutral-800 pb-safe mt-auto">
             <div class="max-w-md mx-auto px-4">
                 <div class="mb-4">
-                    <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400 dark:text-slate-500">İletişim & Öneri</p>
+                    <p class="text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-600 dark:text-slate-400">İletişim & Öneri</p>
                     <a href="mailto:biz2004571@gmail.com"
-                        class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-neutral-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-medium group">
+                        class="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-neutral-700 px-4 py-2 rounded-full shadow-sm hover:shadow-md transition text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 text-xs font-bold group">
                         <i class="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
                         biz2004571@gmail.com
                     </a>
                 </div>
-                <p class="text-[10px] opacity-60">&copy; 2025 - 2032 Ders Arşivi</p>
+                <p class="text-[10px] text-gray-500 dark:text-gray-500">&copy; 2025 - 2032 Ders Arşivi</p>
             </div>
         </footer>
     </div>
