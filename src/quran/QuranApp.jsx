@@ -1445,6 +1445,13 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 window.dispatchQuranNavigation = (state) => {
                     if (!state) return;
 
+                    // Stop playback on any global navigation to prevent confusion
+                    if (isPlayingRef.current && (state.surahNumber || state.ayahNumber)) {
+                        audioRef.current.pause();
+                        setIsPlaying(false);
+                        isPlayingRef.current = false;
+                    }
+
                     if (state.view) {
                         if (state.view === 'playlists_list' && activePlaylistIdRef.current) {
                             setViewMode('playlist_view');
