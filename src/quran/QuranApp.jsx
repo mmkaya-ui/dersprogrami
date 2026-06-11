@@ -153,6 +153,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             // ═══════════════════════════════════════════════════
             const [activeAyah, setActiveAyah] = useState(null);
             const [isPlaying, setIsPlaying] = useState(false);
+            const [isPlayerOpen, setIsPlayerOpen] = useState(false); // Controls PlayerBar visibility
             const isPlayingRef = useRef(false); // Synchronous source of truth for intent
             const lastClickTimeRef = useRef(0); // Debounce
             const audioRef = useRef(new Audio());
@@ -868,6 +869,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 if (isSameAyah && !options.forcePlay) {
                     if (audio.paused) {
                         isPlayingRef.current = true;
+                        setIsPlayerOpen(true);
                         audio.play().catch(e => {
                             if (e.name !== 'AbortError') console.error("Play error:", e);
                             else isPlayingRef.current = false;
@@ -907,6 +909,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 // 2. Start playing immediately to preserve background autoplay trust chain
                 if (targetSrc) {
                     isPlayingRef.current = true;
+                    setIsPlayerOpen(true);
                     audio.play().catch(e => {
                         if (e.name !== 'AbortError') console.error("Play error:", e);
                         else isPlayingRef.current = false;
@@ -1250,6 +1253,12 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         }
                         const s = surahs.find(x => x.number === targetSurahID);
                         if (s) {
+                            if (isPlayingRef.current) {
+                                audioRef.current.pause();
+                                setIsPlaying(false);
+                                isPlayingRef.current = false;
+                            }
+                            setIsPlayerOpen(false);
                             if (targetVerseNum && targetVerseNum > 1) {
                                 jumpTargetRef.current = { ayahNumber: targetVerseNum, shouldPlay: false };
                             }
@@ -1446,10 +1455,13 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     if (!state) return;
 
                     // Stop playback on any global navigation to prevent confusion
-                    if (isPlayingRef.current && (state.surahNumber || state.ayahNumber)) {
-                        audioRef.current.pause();
-                        setIsPlaying(false);
-                        isPlayingRef.current = false;
+                    if (state.surahNumber || state.ayahNumber) {
+                        if (isPlayingRef.current) {
+                            audioRef.current.pause();
+                            setIsPlaying(false);
+                            isPlayingRef.current = false;
+                        }
+                        setIsPlayerOpen(false);
                     }
 
                     if (state.view) {
@@ -1505,8 +1517,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const value = {
                 surahs, sortedSurahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
                 searchQuery, setSearchQuery, handleSearch, currentSearchTerm, rawMatches, setRawMatches, detailedResults, setDetailedResults,
-                activeAyah, setActiveAyah, isPlaying, setIsPlaying, audioRef, playAyah, playNext, playPrev,
-                closePlayer: () => { audioRef.current.pause(); audioRef.current.__activeAyah = null; setIsPlaying(false); isPlayingRef.current = false; setActiveAyah(null); },
+                activeAyah, setActiveAyah, isPlaying, setIsPlaying, isPlayerOpen, setIsPlayerOpen, audioRef, playAyah, playNext, playPrev,
+                closePlayer: () => { audioRef.current.pause(); audioRef.current.__activeAyah = null; setIsPlaying(false); isPlayingRef.current = false; setActiveAyah(null); setIsPlayerOpen(false); },
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
@@ -1947,7 +1959,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled, fetchSurah, surahs, activeSurah, jumpTargetRef, setViewMode, activePlaylist, setActivePlaylist, viewMode, playlistPlaybackRef, playbackPlaylistRef, ayahs, setDisplayLimit, skipDisplayResetRef } = useQuran();
+            const { activeAyah, isPlaying, isPlayerOpen, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled, fetchSurah, surahs, activeSurah, jumpTargetRef, setViewMode, activePlaylist, setActivePlaylist, viewMode, playlistPlaybackRef, playbackPlaylistRef, ayahs, setDisplayLimit, skipDisplayResetRef } = useQuran();
 
             // Local state for high-frequency updates
             const [currentTime, setCurrentTime] = useState(0);
@@ -2044,7 +2056,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             // Klavye kısayolları
             useEffect(() => {
                 const handleKey = (e) => {
-                    if (!activeAyah) return;
+                    if (!activeAyah || !isPlayerOpen) return;
                     const tag = e.target.tagName;
                     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
                     if (e.code === 'Space') { e.preventDefault(); playAyah(activeAyah); }
@@ -2053,9 +2065,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 };
                 window.addEventListener('keydown', handleKey);
                 return () => window.removeEventListener('keydown', handleKey);
-            }, [activeAyah, playAyah, playNext, playPrev]);
+            }, [activeAyah, isPlayerOpen, playAyah, playNext, playPrev]);
 
-            if (!activeAyah) return null;
+            if (!activeAyah || !isPlayerOpen) return null;
 
             return (
                 <div role="region" aria-label="Ses çalar" className="absolute bottom-2 left-2 right-2 md:left-1/2 md:right-auto transform md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-black border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-2 md:pt-1.5 md:pb-2 md:px-3 z-50 flex flex-col gap-1 md:gap-1.5 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+8px)] md:pb-[calc(env(safe-area-inset-bottom)+4px)]">
