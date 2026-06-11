@@ -169,6 +169,21 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const playAyahRef = useRef(null);
             const nextSurahCacheRef = useRef(null);
             const scrollPositionsRef = useRef({ reader: 0, search: 0, my_notes: 0, playlists_list: 0, playlist_view: 0 });
+            
+            // ═══════════════════════════════════════════════════
+            // SECTION 3 — PLAYLIST & SELECTION
+            // ═══════════════════════════════════════════════════
+            const [playlists, setPlaylists] = useState([]);
+            const [selectedAyahs, setSelectedAyahs] = useState([]);
+            const [activePlaylistId, setActivePlaylistId] = useState(null);
+            const activePlaylistIdRef = useRef(activePlaylistId);
+            const setActivePlaylist = useCallback((p) => {
+                const id = p ? p.id : null;
+                setActivePlaylistId(id);
+                activePlaylistIdRef.current = id;
+            }, []);
+            const activePlaylist = useMemo(() => playlists.find(p => p.id === activePlaylistId) || null, [playlists, activePlaylistId]);
+
             // Tracks whether the current playback chain was started from playlist_view.
             // Set to true only when the user taps play inside playlist_view;
             // cleared when the user manually taps play in reader/search view.
@@ -1435,7 +1450,11 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     if (!state) return;
 
                     if (state.view) {
-                        setViewMode(state.view);
+                        if (state.view === 'playlists_list' && activePlaylistIdRef.current) {
+                            setViewMode('playlist_view');
+                        } else {
+                            setViewMode(state.view);
+                        }
 
                         // Restore detailed state if passed
                         if (state.view === 'reader' && state.surahNumber) {
