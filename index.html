@@ -439,6 +439,19 @@
             } catch (e) { /* ignore */ }
         })();
     </script>
+    
+    <script>
+        // Prevent FOUC when navigating directly to Quran tab
+        if (window.location.hash.startsWith('#quran')) {
+            document.documentElement.classList.add('init-quran-mode');
+        }
+    </script>
+
+    <style>
+        /* Anti-FOUC styles for Quran tab */
+        html.init-quran-mode #app-schedule { display: none !important; }
+        html.init-quran-mode #quran-root { display: block !important; }
+    </style>
 
 </head>
 

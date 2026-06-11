@@ -37,6 +37,7 @@ function initScheduleApp() {
         if (show) {
             scheduleApp.classList.add('hidden');
             quranApp.classList.remove('hidden');
+            document.documentElement.classList.remove('init-quran-mode');
             const isDark = document.documentElement.classList.contains('dark');
             if (window.syncReactTheme) window.syncReactTheme(isDark);
 
@@ -69,6 +70,7 @@ function initScheduleApp() {
         } else {
             quranApp.classList.add('hidden');
             scheduleApp.classList.remove('hidden');
+            document.documentElement.classList.remove('init-quran-mode');
 
             if (!fromHistory && window.location.hash.startsWith('#quran')) {
                 history.replaceState(null, '', window.location.pathname);
