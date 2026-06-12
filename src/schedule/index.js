@@ -273,7 +273,7 @@ function initScheduleApp() {
                 const text = await response.text();
                 const rows = Utils.parseCSV(text);
                 return this._processRows(rows);
-            } catch (error) { console.error('[DataManager] fetchFreshData failed:', error); return null; }
+            } catch (error) { console.warn('[DataManager] fetchFreshData failed:', error); return null; }
         }
         _processRows(rows) {
             const processed = rows.slice(1).map(cols => {
