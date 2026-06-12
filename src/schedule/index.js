@@ -267,8 +267,7 @@ function initScheduleApp() {
         }
         async fetchFreshData() {
             try {
-                const cacheBuster = `&_t=${Date.now()}&_r=${Math.floor(Math.random() * 1e7)}`;
-                const response = await fetch(CONFIG.CSV_URL + cacheBuster, { cache: 'no-store' });
+                const response = await fetch(CONFIG.CSV_URL, { cache: 'no-cache' });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const text = await response.text();
                 const rows = Utils.parseCSV(text);
