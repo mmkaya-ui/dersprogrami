@@ -1149,6 +1149,18 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
 
                 try {
+                    const cacheKey = `quran_surah_v1_${surah.number}`;
+                    const cachedData = await bigCache.get(cacheKey);
+
+                    if (cachedData && cachedData.ayahs && cachedData.ayahs.length > 0) {
+                        if (abortSignal.signal.aborted) return;
+                        if (cachedData.meta) setActiveSurah(prev => ({ ...prev, ...cachedData.meta }));
+                        setAyahs(cachedData.ayahs);
+                        setFetchError(null);
+                        setLoading(false);
+                        return; // Servisten çekmeye gerek kalmadan anında göster!
+                    }
+
                     const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.tr_ozturk},${EDITIONS.tr_yildirim},${EDITIONS.tr_yuksel},${EDITIONS.audio}`;
                     const [editionsRes, metaRes] = await Promise.all([
                         fetchWithRetry(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`),
@@ -1160,11 +1172,20 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
                     const editionsData = await editionsRes.json();
                     const metaData = await metaRes.json();
-                    if (metaData.code === 200) setActiveSurah(prev => ({ ...prev, ...metaData.data }));
+                    
+                    const newMeta = metaData.code === 200 ? metaData.data : {};
+                    if (metaData.code === 200) setActiveSurah(prev => ({ ...prev, ...newMeta }));
 
-                    const combinedAyahs = combineAyahEditions(metaData.data.ayahs, editionsData.data, surah.number);
+                    const combinedAyahs = combineAyahEditions(newMeta.ayahs || [], editionsData.data, surah.number);
                     setAyahs(combinedAyahs);
                     setFetchError(null);
+
+                    // IndexedDB'ye kaydet, bir daha bu sure için API beklemesin
+                    bigCache.set(cacheKey, {
+                        meta: newMeta,
+                        ayahs: combinedAyahs
+                    }).catch(e => console.error("Cache save failed", e));
+
                 } catch (e) {
                     if (abortSignal.signal.aborted) return; // Superseded — ignore
                     console.error(e); setAyahs([]); setFetchError({ surah }); showToast('Sure yüklenemedi.');
