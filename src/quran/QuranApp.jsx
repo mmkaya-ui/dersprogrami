@@ -1583,7 +1583,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 return null;
             });
             const [loadingFootnotes, setLoadingFootnotes] = useState(false);
-            const [diyanetTafsir, setDiyanetTafsir] = useState(null);
+            const [diyanetTafsir, setDiyanetTafsir] = useState(() => cachedDiyanetRef.current[ayahData.number] || null);
             const [loadingDiyanet, setLoadingDiyanet] = useState(false);
 
             useEffect(() => {
@@ -1676,7 +1676,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
             useEffect(() => {
                 setFootnotes([]);
-                setDiyanetTafsir(null);
+                setDiyanetTafsir(cachedDiyanetRef.current[ayahData.number] || null);
             }, [ayahData.surahNumber, ayahData.numberInSurah]);
 
             useEffect(() => {
@@ -1703,6 +1703,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     if (!ayahHtml) throw new Error("Bu ayetin tefsiri veritabanında yok.");
                     
                     setDiyanetTafsir(ayahHtml);
+                    cachedDiyanetRef.current[ayahData.number] = ayahHtml;
                 } catch (err) {
                     console.error("Diyanet local fetch error:", err);
                     setDiyanetTafsir("<p class='text-red-500'>Tefsir metni şu an için yüklenemedi. Veritabanı güncelleniyor olabilir.</p>");
