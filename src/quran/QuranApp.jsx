@@ -1848,7 +1848,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                             <button onClick={toggleSelect} aria-label={isSelected ? 'Ayeti seçimden kaldır' : 'Ayeti seç'} aria-pressed={isSelected} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
                                 {isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
                             </button>
-                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
+                            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
                                 {ayahData.surahName || getSurahNameTR(ayahData.surahNumber)} - {ayahData.numberInSurah}
                             </span>
                         </div>
@@ -1915,21 +1915,21 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                             </div>
                         </div>
                         <div className="mb-6 p-3 bg-slate-50 dark:bg-gray-800/60 rounded-lg border-l-4 border-slate-300 dark:border-gray-500">
-                            <h4 className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-300 mb-1 font-bold">Türkçe Okunuş</h4>
+                            <h3 className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-300 mb-1 font-bold">Türkçe Okunuş</h3>
                             <p className="italic text-slate-600 dark:text-slate-200" style={{ fontSize: `${fontSize - 2}px` }}>{ayahData.transliteration}</p>
                         </div>
                         <div className="grid grid-cols-1 gap-4">
                             <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
-                                <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-1">Diyanet Vakfı</h4>
+                                <h3 className="text-xs font-bold text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-1">Diyanet Vakfı</h3>
                                 <p className="text-slate-800 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize}px` }}>{renderTextWithMarkers(ayahData.diyanet)}</p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-neutral-700">
-                                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">Elmalılı Hamdi Yazır</h4>
+                                    <h3 className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">Elmalılı Hamdi Yazır</h3>
                                     <p className="text-slate-600 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yazir}</p>
                                 </div>
                                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-neutral-700">
-                                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">Süleyman Ateş</h4>
+                                    <h3 className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">Süleyman Ateş</h3>
                                     <p className="text-slate-600 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ates}</p>
                                 </div>
                             </div>
@@ -1945,7 +1945,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         {showNotes && (
                             <div ref={noteRef} className="mt-6 p-4 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
                                 <div className="flex justify-between items-center mb-2">
-                                    <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2"><i className="fa-solid fa-pen-nib"></i> Notunuz</h4>
+                                    <h3 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2"><i className="fa-solid fa-pen-nib"></i> Notunuz</h3>
                                     {localNote && (
                                         <button onClick={() => { saveNote(''); }} className="w-8 h-8 rounded-full flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-950/40 dark:hover:bg-red-900/50 border border-red-200/50 dark:border-red-800/30 hover:scale-105 active:scale-95 transition-all shadow-sm" title="Notu sil">
                                             <i className="fa-solid fa-eraser text-sm"></i>
@@ -1960,21 +1960,21 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                             <div className="mt-6 space-y-4 pt-4 border-t dark:border-neutral-800">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-neutral-700">
-                                        <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">Yaşar Nuri Öztürk</h4>
+                                        <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">Yaşar Nuri Öztürk</h3>
                                         <p className="text-slate-600 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ozturk}</p>
                                     </div>
                                     <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-neutral-700">
-                                        <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">Suat Yıldırım</h4>
+                                        <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">Suat Yıldırım</h3>
                                         <p className="text-slate-600 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yildirim}</p>
                                     </div>
                                     <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-800/60 border border-slate-100 dark:border-neutral-700">
-                                        <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">Edip Yüksel</h4>
+                                        <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-2">Edip Yüksel</h3>
                                         <p className="text-slate-600 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yuksel}</p>
                                     </div>
                                 </div>
                                 {loadingFootnotes ? <div className="text-center p-2"><i className="fa-solid fa-spinner fa-spin text-emerald-500"></i></div> : footnotes && footnotes.length > 0 && (
                                     <div className="space-y-2">
-                                        <h4 className="text-xs font-bold text-emerald-600 flex items-center gap-2"><i className="fa-solid fa-circle-info"></i> Açıklamalar</h4>
+                                        <h3 className="text-xs font-bold text-emerald-600 flex items-center gap-2"><i className="fa-solid fa-circle-info"></i> Açıklamalar</h3>
                                         {footnotes.map((fn, idx) => (
                                             <div key={idx} className="p-3 rounded bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-100/50 dark:border-emerald-800/50 text-sm text-slate-700 dark:text-slate-200">{fn.text}</div>
                                         ))}
@@ -1982,10 +1982,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 )}
 
                                 <div className="p-5 border-t border-neutral-200/50 dark:border-neutral-700/50 bg-slate-50 dark:bg-[#151515]">
-                                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
+                                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
                                         <i className="fa-solid fa-book-open-reader text-emerald-600 dark:text-emerald-500"></i>
                                         <span>Diyanet Kur'an Yolu Tefsiri</span>
-                                    </h4>
+                                    </h3>
                                     
                                     {loadingDiyanet ? (
                                         <div className="flex items-center justify-center gap-2 text-xs text-emerald-600 py-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
@@ -2569,7 +2569,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                         {/* Header with surah info */}
                                         <div className="p-4">
                                             <div className="flex justify-between items-center">
-                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
+                                                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
                                                     {note.surahName} {note.ayahNum}
                                                 </span>
                                                 <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
@@ -2582,9 +2582,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                         <div className="mt-5 mx-4 mb-4 pt-5 border-t border-slate-100 dark:border-neutral-800">
                                             <div className="p-4 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2">
+                                                    <h3 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2">
                                                         <i className="fa-solid fa-pen-nib"></i> Notunuz
-                                                    </h4>
+                                                    </h3>
                                                     <div className="flex gap-2.5 items-center">
                                                         <button 
                                                             onClick={() => navigateToAyah(note)} 
@@ -2623,9 +2623,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                     <div className="mt-5 mx-4 mb-4 pt-5 border-t border-slate-100 dark:border-neutral-800">
                                         <div className="p-4 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
                                             <div className="flex justify-between items-center mb-3">
-                                                <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2">
+                                                <h3 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2">
                                                     <i className="fa-solid fa-pen-nib"></i> Notunuz
-                                                </h4>
+                                                </h3>
                                                 <div className="flex gap-2.5 items-center">
                                                     <button 
                                                         onClick={() => navigateToAyah(note)} 
@@ -2873,9 +2873,10 @@ return {
                         {!loading && fetchError && (
                             <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
                                 <i className="fa-solid fa-triangle-exclamation text-4xl text-red-400"></i>
-                                <p className="text-gray-600 dark:text-slate-300 font-medium">{getSurahNameTR(fetchError.surah?.number)} suresi yüklenemedi.</p>
-                                <p className="text-sm text-gray-400 dark:text-slate-500">İnternet bağlantınızı kontrol edip tekrar deneyin.</p>
+                                <p className="text-gray-700 dark:text-slate-300 font-medium">{getSurahNameTR(fetchError.surah?.number)} suresi yüklenemedi.</p>
+                                <p className="text-sm text-gray-500 dark:text-slate-400">İnternet bağlantınızı kontrol edip tekrar deneyin.</p>
                                 <button
+                                    aria-label="Tekrar Dene"
                                     onClick={() => fetchSurah(fetchError.surah)}
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors"
                                 >
@@ -2922,7 +2923,7 @@ return {
                         {showContinueReading && (
                             <div className="mb-6 bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex justify-between items-center shadow-sm border border-emerald-200 dark:border-emerald-800">
                                 <div>
-                                    <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Son Okunan</h4>
+                                    <h3 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Son Okunan</h3>
                                     <p className="text-xs text-emerald-700 dark:text-emerald-400">{bookmark.surah} Suresi, {bookmark.numberInSurah}. Ayet</p>
                                 </div>
                                 <button onClick={() => {
@@ -2942,7 +2943,7 @@ return {
                         {!loading && !searching && viewMode === 'reader' && (
                             <div className="text-center mb-8 border-b border-gray-200 dark:border-neutral-800 pb-6 fade-in relative">
                                 {ayahs.length > 0 && (
-                                    <button onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-black dark:text-emerald-400 dark:border-neutral-800'}`}>
+                                    <button aria-label={allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'} onClick={handleToggleSelectAll} className={`absolute right-0 top-0 text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1 ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 dark:bg-black dark:text-emerald-400 dark:border-neutral-800'}`}>
                                         <i className={`fa-solid ${allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'fa-check-double' : 'fa-list-check'}`}></i>
                                         <span className="hidden sm:inline">{allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}</span>
                                     </button>
