@@ -172,6 +172,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const playAyahRef = useRef(null);
             const nextSurahCacheRef = useRef(null);
             const scrollPositionsRef = useRef({ reader: 0, search: 0, my_notes: 0, playlists_list: 0, playlist_view: 0 });
+            const expandedTafsirsRef = useRef(new Set());
+            const expandedNotesRef = useRef(new Set());
             
             // ═══════════════════════════════════════════════════
             // SECTION 3 — PLAYLIST & SELECTION
@@ -1523,7 +1525,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, playlistLimit, setPlaylistLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled,
-                toastMessage, showToast, scrollPositionsRef, playlistPlaybackRef, playbackPlaylistRef
+                toastMessage, showToast, scrollPositionsRef, expandedTafsirsRef, expandedNotesRef, playlistPlaybackRef, playbackPlaylistRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1553,11 +1555,23 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark, setBookmark, playlistPlaybackRef
+                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark, setBookmark, playlistPlaybackRef,
+                expandedTafsirsRef, expandedNotesRef
             } = useQuran();
 
-            const [showTafsir, setShowTafsir] = useState(false);
-            const [showNotes, setShowNotes] = useState(false);
+            const [showTafsir, setShowTafsir] = useState(() => expandedTafsirsRef.current.has(ayahData.number));
+            const [showNotes, setShowNotes] = useState(() => expandedNotesRef.current.has(ayahData.number));
+
+            useEffect(() => {
+                if (showTafsir) expandedTafsirsRef.current.add(ayahData.number);
+                else expandedTafsirsRef.current.delete(ayahData.number);
+            }, [showTafsir, ayahData.number]);
+
+            useEffect(() => {
+                if (showNotes) expandedNotesRef.current.add(ayahData.number);
+                else expandedNotesRef.current.delete(ayahData.number);
+            }, [showNotes, ayahData.number]);
+
             const noteRef = useRef(null);
             const [localNote, setLocalNote] = useState("");
             const [footnotes, setFootnotes] = useState([]);
