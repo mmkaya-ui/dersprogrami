@@ -298,9 +298,15 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 const savedScroll = scrollPositionsRef.current[currentView] || 0;
 
                 if (savedScroll > 0) {
-                    setTimeout(() => {
+                    let attempts = 0;
+                    const restoreScroll = () => {
                         mainScroll.scrollTo({ top: savedScroll, behavior: 'auto' });
-                    }, 50);
+                        if (attempts < 5) {
+                            attempts++;
+                            setTimeout(restoreScroll, 50);
+                        }
+                    };
+                    requestAnimationFrame(restoreScroll);
                 } else {
                     mainScroll.scrollTo({ top: 0, behavior: 'auto' });
                 }
