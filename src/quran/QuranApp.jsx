@@ -174,6 +174,8 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const scrollPositionsRef = useRef({ reader: 0, search: 0, my_notes: 0, playlists_list: 0, playlist_view: 0 });
             const expandedTafsirsRef = useRef(new Set());
             const expandedNotesRef = useRef(new Set());
+            const cachedFootnotesRef = useRef({});
+            const cachedDiyanetRef = useRef({});
             
             // ═══════════════════════════════════════════════════
             // SECTION 3 — PLAYLIST & SELECTION
@@ -1525,7 +1527,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, playlistLimit, setPlaylistLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode, autoScrollEnabled, setAutoScrollEnabled,
-                toastMessage, showToast, scrollPositionsRef, expandedTafsirsRef, expandedNotesRef, playlistPlaybackRef, playbackPlaylistRef
+                toastMessage, showToast, scrollPositionsRef, expandedTafsirsRef, expandedNotesRef, cachedFootnotesRef, cachedDiyanetRef, playlistPlaybackRef, playbackPlaylistRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1556,7 +1558,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
                 playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark, setBookmark, playlistPlaybackRef,
-                expandedTafsirsRef, expandedNotesRef
+                expandedTafsirsRef, expandedNotesRef, cachedFootnotesRef, cachedDiyanetRef
             } = useQuran();
 
             const [showTafsir, setShowTafsir] = useState(() => expandedTafsirsRef.current.has(ayahData.number));
