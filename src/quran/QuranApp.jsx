@@ -2889,7 +2889,7 @@ return {
                         {!loading && !searching && viewMode === 'reader' && (
                             <div className={`md:hidden sticky left-0 w-full z-10 bg-white dark:bg-black border-b border-gray-200 dark:border-neutral-800 pt-0 px-2 pb-2 shadow-sm flex gap-2 mb-4 transition-transform duration-300 ease-out ${showMobileSelect ? 'translate-y-0 top-0' : '-translate-y-full -top-20'}`}>
                                 <div className="flex-1 relative">
-                                    <select
+                                    <select aria-label="Sure Seçimi"
                                         onChange={(e) => {
                                             const num = parseInt(e.target.value);
                                             if (isNaN(num)) return;
