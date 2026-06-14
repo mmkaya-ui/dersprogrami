@@ -2738,10 +2738,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
             // Infinite Scroll Logic — skip reset when a jump just set displayLimit
             useEffect(() => {
-                if (viewMode === 'playlist_view' || viewMode === 'playlists_list') return; // Liste ekranındayken okuma hafızasını (displayLimit) sıfırlama
                 if (skipDisplayResetRef?.current) { skipDisplayResetRef.current = false; return; }
                 setDisplayLimit(10);
-            }, [activeSurah, searchQuery, viewMode]);
+            }, [activeSurah, searchQuery]);
 
             useEffect(() => {
                 if (activePlaylist) setPlaylistLimit(10);
