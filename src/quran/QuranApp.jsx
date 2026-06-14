@@ -1576,7 +1576,12 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
             const noteRef = useRef(null);
             const [localNote, setLocalNote] = useState("");
-            const [footnotes, setFootnotes] = useState([]);
+            const [footnotes, setFootnotes] = useState(() => {
+                if (ayahData.number in cachedFootnotesRef.current) {
+                    return cachedFootnotesRef.current[ayahData.number];
+                }
+                return null;
+            });
             const [loadingFootnotes, setLoadingFootnotes] = useState(false);
             const [diyanetTafsir, setDiyanetTafsir] = useState(null);
             const [loadingDiyanet, setLoadingDiyanet] = useState(false);
@@ -1675,18 +1680,18 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             }, [ayahData.surahNumber, ayahData.numberInSurah]);
 
             useEffect(() => {
-                if (showTafsir && footnotes.length === 0) {
+                if (showTafsir && footnotes === null) {
                     setLoadingFootnotes(true);
                     fetchWithRetry(`https://api.acikkuran.com/surah/${ayahData.surahNumber}/verse/${ayahData.numberInSurah}?author=105`)
                         .then(r => r.json())
                         .then(data => {
-                            if (data.data && data.data.translation && data.data.translation.footnotes) {
-                                setFootnotes(data.data.translation.footnotes);
-                            }
+                            const fetchedFootnotes = (data.data && data.data.translation && data.data.translation.footnotes) || [];
+                            setFootnotes(fetchedFootnotes);
+                            cachedFootnotesRef.current[ayahData.number] = fetchedFootnotes;
                         }).catch(err => console.error("Footnote error:", err))
                         .finally(() => setLoadingFootnotes(false));
                 }
-            }, [showTafsir, ayahData.surahNumber, ayahData.numberInSurah]);
+            }, [showTafsir, ayahData.surahNumber, ayahData.numberInSurah, ayahData.number, footnotes, cachedFootnotesRef]);
             const fetchDiyanetTafsir = async () => {
                 if (diyanetTafsir || loadingDiyanet) return;
                 setLoadingDiyanet(true);
