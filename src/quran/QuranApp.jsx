@@ -1945,7 +1945,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                         <p className="text-slate-600 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yuksel}</p>
                                     </div>
                                 </div>
-                                {loadingFootnotes ? <div className="text-center p-2"><i className="fa-solid fa-spinner fa-spin text-emerald-500"></i></div> : footnotes.length > 0 && (
+                                {loadingFootnotes ? <div className="text-center p-2"><i className="fa-solid fa-spinner fa-spin text-emerald-500"></i></div> : footnotes && footnotes.length > 0 && (
                                     <div className="space-y-2">
                                         <h4 className="text-xs font-bold text-emerald-600 flex items-center gap-2"><i className="fa-solid fa-circle-info"></i> Açıklamalar</h4>
                                         {footnotes.map((fn, idx) => (
