@@ -2826,12 +2826,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 }
             };
 
-            const itemsToRender = useMemo(() => {
-                if (viewMode === 'reader') return ayahs.slice(0, displayLimit);
-                if (viewMode === 'search') return detailedResults;
-                if (viewMode === 'playlist_view' && activePlaylist) return activePlaylist.items.slice(0, playlistLimit);
-                return [];
-            }, [viewMode, ayahs, displayLimit, detailedResults, activePlaylist, playlistLimit]);
+            const readerItems = useMemo(() => ayahs.slice(0, displayLimit), [ayahs, displayLimit]);
+            const searchItems = useMemo(() => detailedResults, [detailedResults]);
+            const playlistItems = useMemo(() => activePlaylist ? activePlaylist.items.slice(0, playlistLimit) : [], [activePlaylist, playlistLimit]);
 
             // Farklı suredeyken VEYA aynı suredeyken PlayerBar kapalıysa (aktif ayet yok/oynamıyor) göster
             const bookmarkInCurrentSurah = bookmark && bookmark.surahNumber === activeSurah?.number;
@@ -2942,7 +2939,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         {/* List Content */}
                         {!loading && !searching && (viewMode === 'reader' || viewMode === 'search' || viewMode === 'playlist_view') && (
                             <>
-                                {/* SEARCH RESULTS MODE */}
+                                {/* SEARCH RESULTS HEADER */}
                                 {!searching && viewMode === 'search' && (
                                     <>
                                         <div className="flex items-center justify-between mb-6">
@@ -2972,6 +2969,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                     </>
                                 )}
 
+                                {/* PLAYLIST VIEW HEADER */}
                                 {viewMode === 'playlist_view' && activePlaylist && (
                                     <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-6 mb-6 text-center border border-emerald-100 dark:border-emerald-800">
                                         <h2 className="text-2xl font-bold mb-2">{activePlaylist.name}</h2>
@@ -2981,13 +2979,29 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                     </div>
                                 )}
 
-                                {itemsToRender.map((ayah) => (
-                                    <AyahCard key={ayah.number} ayahData={ayah} />
-                                ))}
+                                {/* READER VIEW (KEEP-ALIVE) */}
+                                <div className={viewMode === 'reader' ? 'block' : 'hidden'}>
+                                    {readerItems.map((ayah) => (
+                                        <AyahCard key={ayah.number} ayahData={ayah} />
+                                    ))}
+                                    {viewMode === 'reader' && displayLimit < ayahs.length && <InfiniteScrollTrigger onIntersect={handleLoadMore} />}
+                                </div>
 
-                                {(viewMode === 'reader' && displayLimit < ayahs.length) || (viewMode === 'search' && detailedResults.length < rawMatches.length) || (viewMode === 'playlist_view' && activePlaylist && playlistLimit < activePlaylist.items.length) ? (
-                                    <InfiniteScrollTrigger onIntersect={handleLoadMore} />
-                                ) : null}
+                                {/* SEARCH VIEW (KEEP-ALIVE) */}
+                                <div className={viewMode === 'search' ? 'block' : 'hidden'}>
+                                    {searchItems.map((ayah) => (
+                                        <AyahCard key={`search_${ayah.number}`} ayahData={ayah} />
+                                    ))}
+                                    {viewMode === 'search' && detailedResults.length < rawMatches.length && <InfiniteScrollTrigger onIntersect={handleLoadMore} />}
+                                </div>
+
+                                {/* PLAYLIST VIEW (KEEP-ALIVE) */}
+                                <div className={viewMode === 'playlist_view' ? 'block' : 'hidden'}>
+                                    {playlistItems.map((ayah) => (
+                                        <AyahCard key={`pl_${ayah.number}`} ayahData={ayah} />
+                                    ))}
+                                    {viewMode === 'playlist_view' && activePlaylist && playlistLimit < activePlaylist.items.length && <InfiniteScrollTrigger onIntersect={handleLoadMore} />}
+                                </div>
                             </>
                         )}
 
