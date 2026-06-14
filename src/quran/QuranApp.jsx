@@ -301,9 +301,9 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     let attempts = 0;
                     const restoreScroll = () => {
                         mainScroll.scrollTo({ top: savedScroll, behavior: 'auto' });
-                        if (attempts < 5) {
+                        if (attempts < 15) { // Force for ~375ms to overcome text shaping delays
                             attempts++;
-                            setTimeout(restoreScroll, 50);
+                            setTimeout(restoreScroll, 25);
                         }
                     };
                     requestAnimationFrame(restoreScroll);
@@ -2801,7 +2801,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                         if (viewMode === 'search') {
                             const existingFull = detailedResults.find(d => d.number === item.number);
                             if (existingFull) return existingFull;
-                            return {
+return {
                                 number: item.number,
                                 numberInSurah: item.numberInSurah,
                                 surahName: getSurahNameTR(item.surah.number),
@@ -2839,7 +2839,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             );
 
             return (
-                <main className="flex-1 overflow-y-auto ios-scroll bg-slate-100 dark:bg-black p-4 md:p-8 pt-4 md:pt-8 scroll-smooth transition-colors duration-300" id="main-scroll">
+                <main className="flex-1 overflow-y-auto ios-scroll bg-slate-100 dark:bg-black p-4 md:p-8 pt-4 md:pt-8 transition-colors duration-300" id="main-scroll" style={{ overflowAnchor: 'none' }}>
                     <div className="max-w-4xl mx-auto pb-32">
                         {/* Minimal loading indicator - just top spinner, no blocking overlay */}
                         {loading && (
